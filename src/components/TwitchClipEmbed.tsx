@@ -26,13 +26,15 @@ interface Props {
     autoplay?: boolean;
 }
 
+const hostname = window.location.hostname;
+
 export default function TwitchClipEmbed({ clip, autoplay = false }: Props) {
 
     return (
         <MainContainer>
             <IframeContainer>
                 <iframe
-                    src={`${clip.embed_url}&parent=nflnkr.github.io&autoplay=${autoplay}`}
+                    src={`${clip.embed_url}&parent=${hostname}&autoplay=${autoplay}`}
                     frameBorder="0"
                     allow=" autoplay; picture-in-picture"
                     allowFullScreen
