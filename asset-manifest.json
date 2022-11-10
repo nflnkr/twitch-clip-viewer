@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/twitch-clip-viewer/static/css/main.bd1e1d4f.css",
+    "main.js": "/twitch-clip-viewer/static/js/main.22b2a8f6.js",
+    "index.html": "/twitch-clip-viewer/index.html",
+    "main.bd1e1d4f.css.map": "/twitch-clip-viewer/static/css/main.bd1e1d4f.css.map",
+    "main.22b2a8f6.js.map": "/twitch-clip-viewer/static/js/main.22b2a8f6.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.bd1e1d4f.css",
+    "static/js/main.22b2a8f6.js"
+  ]
+}
