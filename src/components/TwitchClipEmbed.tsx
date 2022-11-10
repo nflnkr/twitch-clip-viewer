@@ -32,7 +32,7 @@ export default function TwitchClipEmbed({ clip, autoplay = false }: Props) {
         <MainContainer>
             <IframeContainer>
                 <iframe
-                    src={`${clip.embed_url}&parent=localhost&autoplay=${autoplay}`}
+                    src={`${clip.embed_url}&parent=nflnkr.github.io&autoplay=${autoplay}`}
                     frameBorder="0"
                     allow=" autoplay; picture-in-picture"
                     allowFullScreen
