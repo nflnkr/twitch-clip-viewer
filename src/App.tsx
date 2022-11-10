@@ -160,7 +160,7 @@ function App() {
 
     const addChannel = useCallback(function addChannel() {
         setChannelname("");
-        const trimmedChannelname = channelname.trim();
+        const trimmedChannelname = channelname.trim().toLowerCase();
         if (/^[a-zA-Z0-9][\w]{2,24}$/.test(trimmedChannelname) && !channels.includes(trimmedChannelname)) setChannels(prev => [...prev, trimmedChannelname]);
     }, [channelname, channels]);
 
