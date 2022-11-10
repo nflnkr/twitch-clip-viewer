@@ -1,0 +1,64 @@
+{
+    "name": "twitch-clip-viewer",
+    "version": "0.1.0",
+    "private": true,
+    "homepage": "https://nflnkr.github.io/twitch-clip-viewer",
+    "dependencies": {
+        "@nextui-org/react": "^1.0.0-beta.10",
+        "@testing-library/jest-dom": "^5.16.5",
+        "@testing-library/react": "^13.4.0",
+        "@testing-library/user-event": "^13.5.0",
+        "@types/jest": "^27.5.2",
+        "@types/node": "^16.18.3",
+        "@types/react": "^18.0.25",
+        "@types/react-date-range": "^1.4.4",
+        "@types/react-dom": "^18.0.8",
+        "@types/styled-components": "^5.1.26",
+        "gh-pages": "^4.0.0",
+        "react": "^18.2.0",
+        "react-date-range": "^1.4.0",
+        "react-dom": "^18.2.0",
+        "react-scripts": "5.0.1",
+        "styled-components": "^5.3.6",
+        "typescript": "^4.8.4",
+        "web-vitals": "^2.1.4"
+    },
+    "scripts": {
+        "predeploy": "npm run build",
+        "deploy": "gh-pages -d build",
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test",
+        "eject": "react-scripts eject"
+    },
+    "eslintConfig": {
+        "extends": [
+            "react-app",
+            "react-app/jest"
+        ],
+        "rules": {
+            "no-unused-vars": "off",
+            "@typescript-eslint/no-unused-vars": "off",
+            "quotes": [
+                "warn",
+                "double",
+                {
+                    "avoidEscape": true,
+                    "allowTemplateLiterals": true
+                }
+            ]
+        }
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    }
+}
