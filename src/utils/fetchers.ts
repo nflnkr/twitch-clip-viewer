@@ -40,7 +40,6 @@ async function getClipsForBroadcasterId(broadcasterId: number, start: string, en
     const json = await response.json();
     const clips: TwitchClipMetadata[] = [...json.data];
     const newCursor = json.pagination?.cursor;
-    console.log("clips.at(-1)!.view_count: ", clips.at(-1)!.view_count)
     if (newCursor && clips.at(-1)!.view_count >= minViewCount) {
         const newClips = await getClipsForBroadcasterId(broadcasterId, start, end, minViewCount, signal, newCursor);
         clips.push(...newClips);
