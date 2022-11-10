@@ -158,6 +158,12 @@ function App() {
         });
     }, []);
 
+    const addChannel = useCallback(function addChannel() {
+        setChannelname("");
+        const trimmedChannelname = channelname.trim();
+        if (/^[a-zA-Z0-9][\w]{2,24}$/.test(trimmedChannelname) && !channels.includes(trimmedChannelname)) setChannels(prev => [...prev, trimmedChannelname]);
+    }, [channelname, channels]);
+
     useEffect(function saveToLocalStorage() {
         localStorage.setItem("channels", JSON.stringify(channels));
         localStorage.setItem("isAutoplay", JSON.stringify(isAutoplay));
@@ -233,9 +239,7 @@ function App() {
     useEffect(function attachEventHandlers() {
         function keyHandler(e: KeyboardEvent) {
             if (e.code === "Enter" || e.code === "NumpadEnter") {
-                setChannelname("");
-                const trimmedChannelname = channelname.trim();
-                if (/^[a-zA-Z0-9][\w]{2,24}$/.test(trimmedChannelname) && !channels.includes(trimmedChannelname)) setChannels(prev => [...prev, trimmedChannelname]);
+                addChannel();
             }
 
             if ((e.target as HTMLElement).tagName === "INPUT") return;
@@ -245,7 +249,7 @@ function App() {
         }
         document.addEventListener("keydown", keyHandler);
         return () => document.removeEventListener("keydown", keyHandler);
-    }, [channelname, channels, nextClip, prevClip]);
+    }, [addChannel, nextClip, prevClip]);
 
     useEffect(function skipClipIfViewed() {
         if (!clipMeta) return;
@@ -321,10 +325,10 @@ function App() {
                         <Input
                             aria-label="add channel"
                             bordered
-                            clearable
                             placeholder="Add channel"
                             value={channelname}
                             onChange={e => setChannelname(e.target.value)}
+                            contentRight={<Button size="xs" onPress={addChannel} style={{ right: "5em" }}>Add</Button>}
                         />
                         <FlexboxWrap>
                             {channels.map(channel => (
