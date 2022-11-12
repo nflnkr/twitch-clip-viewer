@@ -20,7 +20,8 @@ export async function getClips({ channelIds, start, end, minViewCount, signal }:
             const newClips = await getClipsForBroadcasterId(channelId, start, end, minViewCount, signal);
             clips.push(...newClips);
         }));
-    } catch {
+    } catch (e) {
+        console.log("Error", e);
         return null;
     }
     clips.sort((a, b) => b.view_count - a.view_count);
@@ -40,7 +41,7 @@ async function getClipsForBroadcasterId(broadcasterId: number, start: string, en
     const json = await response.json();
     const clips: TwitchClipMetadata[] = [...json.data];
     const newCursor = json.pagination?.cursor;
-    if (newCursor && clips.at(-1)!.view_count >= minViewCount) {
+    if (newCursor && clips.length && clips.at(-1)!.view_count >= minViewCount) {
         const newClips = await getClipsForBroadcasterId(broadcasterId, start, end, minViewCount, signal, newCursor);
         clips.push(...newClips);
     }
