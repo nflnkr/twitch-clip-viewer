@@ -122,7 +122,7 @@ function App() {
         endDate: new Date(),
         key: "selection"
     }]);
-    const nextClipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const debouncedMinViewCount = useDebounce(minViewCount, 1000);
     const isHorizontal = useMediaQuery("(min-width: 70em)");
     const isVertical = useMediaQuery("(max-width: 34em)");
@@ -136,24 +136,28 @@ function App() {
 
     const clipMeta = filteredClips.length ? filteredClips[currentClipIndex] : undefined;
 
-    const nextClip = useCallback(function nextClip() {
+    const nextClip = useCallback(() => {
         if (!clipMeta) return;
+
+        if (nextClipTimeoutRef.current) {
+            clearTimeout(nextClipTimeoutRef.current);
+            nextClipTimeoutRef.current = null;
+        }
+
         setViewedClips(prevViewedClips => {
             if (!prevViewedClips.includes(clipMeta.id)) return [...prevViewedClips, clipMeta.id];
-            // setIsSkipViewed(false);
             return prevViewedClips;
         });
         setCurrentClipIndex(prev => {
             let newIndex = prev + 1;
-            // TODO check for infinite loop then uncomment:
-            // setIsSkipViewed(false);
             if (newIndex > filteredClips.length - 1) newIndex = filteredClips.length - 1;
             return newIndex;
         });
     }, [clipMeta, filteredClips.length]);
 
-    const prevClip = useCallback(function prevClip() {
+    const prevClip = useCallback(() => {
         setIsSkipViewed(false);
+        setIsInfinitePlay(false);
         setCurrentClipIndex(prev => {
             let newIndex = prev - 1;
             if (newIndex < 0) newIndex = 0;
@@ -161,7 +165,7 @@ function App() {
         });
     }, []);
 
-    const addChannel = useCallback(function addChannel() {
+    const addChannel = useCallback(() => {
         setChannelname("");
 
         const newChannelNames = channelname.split(" ").map(s => s.toLowerCase()).filter(s => /^[a-zA-Z0-9][\w]{2,24}$/.test(s) && !channels.includes(s));
@@ -225,9 +229,10 @@ function App() {
     useEffect(function fetchClips() {
         if (!channelIds.length || !dateRange[0].startDate || !dateRange[0].endDate) return setClips([]);
 
+        setClips([]);
+
         const includeLastDayDate = new Date(dateRange[0].endDate.getTime());
         includeLastDayDate.setHours(23, 59, 59, 999);
-        setClips([]);
         const abortcontroller = new AbortController();
         getClips({
             channelIds,
@@ -262,23 +267,21 @@ function App() {
         if (isSkipViewed && viewedClips.includes(clipMeta.id)) nextClip();
     }, [clipMeta, isSkipViewed, nextClip, viewedClips]);
 
-    // TODO infinite play using clip duration
-    // TODO clip progress bar if autoplay on
-    /* useEffect(function startInfinitePlayTimer() {
-        if (!isInfinitePlay && nextClipTimerRef.current) {
-            clearTimeout(nextClipTimerRef.current);
-            nextClipTimerRef.current = null;
+    useEffect(function startInfinitePlayTimer() {
+        if ((!isInfinitePlay && nextClipTimeoutRef.current) || !clipMeta) {
+            if (!nextClipTimeoutRef.current) return;
+            clearTimeout(nextClipTimeoutRef.current);
+            nextClipTimeoutRef.current = null;
             return;
         }
 
-        if (!clipMeta) return;
-
-        if (!nextClipTimerRef.current) {
-            nextClipTimerRef.current = setTimeout(() => {
+        if (isInfinitePlay && !nextClipTimeoutRef.current) {
+            nextClipTimeoutRef.current = setTimeout(() => {
+                nextClipTimeoutRef.current = null;
                 nextClip();
-            }, (clipMeta.duration + 3) * 1000);
+            }, (clipMeta.duration + 4) * 1000);
         }
-    }, [clipMeta, isInfinitePlay, nextClip]); */
+    }, [clipMeta, isInfinitePlay, nextClip]);
 
     // disable rerender on isAutoplay change
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -388,11 +391,17 @@ function App() {
                             {filteredClips.length ? <Text>{currentClipIndex + 1}/{filteredClips.length}</Text> : null}
                         </FlexboxWrap>
                         <FlexboxWrap>
-                            <Switch checked={isClipAutoplay} onChange={e => setIsClipAutoplay(e.target.checked)} />
+                            <Switch checked={isClipAutoplay} onChange={e => {
+                                if (!e.target.checked) setIsInfinitePlay(false);
+                                setIsClipAutoplay(e.target.checked);
+                            }} />
                             <Text>Clip autoplay</Text>
                         </FlexboxWrap>
                         <FlexboxWrap>
-                            <Switch checked={isInfinitePlay} onChange={e => setIsInfinitePlay(e.target.checked)} />
+                            <Switch checked={isInfinitePlay} onChange={e => {
+                                if (e.target.checked) setIsClipAutoplay(true);
+                                setIsInfinitePlay(e.target.checked);
+                            }} />
                             <Text>Auto next</Text>
                         </FlexboxWrap>
                         <FlexboxWrap>
