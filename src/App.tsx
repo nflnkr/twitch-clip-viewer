@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components/macro";
 import TwitchClipEmbed from "./components/TwitchClipEmbed";
 import { ChannelnameToIds, Layout, TwitchClipMetadata } from "./types";
@@ -83,13 +83,9 @@ const CenterContentBox = styled.div`
     align-items: center;
 `;
 
-let initialIsAutoplay = false;
+let initialIsAutoplay = true;
 const isAutoplayString = localStorage.getItem("isAutoplay");
 if (isAutoplayString) initialIsAutoplay = JSON.parse(isAutoplayString) as boolean;
-
-let initialIsSkipViewed = false;
-const initialIsSkipViewedString = localStorage.getItem("isSkipViewed");
-if (initialIsSkipViewedString) initialIsSkipViewed = JSON.parse(initialIsSkipViewedString) as boolean;
 
 let initialStartDateTimestamp: number = new Date(new Date().setDate(new Date().getDate() - 7)).getTime();
 const initialStartDateTimestampString = localStorage.getItem("startDate");
@@ -107,22 +103,26 @@ let initialViewedClips: string[] = [];
 const initialViewedClipsString = localStorage.getItem("viewedClips");
 if (initialViewedClipsString) initialViewedClips = JSON.parse(initialViewedClipsString) as string[];
 
+
+// TODO link to a vod
 function App() {
     const [channelname, setChannelname] = useState<string>("");
     const [channels, setChannels] = useState<string[]>(initialChannels);
     const [channelIds, setChannelIds] = useState<number[]>([]);
     const [clips, setClips] = useState<TwitchClipMetadata[]>([]);
     const [currentClipIndex, setCurrentClipIndex] = useState<number>(0);
-    const [isAutoplay, setIsAutoplay] = useState<boolean>(initialIsAutoplay);
+    const [isClipAutoplay, setIsClipAutoplay] = useState<boolean>(initialIsAutoplay);
+    const [isInfinitePlay, setIsInfinitePlay] = useState<boolean>(false);
+    const [isSkipViewed, setIsSkipViewed] = useState<boolean>(false);
     const [isModalShown, setIsModalShown] = useState<boolean>(false);
     const [minViewCount, setMinViewCount] = useState<number>(initialMinViewCount);
-    const [isSkipViewed, setIsSkipViewed] = useState<boolean>(initialIsSkipViewed);
     const [viewedClips, setViewedClips] = useState<string[]>(initialViewedClips);
     const [dateRange, setDateRange] = useState<Range[]>([{
         startDate: new Date(initialStartDateTimestamp),
         endDate: new Date(),
         key: "selection"
     }]);
+    const nextClipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const debouncedMinViewCount = useDebounce(minViewCount, 1000);
     const isHorizontal = useMediaQuery("(min-width: 70em)");
     const isVertical = useMediaQuery("(max-width: 34em)");
@@ -140,10 +140,13 @@ function App() {
         if (!clipMeta) return;
         setViewedClips(prevViewedClips => {
             if (!prevViewedClips.includes(clipMeta.id)) return [...prevViewedClips, clipMeta.id];
+            // setIsSkipViewed(false);
             return prevViewedClips;
         });
         setCurrentClipIndex(prev => {
             let newIndex = prev + 1;
+            // TODO check for infinite loop then uncomment:
+            // setIsSkipViewed(false);
             if (newIndex > filteredClips.length - 1) newIndex = filteredClips.length - 1;
             return newIndex;
         });
@@ -160,18 +163,20 @@ function App() {
 
     const addChannel = useCallback(function addChannel() {
         setChannelname("");
-        const trimmedChannelname = channelname.trim().toLowerCase();
-        if (/^[a-zA-Z0-9][\w]{2,24}$/.test(trimmedChannelname) && !channels.includes(trimmedChannelname)) setChannels(prev => [...prev, trimmedChannelname]);
+
+        const newChannelNames = channelname.split(" ").map(s => s.toLowerCase()).filter(s => /^[a-zA-Z0-9][\w]{2,24}$/.test(s) && !channels.includes(s));
+        const uniqueChannelNames = [...new Set(newChannelNames)];
+
+        if (uniqueChannelNames.length) setChannels(prev => [...prev, ...uniqueChannelNames]);
     }, [channelname, channels]);
 
     useEffect(function saveToLocalStorage() {
         localStorage.setItem("channels", JSON.stringify(channels));
-        localStorage.setItem("isAutoplay", JSON.stringify(isAutoplay));
-        localStorage.setItem("minViewCount", JSON.stringify(minViewCount));
-        localStorage.setItem("isSkipViewed", JSON.stringify(isSkipViewed));
+        localStorage.setItem("isAutoplay", JSON.stringify(isClipAutoplay));
+        localStorage.setItem("minViewCount", JSON.stringify(debouncedMinViewCount));
         localStorage.setItem("viewedClips", JSON.stringify(viewedClips));
         if (dateRange[0].startDate) localStorage.setItem("startDate", JSON.stringify(dateRange[0].startDate.getTime()));
-    }, [channels, isAutoplay, minViewCount, isSkipViewed, dateRange, viewedClips]);
+    }, [channels, isClipAutoplay, debouncedMinViewCount, isSkipViewed, dateRange, viewedClips]);
 
     useEffect(function getBroadcasterIdsFromChannelnames() {
         if (!channels.length) return setChannelIds([]);
@@ -257,12 +262,27 @@ function App() {
         if (isSkipViewed && viewedClips.includes(clipMeta.id)) nextClip();
     }, [clipMeta, isSkipViewed, nextClip, viewedClips]);
 
-    const clip = useMemo(() => {
-        if (!clipMeta) return null;
-        return <TwitchClipEmbed clip={clipMeta} autoplay={isAutoplay} />;
-        // disable rerender on isAutoplay change
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [clipMeta]);
+    // TODO infinite play using clip duration
+    // TODO clip progress bar if autoplay on
+    /* useEffect(function startInfinitePlayTimer() {
+        if (!isInfinitePlay && nextClipTimerRef.current) {
+            clearTimeout(nextClipTimerRef.current);
+            nextClipTimerRef.current = null;
+            return;
+        }
+
+        if (!clipMeta) return;
+
+        if (!nextClipTimerRef.current) {
+            nextClipTimerRef.current = setTimeout(() => {
+                nextClip();
+            }, (clipMeta.duration + 3) * 1000);
+        }
+    }, [clipMeta, isInfinitePlay, nextClip]); */
+
+    // disable rerender on isAutoplay change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const clip = useMemo(() => clipMeta ? <TwitchClipEmbed clip={clipMeta} autoplay={isClipAutoplay} /> : null, [clipMeta]);
 
     function handleLastWeekClick() {
         setDateRange([{
@@ -368,16 +388,16 @@ function App() {
                             {filteredClips.length ? <Text>{currentClipIndex + 1}/{filteredClips.length}</Text> : null}
                         </FlexboxWrap>
                         <FlexboxWrap>
-                            <FlexboxWrap>
-                                <Switch checked={isAutoplay} onChange={e => setIsAutoplay(e.target.checked)} />
-                                <Text>Autoplay</Text>
-                            </FlexboxWrap>
-                            <FlexboxWrap>
-                                <Switch checked={isSkipViewed} onChange={e => {
-                                    setIsSkipViewed(e.target.checked);
-                                }} />
-                                <Text>Skip viewed</Text>
-                            </FlexboxWrap>
+                            <Switch checked={isClipAutoplay} onChange={e => setIsClipAutoplay(e.target.checked)} />
+                            <Text>Clip autoplay</Text>
+                        </FlexboxWrap>
+                        <FlexboxWrap>
+                            <Switch checked={isInfinitePlay} onChange={e => setIsInfinitePlay(e.target.checked)} />
+                            <Text>Auto next</Text>
+                        </FlexboxWrap>
+                        <FlexboxWrap>
+                            <Switch checked={isSkipViewed} onChange={e => setIsSkipViewed(e.target.checked)} />
+                            <Text>Skip viewed</Text>
                         </FlexboxWrap>
                         <Button
                             size="xs"
