@@ -273,12 +273,6 @@ function App() {
         };
     }, [addChannel, nextClip, prevClip]);
 
-    useEffect(function skipClipIfViewed() {
-        if (!clipMeta) return;
-
-        if (isSkipViewed && viewedClips.includes(clipMeta.id)) nextClip();
-    }, [clipMeta, isSkipViewed, nextClip, viewedClips]);
-
     useEffect(function startInfinitePlayTimer() {
         if ((!isInfinitePlay && nextClipTimeoutRef.current) || !clipMeta) {
             if (!nextClipTimeoutRef.current) return;
@@ -294,6 +288,16 @@ function App() {
             }, (clipMeta.duration + 4) * 1000);
         }
     }, [clipMeta, isInfinitePlay, nextClip]);
+
+    useEffect(function skipClipIfViewed() {
+        if (!clipMeta) return;
+
+        // TODO infinite rerender on last clip?
+        if (isSkipViewed && viewedClips.includes(clipMeta.id)) {
+            nextClip();
+            // TODO find next not viewed clip
+        }
+    }, [clipMeta, isSkipViewed, nextClip, viewedClips]);
 
     function handleLastWeekClick() {
         setDateRange([{
@@ -430,6 +434,8 @@ function App() {
                         </Button>
                         <Tooltip
                             color="primary"
+                            placement="right"
+                            hideArrow
                             content={
                                 <Grid.Container>
                                     <Grid xs={6}>Next clip</Grid>
