@@ -3,7 +3,7 @@ import styled from "styled-components/macro";
 import TwitchClipEmbed from "./components/TwitchClipEmbed";
 import { ChannelnameToIds, Layout, TwitchClipMetadata } from "./types";
 import { getBroadcasterIds, getClips } from "./utils/fetchers";
-import { NextUIProvider, Button, Text, Spacer, Switch, Input, Badge, createTheme, Link, Loading } from "@nextui-org/react";
+import { NextUIProvider, Button, Text, Switch, Input, Badge, createTheme, Link, Loading, Tooltip, Grid } from "@nextui-org/react";
 import { DateRange, Range } from "react-date-range";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 
@@ -105,6 +105,9 @@ if (initialViewedClipsString) initialViewedClips = JSON.parse(initialViewedClips
 
 
 // TODO link to a vod
+// TODO twitchtracker link
+// TODO groups of streamers
+// TODO only 2 orientations - media query
 function App() {
     const [channelname, setChannelname] = useState<string>("");
     const [channels, setChannels] = useState<string[]>(initialChannels);
@@ -257,8 +260,17 @@ function App() {
             if (e.code === "KeyN" || e.code === "ArrowRight") return nextClip();
             if (e.code === "KeyB" || e.code === "ArrowLeft") return prevClip();
         }
+        function mouseHandler(e: MouseEvent) {
+            e.preventDefault();
+            if (e.button === 3) return prevClip();
+            if (e.button === 4) return nextClip();
+        }
         document.addEventListener("keydown", keyHandler);
-        return () => document.removeEventListener("keydown", keyHandler);
+        document.addEventListener("mouseup", mouseHandler);
+        return () => {
+            document.removeEventListener("keydown", keyHandler);
+            document.removeEventListener("mouseup", mouseHandler);
+        };
     }, [addChannel, nextClip, prevClip]);
 
     useEffect(function skipClipIfViewed() {
@@ -282,10 +294,6 @@ function App() {
             }, (clipMeta.duration + 4) * 1000);
         }
     }, [clipMeta, isInfinitePlay, nextClip]);
-
-    // disable rerender on isAutoplay change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const clip = useMemo(() => clipMeta ? <TwitchClipEmbed clip={clipMeta} autoplay={isClipAutoplay} /> : null, [clipMeta]);
 
     function handleLastWeekClick() {
         setDateRange([{
@@ -319,6 +327,10 @@ function App() {
         }]);
     }
 
+    // disable rerender on isAutoplay change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const clip = useMemo(() => clipMeta ? <TwitchClipEmbed key={Math.random()} clip={clipMeta} autoplay={isClipAutoplay} /> : null, [clipMeta]);
+
     return (
         <NextUIProvider theme={darkTheme}>
             <AppContainer
@@ -333,9 +345,7 @@ function App() {
                     channelIds.length ?
                         <CenterContentBox><Loading size="xl" /></CenterContentBox>
                         :
-                        <CenterContentBox>
-                            <Text h2>No channels</Text>
-                        </CenterContentBox>
+                        <CenterContentBox><Text h2>No channels</Text></CenterContentBox>
                 }
                 <ControlsAndClipInfoContainer
                     style={{
@@ -418,7 +428,19 @@ function App() {
                         >
                             Clear viewed clips {viewedClips.length > 0 && `(${viewedClips.length})`}
                         </Button>
-                        <Spacer />
+                        <Tooltip
+                            color="primary"
+                            content={
+                                <Grid.Container>
+                                    <Grid xs={6}>Next clip</Grid>
+                                    <Grid xs={6}>➡, N, mouse button 4</Grid>
+                                    <Grid xs={6}>Previous clip</Grid>
+                                    <Grid xs={6}>⬅, B, mouse button 3</Grid>
+                                </Grid.Container>
+                            }
+                        >
+                            <Button size="xs">Shortcuts</Button>
+                        </Tooltip>
                     </ControlsContainer>
                     {clipMeta &&
                         <ClipInfoContainer>
