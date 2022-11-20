@@ -35,6 +35,7 @@ const ControlsContainer = styled.div`
     gap: 1em;
     padding: 1em;
     max-width: 26em;
+    user-select: none;
 `;
 
 const ClipInfoContainer = styled.div`
@@ -462,6 +463,7 @@ function App() {
                             <Text>Views: {clipMeta.view_count}</Text>
                             <Text>Author: {clipMeta.creator_name}</Text>
                             <Text>Date: {new Date(clipMeta.created_at).toLocaleDateString()}</Text>
+                            <Text size="$xs" color="#ffffff29">1.0.0</Text>
                         </ClipInfoContainer>
                     }
                 </ControlsAndClipInfoContainer>
