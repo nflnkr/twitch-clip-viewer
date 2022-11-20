@@ -109,6 +109,7 @@ if (initialViewedClipsString) initialViewedClips = JSON.parse(initialViewedClips
 // TODO twitchtracker link
 // TODO groups of streamers
 // TODO only 2 orientations - media query
+// TODO capture and stop MB3/4 events before iframe
 function App() {
     const [channelname, setChannelname] = useState<string>("");
     const [channels, setChannels] = useState<string[]>(initialChannels);
@@ -285,7 +286,8 @@ function App() {
         if (isInfinitePlay && !nextClipTimeoutRef.current) {
             nextClipTimeoutRef.current = setTimeout(() => {
                 nextClipTimeoutRef.current = null;
-                nextClip();
+                if (!document.hidden) return nextClip();
+                else setIsInfinitePlay(false);
             }, (clipMeta.duration + 4) * 1000);
         }
     }, [clipMeta, isInfinitePlay, nextClip]);
