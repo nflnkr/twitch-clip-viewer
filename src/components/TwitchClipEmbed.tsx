@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import styled from "styled-components/macro";
 import { TwitchClipMetadata } from "../types";
 
