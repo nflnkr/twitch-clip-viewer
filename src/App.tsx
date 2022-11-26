@@ -37,7 +37,6 @@ const ControlsContainer = styled.div`
     gap: 1em;
     padding: 1em;
     max-width: 26em;
-    user-select: none;
 `;
 
 const ClipInfoContainer = styled.div`
@@ -404,7 +403,7 @@ function App() {
                             value={minViewCount}
                             onChange={e => setMinViewCount(Number(e.target.value))}
                         />
-                        <FlexboxWrap>
+                        <FlexboxWrap style={{ userSelect: "none" }}>
                             <Button size="sm" disabled={currentClipIndex === 0} onPress={prevClip}>Previous</Button>
                             <Button size="sm" disabled={currentClipIndex >= filteredClips.length - 1} onPress={nextClip}>Next</Button>
                             {filteredClips.length ? <Text>{currentClipIndex + 1}/{filteredClips.length}</Text> : null}
