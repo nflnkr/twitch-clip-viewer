@@ -1,6 +1,6 @@
 import { ChannelnameToIds, TwitchClipMetadata, TwitchUserMetadata } from "../types";
 
-const authToken = "23lqtwpgq6cmufzura2fuqiqu4snkh";
+const authToken = "w284j6uxmrrrqnpt713p99075571i2";
 const clientId = "sl7qzvmvjfha998253d5d6muxxtglg";
 
 interface GetClipsParams {
