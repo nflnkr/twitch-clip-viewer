@@ -8,8 +8,6 @@ import { DateRange, Range } from "react-date-range";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 
 
-const VERSION = "1.1.0";
-
 const darkTheme = createTheme({
     type: "dark",
     theme: {
@@ -466,7 +464,6 @@ function App() {
                             <Text>Views: {clipMeta.view_count}</Text>
                             <Text>Author: {clipMeta.creator_name}</Text>
                             <Text>Date: {new Date(clipMeta.created_at).toLocaleDateString()}</Text>
-                            <Text size="$xs" color="#ffffff29">{VERSION}</Text>
                         </ClipInfoContainer>
                     }
                 </ControlsAndClipInfoContainer>
