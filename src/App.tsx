@@ -1,87 +1,118 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import styled from "styled-components/macro";
 import TwitchClipEmbed from "./components/TwitchClipEmbed";
-import { ChannelnameToIds, Layout, TwitchClipMetadata } from "./types";
+import { ChannelnameToIds, TwitchClipMetadata } from "./types";
 import { getBroadcasterIds, getClips } from "./utils/fetchers";
-import { NextUIProvider, Button, Text, Switch, Input, Badge, createTheme, Link, Loading, Tooltip, Grid } from "@nextui-org/react";
+import { NextUIProvider, Button, Text, Switch, Input, Badge, createTheme, Link, Loading, styled } from "@nextui-org/react";
 import { DateRange, Range } from "react-date-range";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
+import { ChannelGroup } from "./reducers/channelGroups";
+import { IoMdSettings } from "react-icons/io";
 
 
-const darkTheme = createTheme({
+const theme = createTheme({
     type: "dark",
     theme: {
         colors: {
-            background: "#1a1a1a"
+            background: "#1a1a1a",
+            primary: "$blue500",
+            primaryDark: "$blue300",
         }
     }
 });
 
-const AppContainer = styled.main`
-    display: flex;
-    height: 100vh;
-`;
+const AppContainer = styled("main", {
+    display: "flex",
+});
 
-const ControlsAndClipInfoContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    min-width: fit-content;
-    max-width: 26em;
-`;
+const ControlsAndClipInfoContainer = styled("div", {
+    display: "flex",
+    minWidth: "fit-content",
+    // maxWidth: "26em",
+    flex: "1",
+    padding: "1em",
+    overflow: "auto",
+});
 
-const ControlsContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
-    padding: 1em;
-    max-width: 26em;
-`;
+const ControlsContainer = styled("div", {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1em",
+    maxWidth: "26em",
+});
 
-const ClipInfoContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 0.25em;
-    padding: 1em;
-    max-width: 25em;
-`;
+const ClipInfoContainer = styled("div", {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.25em",
+    maxWidth: "25em",
+});
 
-const FlexboxWrap = styled.div`
-    display: flex;
-    gap: 1em;
-    flex-wrap: wrap;
-    align-items: center;
-`;
+const FlexboxWrap = styled("div", {
+    display: "flex",
+    gap: "1em",
+    flexWrap: "wrap",
+    alignItems: "center",
+});
 
-const FlexboxWrapSpaceBetween = styled.div`
-    display: flex;
-    gap: 1em;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-`;
+const FlexboxWrapSpaceBetween = styled("div", {
+    display: "flex",
+    gap: "1em",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+});
 
-const DateRangePickerModal = styled.div`
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    box-shadow: 0px 0px 14px 0px rgba(0,0,0,1);
-`;
+// const DateRangePickerModal = styled("div", {
+//     position: "absolute",
+//     top: "10px",
+//     right: "10px",
+//     boxShadow: "0px 0px 14px 0px rgba(0,0,0,1)",
+// });
 
-const ModalContainer = styled.div`
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    height: 100vh;
-    width: 100vw;
-    z-index: 1000;
-`;
+const ModalContainer = styled("div", {
+    position: "absolute",
+    display: "flex",
+    justifyContent: "center",
+    // alignItems: "center",
+    top: "0px",
+    left: "0px",
+    minHeight: "100%",
+    width: "100vw",
+});
 
-const CenterContentBox = styled.div`
-    display: flex;
-    flex-grow: 1;
-    justify-content: center;
-    align-items: center;
-`;
+const CenterContentBox = styled("div", {
+    display: "flex",
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+});
+
+const ClipContainer = styled("div", {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    width: "100%",
+    maxHeight: "100vh",
+    minHeight: "160px",
+});
+
+const ButtonsContainer = styled("div", {
+    display: "flex",
+    width: "100%",
+    gap: "1px",
+    marginTop: "1px",
+});
+
+const SettingsModalContainer = styled("div", {
+    backgroundColor: "$backgroundContrast",
+    border: "1px solid $gray400",
+    borderRadius: "4px",
+    boxShadow: "$sm",
+    padding: "1em",
+    marginTop: "1em",
+    marginBottom: "1em",
+    height: "max-content",
+});
 
 let initialIsAutoplay = true;
 const isAutoplayString = localStorage.getItem("isAutoplay");
@@ -95,6 +126,10 @@ let initialChannels: string[] = [];
 const initialChannelsString = localStorage.getItem("channels");
 if (initialChannelsString) initialChannels = JSON.parse(initialChannelsString) as string[];
 
+let initialChannelsGroups: ChannelGroup[] = [];
+const initialChannelsGroupsString = localStorage.getItem("channels");
+if (initialChannelsGroupsString) initialChannelsGroups = JSON.parse(initialChannelsGroupsString) as ChannelGroup[];
+
 let initialMinViewCount: number = 10;
 const initialMinViewCountString = localStorage.getItem("minViewCount");
 if (initialMinViewCountString) initialMinViewCount = JSON.parse(initialMinViewCountString) as number;
@@ -104,21 +139,26 @@ const initialViewedClipsString = localStorage.getItem("viewedClips");
 if (initialViewedClipsString) initialViewedClips = JSON.parse(initialViewedClipsString) as string[];
 
 
-// TODO link to a vod
-// TODO twitchtracker link
+// TODO concurrent fetch
 // TODO groups of streamers
 // TODO only 2 orientations - media query
 // TODO capture and stop MB3/4 events before iframe
+// TODO replace styled-components with next/styled
+// TODO show errors
+// TODO collapse settings bar/ hide/show on hover
 function App() {
     const [channelname, setChannelname] = useState<string>("");
     const [channels, setChannels] = useState<string[]>(initialChannels);
+    const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
+    const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
     const [channelIds, setChannelIds] = useState<number[]>([]);
     const [clips, setClips] = useState<TwitchClipMetadata[]>([]);
     const [currentClipIndex, setCurrentClipIndex] = useState<number>(0);
     const [isClipAutoplay, setIsClipAutoplay] = useState<boolean>(initialIsAutoplay);
     const [isInfinitePlay, setIsInfinitePlay] = useState<boolean>(false);
     const [isSkipViewed, setIsSkipViewed] = useState<boolean>(false);
-    const [isModalShown, setIsModalShown] = useState<boolean>(false);
+    const [isCalendarShown, setIsCalendarShown] = useState<boolean>(false);
+    const [isSettingsModalShown, setIsSettingsModalShown] = useState<boolean>(false);
     const [minViewCount, setMinViewCount] = useState<number>(initialMinViewCount);
     const [viewedClips, setViewedClips] = useState<string[]>(initialViewedClips);
     const [dateRange, setDateRange] = useState<Range[]>([{
@@ -127,11 +167,9 @@ function App() {
         key: "selection"
     }]);
     const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const appContainer = useRef<HTMLDivElement>(null);
     const debouncedMinViewCount = useDebounce(minViewCount, 1000);
-    const isHorizontal = useMediaQuery("(min-width: 70em)");
-    const isVertical = useMediaQuery("(max-width: 34em)");
-
-    const layout: Layout = isHorizontal ? "horizontal" : isVertical ? "vertical" : "square";
+    const isLandscape = useMediaQuery("(min-width: 1200px)");
 
     const filteredClips = useMemo(() => {
         const filteredByMinViewCount = clips.filter(clip => clip.view_count >= debouncedMinViewCount);
@@ -177,6 +215,19 @@ function App() {
 
         if (uniqueChannelNames.length) setChannels(prev => [...prev, ...uniqueChannelNames]);
     }, [channelname, channels]);
+
+    function handleSettingsModalClose() {
+        console.log("blah");
+        setIsSettingsModalShown(false);
+        setIsCalendarShown(false);
+        setTimeout(() => {
+            appContainer.current?.scrollIntoView({ behavior: "smooth" });
+        }, 300);
+    }
+
+    useEffect(function resetModalOnResize() {
+        if (isLandscape) handleSettingsModalClose();
+    }, [isLandscape]);
 
     useEffect(function saveToLocalStorage() {
         localStorage.setItem("channels", JSON.stringify(channels));
@@ -337,121 +388,176 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const clip = useMemo(() => clipMeta ? <TwitchClipEmbed key={Math.random()} clip={clipMeta} autoplay={isClipAutoplay} /> : null, [clipMeta]);
 
-    return (
-        <NextUIProvider theme={darkTheme}>
-            <AppContainer
-                style={{
-                    flexDirection: layout === "horizontal" ? "row" : "column",
-                    alignItems: layout === "square" ? "center" : undefined
+    const settingsContainer = (
+        <ControlsContainer>
+            <Input
+                aria-label="add channel"
+                bordered
+                placeholder="Add channel"
+                value={channelname}
+                onChange={e => setChannelname(e.target.value)}
+                contentRight={<Button size="xs" onPress={addChannel} style={{ right: "5em" }}>Add</Button>}
+            />
+            <FlexboxWrap>
+                {channels.map(channel =>
+                    <Badge
+                        color="secondary"
+                        key={channel}
+                        size="md"
+                        onClick={() => setChannels(prev => prev.filter(ch => ch !== channel))}
+                    >
+                        {channel}
+                    </Badge>
+                )}
+            </FlexboxWrap>
+            {/* <Card variant="bordered">
+                            <Card.Body css={{
+                                padding: 10,
+                                backgroundColor: "#26262e",
+                                flexWrap: "wrap",
+                                flexDirection: "row",
+                                gap: "0.25em"
+                            }}>
+                                {channels.map(channel => (
+                                    <Badge
+                                        color="secondary"
+                                        key={channel}
+                                        size="md"
+                                        onClick={() => setChannels(prev => prev.filter(ch => ch !== channel))}
+                                    >
+                                        {channel}
+                                    </Badge>
+                                ))}
+                            </Card.Body>
+                            <Card.Footer css={{
+                                flexWrap: "wrap",
+                                justifyContent: "space-between"
+                            }}>
+                                <Button css={{ width: "20%" }} size={"xs"}>Delete</Button>
+                                <Button css={{ width: "20%" }} size={"xs"}>Move up</Button>
+                                <Button css={{ width: "20%" }} size={"xs"}>Move down</Button>
+                                <Button css={{ width: "20%" }} size={"xs"}>Merge with</Button>
+                            </Card.Footer>
+                        </Card> */}
+            <Button
+                size="sm"
+                onPress={() => setIsCalendarShown(prev => !prev)}
+            >
+                {`${dateRange[0].startDate?.toLocaleDateString()} - ${dateRange[0].endDate?.toLocaleDateString()}`}
+            </Button>
+            {isCalendarShown &&
+                <DateRange
+                    onChange={item => setDateRange([item.selection])}
+                    maxDate={new Date()}
+                    ranges={dateRange}
+                    direction="vertical"
+                />
+            }
+            <FlexboxWrapSpaceBetween>
+                <Button size="xs" onPress={handleLastWeekClick}>Last week</Button>
+                <Button size="xs" onPress={handleLastMonthClick}>Last month</Button>
+                <Button size="xs" onPress={handleLastYearClick}>Last year</Button>
+                <Button size="xs" onPress={handleAlltimeClick}>All</Button>
+            </FlexboxWrapSpaceBetween>
+            <Input
+                aria-label="min views"
+                label="Min views"
+                type="number"
+                bordered
+                value={minViewCount}
+                onChange={e => setMinViewCount(Number(e.target.value))}
+            />
+            <FlexboxWrap css={{ userSelect: "none" }}>
+                {filteredClips.length ? <Text>{currentClipIndex + 1}/{filteredClips.length}</Text> : null}
+            </FlexboxWrap>
+            <FlexboxWrap>
+                <Switch checked={isClipAutoplay} onChange={e => {
+                    if (!e.target.checked) setIsInfinitePlay(false);
+                    setIsClipAutoplay(e.target.checked);
+                }} />
+                <Text>Clip autoplay</Text>
+            </FlexboxWrap>
+            <FlexboxWrap>
+                <Switch checked={isInfinitePlay} onChange={e => {
+                    if (e.target.checked) setIsClipAutoplay(true);
+                    setIsInfinitePlay(e.target.checked);
+                }} />
+                <Text>Auto next</Text>
+            </FlexboxWrap>
+            <FlexboxWrap>
+                <Switch checked={isSkipViewed} onChange={e => setIsSkipViewed(e.target.checked)} />
+                <Text>Skip viewed</Text>
+            </FlexboxWrap>
+            <Button
+                size="xs"
+                onPress={() => {
+                    localStorage.removeItem("viewedClips");
+                    setViewedClips([]);
+                    setIsSkipViewed(false);
                 }}
             >
-                {clips.length ?
-                    clip
-                    :
-                    channelIds.length ?
-                        <CenterContentBox><Loading size="xl" /></CenterContentBox>
-                        :
-                        <CenterContentBox><Text h2>No channels</Text></CenterContentBox>
+                Clear viewed clips {viewedClips.length > 0 && `(${viewedClips.length})`}
+            </Button>
+            {isSettingsModalShown &&
+                <Button size="sm" onPress={handleSettingsModalClose}>Close</Button>
+            }
+            {/* <Tooltip
+                color="primary"
+                placement="right"
+                hideArrow
+                content={
+                    <Grid.Container>
+                        <Grid xs={6}>Next clip</Grid>
+                        <Grid xs={6}>➡, N, mouse button 4</Grid>
+                        <Grid xs={6}>Previous clip</Grid>
+                        <Grid xs={6}>⬅, B, mouse button 3</Grid>
+                    </Grid.Container>
                 }
+            >
+                <Button size="xs">Shortcuts</Button>
+            </Tooltip> */}
+        </ControlsContainer>
+    );
+
+    return (
+        <NextUIProvider theme={theme}>
+            <AppContainer
+                ref={appContainer}
+                style={{
+                    flexDirection: isLandscape ? "row" : "column",
+                    filter: isSettingsModalShown ? "blur(2px)" : undefined,
+                    height: isLandscape ? "100vh" : undefined,
+                }}
+            >
+                <ClipContainer>
+                    {clips.length ?
+                        <>
+                            {clip}
+                            <ButtonsContainer>
+                                <Button size="md" css={{ backgroundColor: "$primaryDark", flex: "1 1 50%", borderRadius: 0, minWidth: "120px" }} disabled={currentClipIndex === 0} onPress={prevClip}>Previous</Button>
+                                <Button size="md" css={{ backgroundColor: "$primaryDark", flex: "1 1 50%", borderRadius: 0, minWidth: "120px" }} disabled={currentClipIndex >= filteredClips.length - 1} onPress={nextClip}>Next</Button>
+                            </ButtonsContainer>
+                        </>
+                        :
+                        channelIds.length ?
+                            <CenterContentBox><Loading size="xl" /></CenterContentBox>
+                            :
+                            <CenterContentBox><Text h2>No channels</Text></CenterContentBox>
+                    }
+                </ClipContainer>
                 <ControlsAndClipInfoContainer
                     style={{
-                        flexDirection: layout === "square" ? "row" : "column",
-                        alignItems: layout === "vertical" ? "center" : undefined,
-                        borderLeft: layout === "horizontal" ? "1px solid #363636" : undefined,
+                        borderLeft: isLandscape ? "1px solid #363636" : undefined,
+                        flexDirection: isLandscape ? "column" : "row",
+                        justifyContent: isLandscape ? undefined : "space-between",
+                        width: isLandscape ? undefined : "100%",
                     }}
                 >
-                    <ControlsContainer>
-                        <Input
-                            aria-label="add channel"
-                            bordered
-                            placeholder="Add channel"
-                            value={channelname}
-                            onChange={e => setChannelname(e.target.value)}
-                            contentRight={<Button size="xs" onPress={addChannel} style={{ right: "5em" }}>Add</Button>}
-                        />
-                        <FlexboxWrap>
-                            {channels.map(channel => (
-                                <Badge
-                                    color="secondary"
-                                    key={channel}
-                                    size="md"
-                                    onClick={() => setChannels(prev => prev.filter(ch => ch !== channel))}
-                                >
-                                    {channel}
-                                </Badge>
-                            ))}
-                        </FlexboxWrap>
-                        <Button
-                            size="sm"
-                            onPress={() => setIsModalShown(true)}
-                        >
-                            {`${dateRange[0].startDate?.toLocaleDateString()} - ${dateRange[0].endDate?.toLocaleDateString()}`}
-                        </Button>
-                        <FlexboxWrapSpaceBetween>
-                            <Button size="xs" onPress={handleLastWeekClick}>Last week</Button>
-                            <Button size="xs" onPress={handleLastMonthClick}>Last month</Button>
-                            <Button size="xs" onPress={handleLastYearClick}>Last year</Button>
-                            <Button size="xs" onPress={handleAlltimeClick}>All</Button>
-                        </FlexboxWrapSpaceBetween>
-                        <Input
-                            aria-label="min views"
-                            label="Min views"
-                            type="number"
-                            bordered
-                            value={minViewCount}
-                            onChange={e => setMinViewCount(Number(e.target.value))}
-                        />
-                        <FlexboxWrap style={{ userSelect: "none" }}>
-                            <Button size="sm" disabled={currentClipIndex === 0} onPress={prevClip}>Previous</Button>
-                            <Button size="sm" disabled={currentClipIndex >= filteredClips.length - 1} onPress={nextClip}>Next</Button>
-                            {filteredClips.length ? <Text>{currentClipIndex + 1}/{filteredClips.length}</Text> : null}
-                        </FlexboxWrap>
-                        <FlexboxWrap>
-                            <Switch checked={isClipAutoplay} onChange={e => {
-                                if (!e.target.checked) setIsInfinitePlay(false);
-                                setIsClipAutoplay(e.target.checked);
-                            }} />
-                            <Text>Clip autoplay</Text>
-                        </FlexboxWrap>
-                        <FlexboxWrap>
-                            <Switch checked={isInfinitePlay} onChange={e => {
-                                if (e.target.checked) setIsClipAutoplay(true);
-                                setIsInfinitePlay(e.target.checked);
-                            }} />
-                            <Text>Auto next</Text>
-                        </FlexboxWrap>
-                        <FlexboxWrap>
-                            <Switch checked={isSkipViewed} onChange={e => setIsSkipViewed(e.target.checked)} />
-                            <Text>Skip viewed</Text>
-                        </FlexboxWrap>
-                        <Button
-                            size="xs"
-                            onPress={() => {
-                                localStorage.removeItem("viewedClips");
-                                setViewedClips([]);
-                                setIsSkipViewed(false);
-                            }}
-                        >
-                            Clear viewed clips {viewedClips.length > 0 && `(${viewedClips.length})`}
-                        </Button>
-                        <Tooltip
-                            color="primary"
-                            placement="right"
-                            hideArrow
-                            content={
-                                <Grid.Container>
-                                    <Grid xs={6}>Next clip</Grid>
-                                    <Grid xs={6}>➡, N, mouse button 4</Grid>
-                                    <Grid xs={6}>Previous clip</Grid>
-                                    <Grid xs={6}>⬅, B, mouse button 3</Grid>
-                                </Grid.Container>
-                            }
-                        >
-                            <Button size="xs">Shortcuts</Button>
-                        </Tooltip>
-                    </ControlsContainer>
+                    {isLandscape && settingsContainer}
                     {clipMeta &&
-                        <ClipInfoContainer>
+                        <ClipInfoContainer css={{
+                            marginTop: isLandscape ? "2em" : undefined,
+                        }}>
                             <Text h3 css={{ overflowWrap: "anywhere" }}>{clipMeta.title}</Text>
                             <Link
                                 target="_blank"
@@ -466,22 +572,36 @@ function App() {
                             <Text>Date: {new Date(clipMeta.created_at).toLocaleDateString()}</Text>
                         </ClipInfoContainer>
                     }
+                    {!isLandscape &&
+                        <Button
+                            css={{
+                                minWidth: "40px",
+                                minHeight: "40px",
+                                paddingLeft: "2.5em",
+                                marginLeft: "auto",
+                            }}
+                            onPress={() => {
+                                setIsSettingsModalShown(true);
+                                setTimeout(() => {
+                                    appContainer.current?.scrollIntoView({ behavior: "smooth" });
+                                }, 300);
+                            }}
+                            icon={<IoMdSettings />}
+                        >Settings</Button>
+                    }
                 </ControlsAndClipInfoContainer>
             </AppContainer>
-            {
-                isModalShown &&
-                <ModalContainer onClick={() => setIsModalShown(false)}>
-                    <DateRangePickerModal onClick={e => e.stopPropagation()}>
-                        <DateRange
-                            onChange={item => setDateRange([item.selection])}
-                            maxDate={new Date()}
-                            ranges={dateRange}
-                            direction="vertical"
-                        />
-                    </DateRangePickerModal>
+            {isSettingsModalShown && !isLandscape &&
+                <ModalContainer css={{ zIndex: 100 }} onClick={handleSettingsModalClose}>
+                    <SettingsModalContainer
+                        css={{ zIndex: 101 }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {settingsContainer}
+                    </SettingsModalContainer>
                 </ModalContainer>
             }
-        </NextUIProvider >
+        </NextUIProvider>
     );
 }
 

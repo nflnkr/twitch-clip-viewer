@@ -1,24 +1,29 @@
-import styled from "styled-components/macro";
+import { styled } from "@nextui-org/react";
 import { TwitchClipMetadata } from "../types";
 
 
-const MainContainer = styled.div`
-    width: 100%;
-    align-self: center;
-`;
+const MainContainer = styled("div", {
+    width: "100%",
+    // alignSelf: "center",
+    flexGrow: 1,
+    display: "flex",
+    alignItems: "center",
+    aspectRatio: "16 / 9"
+});
 
-const IframeContainer = styled.div`
-    position: relative;
-    width: 100%;
-    padding-bottom: 56.25%;
-    & iframe {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
+const IframeContainer = styled("div", {
+    position: "relative",
+    width: "100%",
+    height: "100%",
+    // paddingBottom: "56.25%",
+    "& iframe": {
+        // position: "absolute",
+        width: "100%",
+        height: "100%",
+        // top: 0,
+        // left: 0,
     }
-`;
+});
 
 interface Props {
     clip: TwitchClipMetadata;

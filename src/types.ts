@@ -35,5 +35,3 @@ export interface TwitchUserMetadata {
 export type ChannelnameToIds = {
     [key: string]: number;
 };
-
-export type Layout = "horizontal" | "vertical" | "square";
