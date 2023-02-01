@@ -27,7 +27,6 @@ const AppContainer = styled("main", {
 const ControlsAndClipInfoContainer = styled("div", {
     display: "flex",
     minWidth: "fit-content",
-    // maxWidth: "26em",
     flex: "1",
     padding: "1em",
     overflow: "auto",
@@ -62,18 +61,10 @@ const FlexboxWrapSpaceBetween = styled("div", {
     justifyContent: "space-between",
 });
 
-// const DateRangePickerModal = styled("div", {
-//     position: "absolute",
-//     top: "10px",
-//     right: "10px",
-//     boxShadow: "0px 0px 14px 0px rgba(0,0,0,1)",
-// });
-
 const ModalContainer = styled("div", {
     position: "absolute",
     display: "flex",
     justifyContent: "center",
-    // alignItems: "center",
     top: "0px",
     left: "0px",
     minHeight: "100%",
@@ -217,7 +208,6 @@ function App() {
     }, [channelname, channels]);
 
     function handleSettingsModalClose() {
-        console.log("blah");
         setIsSettingsModalShown(false);
         setIsCalendarShown(false);
         setTimeout(() => {
