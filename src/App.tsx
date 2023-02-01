@@ -7,6 +7,7 @@ import { DateRange, Range } from "react-date-range";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { ChannelGroup } from "./reducers/channelGroups";
 import { IoMdSettings } from "react-icons/io";
+import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
 
 
 const theme = createTheme({
@@ -524,8 +525,28 @@ function App() {
                         <>
                             {clip}
                             <ButtonsContainer>
-                                <Button size="md" css={{ backgroundColor: "$primaryDark", flex: "1 1 50%", borderRadius: 0, minWidth: "120px" }} disabled={currentClipIndex === 0} onPress={prevClip}>Previous</Button>
-                                <Button size="md" css={{ backgroundColor: "$primaryDark", flex: "1 1 50%", borderRadius: 0, minWidth: "120px" }} disabled={currentClipIndex >= filteredClips.length - 1} onPress={nextClip}>Next</Button>
+                                <Button
+                                    size="md"
+                                    disabled={currentClipIndex === 0} onPress={prevClip}
+                                    icon={<ImArrowLeft2 />}
+                                    css={{
+                                        backgroundColor: "$primaryDark",
+                                        flex: "1 1 50%",
+                                        borderRadius: 0,
+                                        minWidth: "120px"
+                                    }}
+                                />
+                                <Button
+                                    size="md"
+                                    disabled={currentClipIndex >= filteredClips.length - 1} onPress={nextClip}
+                                    icon={<ImArrowRight2 />}
+                                    css={{
+                                        backgroundColor: "$primaryDark",
+                                        flex: "1 1 50%",
+                                        borderRadius: 0,
+                                        minWidth: "120px"
+                                    }}
+                                />
                             </ButtonsContainer>
                         </>
                         :
