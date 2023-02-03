@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TwitchClipEmbed from "./components/TwitchClipEmbed";
 import { ChannelnameToIds, TwitchClipMetadata } from "./types";
 import { getBroadcasterIds, getClips } from "./utils/fetchers";
-import { NextUIProvider, Button, Text, Switch, Input, Badge, createTheme, Link, Loading, styled } from "@nextui-org/react";
+import { NextUIProvider, Button, Text, Switch, Input, Badge, createTheme, Link, Loading, styled, keyframes } from "@nextui-org/react";
 import { DateRange, Range } from "react-date-range";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { ChannelGroup } from "./reducers/channelGroups";
@@ -106,6 +106,16 @@ const SettingsModalContainer = styled("div", {
     height: "max-content",
 });
 
+const sliderAnimation = keyframes({
+    "0%": { width: "0%" },
+    "100%": { width: "100%" }
+});
+
+const ClipProgressBar = styled("div", {
+    height: "4px",
+    backgroundColor: "$blue300",
+});
+
 let initialIsAutoplay = true;
 const isAutoplayString = localStorage.getItem("isAutoplay");
 if (isAutoplayString) initialIsAutoplay = JSON.parse(isAutoplayString) as boolean;
@@ -151,6 +161,7 @@ function App() {
     const [isSkipViewed, setIsSkipViewed] = useState<boolean>(false);
     const [isCalendarShown, setIsCalendarShown] = useState<boolean>(false);
     const [isSettingsModalShown, setIsSettingsModalShown] = useState<boolean>(false);
+    const [infinitePlayBuffer, setInfinitePlayBuffer] = useState<number>(4);
     const [minViewCount, setMinViewCount] = useState<number>(initialMinViewCount);
     const [viewedClips, setViewedClips] = useState<string[]>(initialViewedClips);
     const [dateRange, setDateRange] = useState<Range[]>([{
@@ -329,8 +340,9 @@ function App() {
                 nextClipTimeoutRef.current = null;
                 if (!document.hidden) return nextClip();
                 else setIsInfinitePlay(false);
-            }, (clipMeta.duration + 4) * 1000);
+            }, (clipMeta.duration + infinitePlayBuffer) * 1000);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clipMeta, isInfinitePlay, nextClip]);
 
     useEffect(function skipClipIfViewed() {
@@ -382,9 +394,9 @@ function App() {
     const settingsContainer = (
         <ControlsContainer>
             <Input
-                aria-label="add channel"
+                aria-label="new channel"
                 bordered
-                placeholder="Add channel"
+                placeholder="New channel"
                 value={channelname}
                 onChange={e => setChannelname(e.target.value)}
                 contentRight={<Button size="xs" onPress={addChannel} style={{ right: "5em" }}>Add</Button>}
@@ -451,12 +463,18 @@ function App() {
                 <Button size="xs" onPress={handleAlltimeClick}>All</Button>
             </FlexboxWrapSpaceBetween>
             <Input
+                size="sm"
                 aria-label="min views"
-                label="Min views"
+                labelLeft="Min views"
                 type="number"
                 bordered
                 value={minViewCount}
                 onChange={e => setMinViewCount(Number(e.target.value))}
+                css={{
+                    ".nextui-input-label--left": {
+                        whiteSpace: "nowrap",
+                    }
+                }}
             />
             <FlexboxWrap css={{ userSelect: "none" }}>
                 {filteredClips.length ? <Text>{currentClipIndex + 1}/{filteredClips.length}</Text> : null}
@@ -475,6 +493,22 @@ function App() {
                 }} />
                 <Text>Auto next</Text>
             </FlexboxWrap>
+            {isInfinitePlay &&
+                <Input
+                    size="sm"
+                    aria-label="infinite play buffer"
+                    labelLeft="Buffer in seconds"
+                    type="number"
+                    bordered
+                    value={infinitePlayBuffer}
+                    onChange={e => setInfinitePlayBuffer(Number(e.target.value) || 4)}
+                    css={{
+                        ".nextui-input-label--left": {
+                            whiteSpace: "nowrap",
+                        }
+                    }}
+                />
+            }
             <FlexboxWrap>
                 <Switch checked={isSkipViewed} onChange={e => setIsSkipViewed(e.target.checked)} />
                 <Text>Skip viewed</Text>
@@ -510,6 +544,17 @@ function App() {
         </ControlsContainer>
     );
 
+    const clipProgressBar = useMemo(() => (
+        clipMeta && isInfinitePlay ?
+            <ClipProgressBar
+                key={clipMeta.id + isInfinitePlay.toString()}
+                css={{
+                    animation: `${sliderAnimation} ${(clipMeta.duration + infinitePlayBuffer).toFixed(0)}s linear`,
+                }}
+            /> : null
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    ), [clipMeta, isInfinitePlay]);
+
     return (
         <NextUIProvider theme={theme}>
             <AppContainer
@@ -521,9 +566,10 @@ function App() {
                 }}
             >
                 <ClipContainer>
-                    {clips.length ?
+                    {clips.length && clipMeta ?
                         <>
                             {clip}
+                            {clipProgressBar}
                             <ButtonsContainer>
                                 <Button
                                     size="md"
