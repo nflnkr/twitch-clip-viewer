@@ -4,8 +4,7 @@ import { ChannelnameToIds, TwitchClipMetadata } from "./types";
 import { getBroadcasterIds, getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, Text, Switch, Input, Badge, createTheme, Link, Loading, styled, keyframes } from "@nextui-org/react";
 import { DateRange, Range } from "react-date-range";
-import { useDebounce, useMediaQuery } from "./utils/hooks";
-import { ChannelGroup } from "./reducers/channelGroups";
+import { useDebounce, useLocalStorage, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
 
@@ -117,59 +116,37 @@ const ClipProgressBar = styled("div", {
 });
 
 let initialIsAutoplay = true;
-const isAutoplayString = localStorage.getItem("isAutoplay");
-if (isAutoplayString) initialIsAutoplay = JSON.parse(isAutoplayString) as boolean;
-
 let initialStartDateTimestamp: number = new Date(new Date().setDate(new Date().getDate() - 7)).getTime();
-const initialStartDateTimestampString = localStorage.getItem("startDate");
-if (initialStartDateTimestampString) initialStartDateTimestamp = JSON.parse(initialStartDateTimestampString) as number;
-
 let initialChannels: string[] = [];
-const initialChannelsString = localStorage.getItem("channels");
-if (initialChannelsString) initialChannels = JSON.parse(initialChannelsString) as string[];
-
-let initialChannelsGroups: ChannelGroup[] = [];
-const initialChannelsGroupsString = localStorage.getItem("channels");
-if (initialChannelsGroupsString) initialChannelsGroups = JSON.parse(initialChannelsGroupsString) as ChannelGroup[];
-
+// let initialChannelsGroups: ChannelGroup[] = [];
 let initialMinViewCount: number = 10;
-const initialMinViewCountString = localStorage.getItem("minViewCount");
-if (initialMinViewCountString) initialMinViewCount = JSON.parse(initialMinViewCountString) as number;
-
 let initialViewedClips: string[] = [];
-const initialViewedClipsString = localStorage.getItem("viewedClips");
-if (initialViewedClipsString) initialViewedClips = JSON.parse(initialViewedClipsString) as string[];
-
 let initialInfinitePlayBuffer: number = 4;
-const initialInfinitePlayBufferString = localStorage.getItem("infinitePlayBuffer");
-if (initialInfinitePlayBufferString) initialInfinitePlayBuffer = JSON.parse(initialInfinitePlayBufferString) as number;
-
 
 // TODO concurrent fetch
 // TODO groups of streamers
-// TODO only 2 orientations - media query
 // TODO capture and stop MB3/4 events before iframe
-// TODO replace styled-components with next/styled
 // TODO show errors
 // TODO collapse settings bar/ hide/show on hover
 function App() {
     const [channelname, setChannelname] = useState<string>("");
-    const [channels, setChannels] = useState<string[]>(initialChannels);
-    const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
-    const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
+    const [channels, setChannels] = useLocalStorage<string[]>("channels", initialChannels);
+    // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
+    // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
     const [channelIds, setChannelIds] = useState<number[]>([]);
     const [clips, setClips] = useState<TwitchClipMetadata[]>([]);
     const [currentClipIndex, setCurrentClipIndex] = useState<number>(0);
-    const [isClipAutoplay, setIsClipAutoplay] = useState<boolean>(initialIsAutoplay);
+    const [isClipAutoplay, setIsClipAutoplay] = useLocalStorage<boolean>("isAutoplay", initialIsAutoplay);
     const [isInfinitePlay, setIsInfinitePlay] = useState<boolean>(false);
     const [isSkipViewed, setIsSkipViewed] = useState<boolean>(false);
     const [isCalendarShown, setIsCalendarShown] = useState<boolean>(false);
     const [isSettingsModalShown, setIsSettingsModalShown] = useState<boolean>(false);
-    const [infinitePlayBuffer, setInfinitePlayBuffer] = useState<number>(initialInfinitePlayBuffer);
-    const [minViewCount, setMinViewCount] = useState<number>(initialMinViewCount);
-    const [viewedClips, setViewedClips] = useState<string[]>(initialViewedClips);
+    const [infinitePlayBuffer, setInfinitePlayBuffer] = useLocalStorage<number>("infinitePlayBuffer", initialInfinitePlayBuffer);
+    const [minViewCount, setMinViewCount] = useLocalStorage<number>("minViewCount", initialMinViewCount);
+    const [viewedClips, setViewedClips] = useLocalStorage<string[]>("viewedClips", initialViewedClips);
+    const [startDateTimestamp, setStartDateTimestamp] = useLocalStorage<number>("startDate", initialStartDateTimestamp);
     const [dateRange, setDateRange] = useState<Range[]>([{
-        startDate: new Date(initialStartDateTimestamp),
+        startDate: new Date(startDateTimestamp),
         endDate: new Date(),
         key: "selection"
     }]);
@@ -202,7 +179,7 @@ function App() {
             if (newIndex > filteredClips.length - 1) newIndex = filteredClips.length - 1;
             return newIndex;
         });
-    }, [clipMeta, filteredClips.length]);
+    }, [clipMeta, filteredClips.length, setViewedClips]);
 
     const prevClip = useCallback(() => {
         setIsSkipViewed(false);
@@ -221,7 +198,7 @@ function App() {
         const uniqueChannelNames = [...new Set(newChannelNames)];
 
         if (uniqueChannelNames.length) setChannels(prev => [...prev, ...uniqueChannelNames]);
-    }, [channelname, channels]);
+    }, [channelname, channels, setChannels]);
 
     function handleSettingsModalClose() {
         setIsSettingsModalShown(false);
@@ -235,14 +212,9 @@ function App() {
         if (isLandscape) handleSettingsModalClose();
     }, [isLandscape]);
 
-    useEffect(function saveToLocalStorage() {
-        localStorage.setItem("channels", JSON.stringify(channels));
-        localStorage.setItem("isAutoplay", JSON.stringify(isClipAutoplay));
-        localStorage.setItem("minViewCount", JSON.stringify(debouncedMinViewCount));
-        localStorage.setItem("viewedClips", JSON.stringify(viewedClips));
-        localStorage.setItem("infinitePlayBuffer", JSON.stringify(infinitePlayBuffer));
-        if (dateRange[0].startDate) localStorage.setItem("startDate", JSON.stringify(dateRange[0].startDate.getTime()));
-    }, [channels, isClipAutoplay, debouncedMinViewCount, isSkipViewed, dateRange, viewedClips, infinitePlayBuffer]);
+    useEffect(function setStartDate() {
+        if (dateRange[0].startDate) setStartDateTimestamp(dateRange[0].startDate.getTime());
+    }, [dateRange, setStartDateTimestamp]);
 
     useEffect(function getBroadcasterIdsFromChannelnames() {
         if (!channels.length) return setChannelIds([]);
