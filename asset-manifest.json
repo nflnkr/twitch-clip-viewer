@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/twitch-clip-viewer/static/css/main.f6a48986.css",
-    "main.js": "/twitch-clip-viewer/static/js/main.00668807.js",
+    "main.js": "/twitch-clip-viewer/static/js/main.a1ef393e.js",
     "index.html": "/twitch-clip-viewer/index.html",
     "main.f6a48986.css.map": "/twitch-clip-viewer/static/css/main.f6a48986.css.map",
-    "main.00668807.js.map": "/twitch-clip-viewer/static/js/main.00668807.js.map"
+    "main.a1ef393e.js.map": "/twitch-clip-viewer/static/js/main.a1ef393e.js.map"
   },
   "entrypoints": [
     "static/css/main.f6a48986.css",
-    "static/js/main.00668807.js"
+    "static/js/main.a1ef393e.js"
   ]
 }
