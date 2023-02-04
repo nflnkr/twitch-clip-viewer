@@ -7,6 +7,7 @@ import { DateRange, Range } from "react-date-range";
 import { useDebounce, useLocalStorage, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
+import ClipCarousel from "./components/ClipCarousel";
 
 
 const theme = createTheme({
@@ -91,7 +92,6 @@ const ButtonsContainer = styled("div", {
     display: "flex",
     width: "100%",
     gap: "1px",
-    marginTop: "1px",
 });
 
 const SettingsModalContainer = styled("div", {
@@ -141,6 +141,7 @@ function App() {
     const [isSkipViewed, setIsSkipViewed] = useState<boolean>(false);
     const [isCalendarShown, setIsCalendarShown] = useState<boolean>(false);
     const [isSettingsModalShown, setIsSettingsModalShown] = useState<boolean>(false);
+    const [isShowCarousel, setIsShowCarousel] = useLocalStorage<boolean>("isShowCarousel", false);
     const [infinitePlayBuffer, setInfinitePlayBuffer] = useLocalStorage<number>("infinitePlayBuffer", initialInfinitePlayBuffer);
     const [minViewCount, setMinViewCount] = useLocalStorage<number>("minViewCount", initialMinViewCount);
     const [viewedClips, setViewedClips] = useLocalStorage<string[]>("viewedClips", initialViewedClips);
@@ -364,6 +365,12 @@ function App() {
         }]);
     }
 
+    const handleCarouselItemClick = (newIndex: number) => {
+        setCurrentClipIndex(newIndex);
+        setIsSkipViewed(false);
+        setIsInfinitePlay(false);
+    };
+
     // disable rerender on isAutoplay change
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const clip = useMemo(() => clipMeta ? <TwitchClipEmbed key={Math.random()} clip={clipMeta} autoplay={isClipAutoplay} /> : null, [clipMeta]);
@@ -490,6 +497,10 @@ function App() {
                 <Switch checked={isSkipViewed} onChange={e => setIsSkipViewed(e.target.checked)} />
                 <Text>Skip viewed</Text>
             </FlexboxWrap>
+            <FlexboxWrap>
+                <Switch checked={isShowCarousel} onChange={e => setIsShowCarousel(e.target.checked)} />
+                <Text>Carousel</Text>
+            </FlexboxWrap>
             <Button
                 size="xs"
                 onPress={() => {
@@ -543,10 +554,16 @@ function App() {
                 }}
             >
                 <ClipContainer>
-                    {clips.length && clipMeta ?
+                    {filteredClips.length && clipMeta ?
                         <>
                             {clip}
-                            {clipProgressBar}
+                            {isShowCarousel &&
+                                <ClipCarousel
+                                    clips={filteredClips}
+                                    currentClipIndex={currentClipIndex}
+                                    handleCarouselItemClick={handleCarouselItemClick}
+                                />
+                            }
                             <ButtonsContainer>
                                 <Button
                                     size="md"
@@ -571,6 +588,7 @@ function App() {
                                     }}
                                 />
                             </ButtonsContainer>
+                            {clipProgressBar}
                         </>
                         :
                         channelIds.length ?
