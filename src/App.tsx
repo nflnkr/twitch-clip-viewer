@@ -128,6 +128,7 @@ let initialInfinitePlayBuffer: number = 4;
 // TODO capture and stop MB3/4 events before iframe
 // TODO show errors
 // TODO collapse settings bar/ hide/show on hover
+// TODO find clip by name
 function App() {
     const [channelname, setChannelname] = useState<string>("");
     const [channels, setChannels] = useLocalStorage<string[]>("channels", initialChannels);
