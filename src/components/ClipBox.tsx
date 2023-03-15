@@ -1,11 +1,10 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import TwitchClipEmbed from "../components/TwitchClipEmbed";
 import { Button, Text, Loading, styled, keyframes } from "@nextui-org/react";
 import { useDebounce } from "../utils/hooks";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
 import ClipCarousel from "../components/ClipCarousel";
-import { TwitchClipMetadata } from "../model/clips";
-import { addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsInfinitePlay, setIsSkipViewed, useAppStore } from "../stores/app";
+import { setCurrentClipIndex, setIsInfinitePlay, setIsSkipViewed, useAppStore } from "../stores/app";
 import { useClipsStore } from "../stores/clips";
 
 
@@ -48,7 +47,10 @@ const ClipProgressBar = styled("div", {
     backgroundColor: "$blue300",
 });
 
-export default function ClipBox() {
+export default function ClipBox({ nextClip, prevClip }: {
+    nextClip: () => void;
+    prevClip: () => void;
+}) {
     const clips = useClipsStore(state => state.clips);
     // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
     // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
@@ -59,8 +61,6 @@ export default function ClipBox() {
     const isShowCarousel = useAppStore(state => state.isShowCarousel);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
     const minViewCount = useAppStore(state => state.minViewCount);
-
-    const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const debouncedMinViewCount = useDebounce(minViewCount, 1000);
 
     const filteredClips = useMemo(() => {
@@ -72,24 +72,6 @@ export default function ClipBox() {
     // disable rerender on isAutoplay change
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const clip = useMemo(() => clipMeta ? <TwitchClipEmbed key={Math.random()} clip={clipMeta} autoplay={isClipAutoplay} /> : null, [clipMeta]);
-
-    const nextClip = useCallback(() => {
-        if (!clipMeta) return;
-
-        if (nextClipTimeoutRef.current) {
-            clearTimeout(nextClipTimeoutRef.current);
-            nextClipTimeoutRef.current = null;
-        }
-
-        addViewedClip(clipMeta.id);
-        incrementCurrentClipIndex(filteredClips.length - 1);
-    }, [clipMeta, filteredClips.length]);
-
-    const prevClip = useCallback(() => {
-        setIsSkipViewed(false);
-        setIsInfinitePlay(false);
-        decrementCurrentClipIndex();
-    }, []);
 
     const clipProgressBar = useMemo(() => (
         clipMeta && isInfinitePlay ?

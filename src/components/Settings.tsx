@@ -1,9 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Button, Text, Switch, Input, Badge, styled } from "@nextui-org/react";
-import { DateRange, Range, RangeKeyDict } from "react-date-range";
+import { DateRange, RangeKeyDict } from "react-date-range";
 import { useDebounce } from "../utils/hooks";
-import { TwitchClipMetadata } from "../model/clips";
-import { addChannels, clearViewedClips, removeChannels, setChannelnameField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setIsSkipViewed, setMinViewCount, setStartDate, switchIsCalendarShown, useAppStore } from "../stores/app";
+import { clearViewedClips, removeChannels, setChannelnameField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setIsSkipViewed, setMinViewCount, setStartDate, switchIsCalendarShown, useAppStore } from "../stores/app";
 import { useClipsStore } from "../stores/clips";
 
 
@@ -21,8 +20,9 @@ const FlexboxWrap = styled("div", {
     alignItems: "center",
 });
 
-export default function Settings({ scrollTop }: {
+export default function Settings({ scrollTop, addChannel }: {
     scrollTop: () => void;
+    addChannel: () => void;
 }) {
     const clips = useClipsStore(state => state.clips);
     const channelsField = useAppStore(state => state.channelsField);
@@ -52,15 +52,6 @@ export default function Settings({ scrollTop }: {
         const filteredByMinViewCount = clips.filter(clip => clip.view_count >= debouncedMinViewCount);
         return filteredByMinViewCount;
     }, [clips, debouncedMinViewCount]);
-
-    const addChannel = useCallback(() => {
-        setChannelnameField("");
-
-        const newChannelNames = channelsField.split(" ").map(s => s.toLowerCase()).filter(s => /^[a-zA-Z0-9][\w]{2,24}$/.test(s) && !channels.includes(s));
-        const uniqueChannelNames = [...new Set(newChannelNames)];
-
-        if (uniqueChannelNames.length) addChannels(uniqueChannelNames);
-    }, [channelsField, channels]);
 
     function handleLastWeekClick() {
         setStartDate(new Date(new Date().setDate(new Date().getDate() - 7)).getTime());

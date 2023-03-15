@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { getBroadcasterIds, getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, createTheme, styled } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
-import { TwitchClipMetadata } from "./model/clips";
 import { ChannelnameToIds } from "./model/user";
 import { addChannels, addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setChannelIds, setChannelnameField, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, setIsSkipViewed, useAppStore } from "./stores/app";
 import Settings from "./components/Settings";
@@ -261,7 +260,7 @@ function App() {
                     minHeight: isLandscape ? "100vh" : undefined,
                 }}
             >
-                <ClipBox />
+                <ClipBox nextClip={nextClip} prevClip={prevClip} />
                 <ControlsAndClipInfoContainer
                     style={{
                         borderLeft: isLandscape ? "1px solid #363636" : undefined,
@@ -270,7 +269,7 @@ function App() {
                         width: isLandscape ? undefined : "100%",
                     }}
                 >
-                    {isLandscape && <Settings scrollTop={scrollTop} />}
+                    {isLandscape && <Settings scrollTop={scrollTop} addChannel={addChannel} />}
                     {clipMeta && <ClipInfo clipMeta={clipMeta} />}
                     {!isLandscape &&
                         <Button
@@ -295,7 +294,7 @@ function App() {
                         css={{ zIndex: 101 }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <Settings scrollTop={scrollTop} />
+                        <Settings scrollTop={scrollTop} addChannel={addChannel} />
                     </SettingsModalContainer>
                 </ModalContainer>
             }
