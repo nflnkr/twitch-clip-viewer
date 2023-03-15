@@ -1,5 +1,5 @@
 import { styled } from "@nextui-org/react";
-import { TwitchClipMetadata } from "../types";
+import { TwitchClipMetadata } from "../model/clips";
 
 
 const MainContainer = styled("div", {
