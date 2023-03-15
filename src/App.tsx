@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TwitchClipEmbed from "./components/TwitchClipEmbed";
-import { ChannelnameToIds, TwitchClipMetadata } from "./types";
 import { getBroadcasterIds, getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, Text, Switch, Input, Badge, createTheme, Link, Loading, styled, keyframes } from "@nextui-org/react";
 import { DateRange, Range } from "react-date-range";
-import { useDebounce, useLocalStorage, useMediaQuery } from "./utils/hooks";
+import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
 import ClipCarousel from "./components/ClipCarousel";
+import { TwitchClipMetadata } from "./model/clips";
+import { ChannelnameToIds } from "./model/user";
+import { addChannels, addViewedClip, clearViewedClips, decrementCurrentClipIndex, incrementCurrentClipIndex, removeChannels, setChannelIds, setChannelnameField, setCurrentClipIndex, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setIsSkipViewed, setMinViewCount, setStartDateTimestamp, switchIsCalendarShown, useAppStore } from "./stores/app";
 
 
 const theme = createTheme({
@@ -115,14 +117,6 @@ const ClipProgressBar = styled("div", {
     backgroundColor: "$blue300",
 });
 
-let initialIsAutoplay = true;
-let initialStartDateTimestamp: number = new Date(new Date().setDate(new Date().getDate() - 7)).getTime();
-let initialChannels: string[] = [];
-// let initialChannelsGroups: ChannelGroup[] = [];
-let initialMinViewCount: number = 10;
-let initialViewedClips: string[] = [];
-let initialInfinitePlayBuffer: number = 4;
-
 // TODO concurrent fetch
 // TODO groups of streamers
 // TODO capture and stop MB3/4 events before iframe
@@ -130,23 +124,24 @@ let initialInfinitePlayBuffer: number = 4;
 // TODO collapse settings bar/ hide/show on hover
 // TODO find clip by name
 function App() {
-    const [channelname, setChannelname] = useState<string>("");
-    const [channels, setChannels] = useLocalStorage<string[]>("channels", initialChannels);
+    const [clips, setClips] = useState<TwitchClipMetadata[]>([]);
+    const channelnameField = useAppStore(state => state.channelnameField);
+    const channels = useAppStore(state => state.channels);
     // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
     // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
-    const [channelIds, setChannelIds] = useState<number[]>([]);
-    const [clips, setClips] = useState<TwitchClipMetadata[]>([]);
-    const [currentClipIndex, setCurrentClipIndex] = useState<number>(0);
-    const [isClipAutoplay, setIsClipAutoplay] = useLocalStorage<boolean>("isAutoplay", initialIsAutoplay);
-    const [isInfinitePlay, setIsInfinitePlay] = useState<boolean>(false);
-    const [isSkipViewed, setIsSkipViewed] = useState<boolean>(false);
-    const [isCalendarShown, setIsCalendarShown] = useState<boolean>(false);
-    const [isSettingsModalShown, setIsSettingsModalShown] = useState<boolean>(false);
-    const [isShowCarousel, setIsShowCarousel] = useLocalStorage<boolean>("isShowCarousel", false);
-    const [infinitePlayBuffer, setInfinitePlayBuffer] = useLocalStorage<number>("infinitePlayBuffer", initialInfinitePlayBuffer);
-    const [minViewCount, setMinViewCount] = useLocalStorage<number>("minViewCount", initialMinViewCount);
-    const [viewedClips, setViewedClips] = useLocalStorage<string[]>("viewedClips", initialViewedClips);
-    const [startDateTimestamp, setStartDateTimestamp] = useLocalStorage<number>("startDate", initialStartDateTimestamp);
+    const channelIds = useAppStore(state => state.channelIds);
+    const currentClipIndex = useAppStore(state => state.currentClipIndex);
+    const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
+    const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
+    const isSkipViewed = useAppStore(state => state.isSkipViewed);
+    const isCalendarShown = useAppStore(state => state.isCalendarShown);
+    const isSettingsModalShown = useAppStore(state => state.isSettingsModalShown);
+    const isShowCarousel = useAppStore(state => state.isShowCarousel);
+    const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
+    const minViewCount = useAppStore(state => state.minViewCount);
+    const viewedClips = useAppStore(state => state.viewedClips);
+    const startDateTimestamp = useAppStore(state => state.startDateTimestamp);
+
     const [dateRange, setDateRange] = useState<Range[]>([{
         startDate: new Date(startDateTimestamp),
         endDate: new Date(),
@@ -172,35 +167,24 @@ function App() {
             nextClipTimeoutRef.current = null;
         }
 
-        setViewedClips(prevViewedClips => {
-            if (!prevViewedClips.includes(clipMeta.id)) return [...prevViewedClips, clipMeta.id];
-            return prevViewedClips;
-        });
-        setCurrentClipIndex(prev => {
-            let newIndex = prev + 1;
-            if (newIndex > filteredClips.length - 1) newIndex = filteredClips.length - 1;
-            return newIndex;
-        });
-    }, [clipMeta, filteredClips.length, setViewedClips]);
+        addViewedClip(clipMeta.id);
+        incrementCurrentClipIndex(filteredClips.length - 1);
+    }, [clipMeta, filteredClips.length]);
 
     const prevClip = useCallback(() => {
         setIsSkipViewed(false);
         setIsInfinitePlay(false);
-        setCurrentClipIndex(prev => {
-            let newIndex = prev - 1;
-            if (newIndex < 0) newIndex = 0;
-            return newIndex;
-        });
+        decrementCurrentClipIndex();
     }, []);
 
     const addChannel = useCallback(() => {
-        setChannelname("");
+        setChannelnameField("");
 
-        const newChannelNames = channelname.split(" ").map(s => s.toLowerCase()).filter(s => /^[a-zA-Z0-9][\w]{2,24}$/.test(s) && !channels.includes(s));
+        const newChannelNames = channelnameField.split(" ").map(s => s.toLowerCase()).filter(s => /^[a-zA-Z0-9][\w]{2,24}$/.test(s) && !channels.includes(s));
         const uniqueChannelNames = [...new Set(newChannelNames)];
 
-        if (uniqueChannelNames.length) setChannels(prev => [...prev, ...uniqueChannelNames]);
-    }, [channelname, channels, setChannels]);
+        if (uniqueChannelNames.length) addChannels(uniqueChannelNames);
+    }, [channelnameField, channels]);
 
     function handleSettingsModalClose() {
         setIsSettingsModalShown(false);
@@ -216,7 +200,7 @@ function App() {
 
     useEffect(function setStartDate() {
         if (dateRange[0].startDate) setStartDateTimestamp(dateRange[0].startDate.getTime());
-    }, [dateRange, setStartDateTimestamp]);
+    }, [dateRange]);
 
     useEffect(function getBroadcasterIdsFromChannelnames() {
         if (!channels.length) return setChannelIds([]);
@@ -382,8 +366,8 @@ function App() {
                 aria-label="new channel"
                 bordered
                 placeholder="New channel"
-                value={channelname}
-                onChange={e => setChannelname(e.target.value)}
+                value={channelnameField}
+                onChange={e => setChannelnameField(e.target.value)}
                 contentRight={<Button size="xs" onPress={addChannel} style={{ right: "5em" }}>Add</Button>}
             />
             <FlexboxWrap>
@@ -392,10 +376,8 @@ function App() {
                         color="secondary"
                         key={channel}
                         size="md"
-                        onClick={() => setChannels(prev => prev.filter(ch => ch !== channel))}
-                    >
-                        {channel}
-                    </Badge>
+                        onClick={() => removeChannels([channel])}
+                    >{channel}</Badge>
                 )}
             </FlexboxWrap>
             {/* <Card variant="bordered">
@@ -429,7 +411,7 @@ function App() {
                         </Card> */}
             <Button
                 size="sm"
-                onPress={() => setIsCalendarShown(prev => !prev)}
+                onPress={() => switchIsCalendarShown()}
             >
                 {`${dateRange[0].startDate?.toLocaleDateString()} - ${dateRange[0].endDate?.toLocaleDateString()}`}
             </Button>
@@ -506,7 +488,7 @@ function App() {
                 size="xs"
                 onPress={() => {
                     localStorage.removeItem("viewedClips");
-                    setViewedClips([]);
+                    clearViewedClips();
                     setIsSkipViewed(false);
                 }}
             >
