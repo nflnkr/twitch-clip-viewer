@@ -16,8 +16,4 @@ export const useClipsStore = create<ClipsState>()(
     )
 );
 
-export async function fetchClips() {
-    const clips: TwitchClipMetadata[] = [];
-
-    useClipsStore.setState({ clips });
-};
+export const setClips = (clips: TwitchClipMetadata[]) => useClipsStore.setState({ clips });

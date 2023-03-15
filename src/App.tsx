@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import TwitchClipEmbed from "./components/TwitchClipEmbed";
 import { getBroadcasterIds, getClips } from "./utils/fetchers";
-import { NextUIProvider, Button, Text, createTheme, Link, Loading, styled, keyframes } from "@nextui-org/react";
+import { NextUIProvider, Button, createTheme, styled } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
-import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
-import ClipCarousel from "./components/ClipCarousel";
 import { TwitchClipMetadata } from "./model/clips";
 import { ChannelnameToIds } from "./model/user";
 import { addChannels, addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setChannelIds, setChannelnameField, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, setIsSkipViewed, useAppStore } from "./stores/app";
-import Settings from "./components/Settings/Settings";
+import Settings from "./components/Settings";
+import ClipInfo from "./components/ClipInfo";
+import ClipBox from "./components/ClipBox";
+import { setClips, useClipsStore } from "./stores/clips";
 
 
 const theme = createTheme({
@@ -35,13 +35,6 @@ const ControlsAndClipInfoContainer = styled("div", {
     overflow: "auto",
 });
 
-const ClipInfoContainer = styled("div", {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.25em",
-    maxWidth: "25em",
-});
-
 const ModalContainer = styled("div", {
     position: "absolute",
     display: "flex",
@@ -50,28 +43,6 @@ const ModalContainer = styled("div", {
     left: "0px",
     minHeight: "100%",
     width: "100vw",
-});
-
-const CenterContentBox = styled("div", {
-    display: "flex",
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-});
-
-const ClipContainer = styled("div", {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    width: "100%",
-    maxHeight: "100vh",
-    minHeight: "160px",
-});
-
-const ButtonsContainer = styled("div", {
-    display: "flex",
-    width: "100%",
-    gap: "1px",
 });
 
 const SettingsModalContainer = styled("div", {
@@ -85,16 +56,6 @@ const SettingsModalContainer = styled("div", {
     height: "max-content",
 });
 
-const sliderAnimation = keyframes({
-    "0%": { width: "0%" },
-    "100%": { width: "100%" }
-});
-
-const ClipProgressBar = styled("div", {
-    height: "4px",
-    backgroundColor: "$blue300",
-});
-
 // TODO concurrent fetch
 // TODO groups of streamers
 // TODO capture and stop MB3/4 events before iframe
@@ -102,23 +63,21 @@ const ClipProgressBar = styled("div", {
 // TODO collapse settings bar/ hide/show on hover
 // TODO find clip by name
 function App() {
-    const [clips, setClips] = useState<TwitchClipMetadata[]>([]);
+    const clips = useClipsStore(state => state.clips);
     const channelsField = useAppStore(state => state.channelsField);
     const channels = useAppStore(state => state.channels);
     // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
     // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
     const channelIds = useAppStore(state => state.channelIds);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
-    const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
     const isSkipViewed = useAppStore(state => state.isSkipViewed);
     const isSettingsModalShown = useAppStore(state => state.isSettingsModalShown);
-    const isShowCarousel = useAppStore(state => state.isShowCarousel);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
     const minViewCount = useAppStore(state => state.minViewCount);
     const viewedClips = useAppStore(state => state.viewedClips);
     const startDate = useAppStore(state => state.startDate);
-    const endDate = useAppStore(state => state.endDate);   
+    const endDate = useAppStore(state => state.endDate);
 
     const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const appContainer = useRef<HTMLDivElement>(null);
@@ -291,28 +250,6 @@ function App() {
         }
     }, [clipMeta, isSkipViewed, nextClip, viewedClips]);
 
-    const handleCarouselItemClick = (newIndex: number) => {
-        setCurrentClipIndex(newIndex);
-        setIsSkipViewed(false);
-        setIsInfinitePlay(false);
-    };
-
-    // disable rerender on isAutoplay change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const clip = useMemo(() => clipMeta ? <TwitchClipEmbed key={Math.random()} clip={clipMeta} autoplay={isClipAutoplay} /> : null, [clipMeta]);
-
-
-
-    const clipProgressBar = useMemo(() => (
-        clipMeta && isInfinitePlay ?
-            <ClipProgressBar
-                key={clipMeta.id + isInfinitePlay.toString()}
-                css={{
-                    animation: `${sliderAnimation} ${(clipMeta.duration + infinitePlayBuffer).toFixed(0)}s linear`,
-                }}
-            /> : null
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [clipMeta, isInfinitePlay]);
 
     return (
         <NextUIProvider theme={theme}>
@@ -321,53 +258,10 @@ function App() {
                 style={{
                     flexDirection: isLandscape ? "row" : "column",
                     filter: isSettingsModalShown ? "blur(2px)" : undefined,
-                    height: isLandscape ? "100vh" : undefined,
+                    minHeight: isLandscape ? "100vh" : undefined,
                 }}
             >
-                <ClipContainer>
-                    {filteredClips.length && clipMeta ?
-                        <>
-                            {clip}
-                            {isShowCarousel &&
-                                <ClipCarousel
-                                    clips={filteredClips}
-                                    currentClipIndex={currentClipIndex}
-                                    handleCarouselItemClick={handleCarouselItemClick}
-                                />
-                            }
-                            <ButtonsContainer>
-                                <Button
-                                    size="md"
-                                    disabled={currentClipIndex === 0} onPress={prevClip}
-                                    icon={<ImArrowLeft2 />}
-                                    css={{
-                                        backgroundColor: "$primaryDark",
-                                        flex: "1 1 50%",
-                                        borderRadius: 0,
-                                        minWidth: "120px"
-                                    }}
-                                />
-                                <Button
-                                    size="md"
-                                    disabled={currentClipIndex >= filteredClips.length - 1} onPress={nextClip}
-                                    icon={<ImArrowRight2 />}
-                                    css={{
-                                        backgroundColor: "$primaryDark",
-                                        flex: "1 1 50%",
-                                        borderRadius: 0,
-                                        minWidth: "120px"
-                                    }}
-                                />
-                            </ButtonsContainer>
-                            {clipProgressBar}
-                        </>
-                        :
-                        channelIds.length ?
-                            <CenterContentBox><Loading size="xl" /></CenterContentBox>
-                            :
-                            <CenterContentBox><Text h2>No channels</Text></CenterContentBox>
-                    }
-                </ClipContainer>
+                <ClipBox />
                 <ControlsAndClipInfoContainer
                     style={{
                         borderLeft: isLandscape ? "1px solid #363636" : undefined,
@@ -377,24 +271,7 @@ function App() {
                     }}
                 >
                     {isLandscape && <Settings scrollTop={scrollTop} />}
-                    {clipMeta &&
-                        <ClipInfoContainer css={{
-                            marginTop: isLandscape ? "2em" : undefined,
-                        }}>
-                            <Text h3 css={{ overflowWrap: "anywhere" }}>{clipMeta.title}</Text>
-                            <Link
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                color="secondary"
-                                href={`https://twitch.tv/${clipMeta.broadcaster_name.toLowerCase()}`}
-                            >
-                                {clipMeta.broadcaster_name}
-                            </Link>
-                            <Text>Views: {clipMeta.view_count}</Text>
-                            <Text>Author: {clipMeta.creator_name}</Text>
-                            <Text>Date: {new Date(clipMeta.created_at).toLocaleDateString()}</Text>
-                        </ClipInfoContainer>
-                    }
+                    {clipMeta && <ClipInfo clipMeta={clipMeta} />}
                     {!isLandscape &&
                         <Button
                             css={{

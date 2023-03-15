@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { Button, Text, Switch, Input, Badge, styled } from "@nextui-org/react";
 import { DateRange, Range, RangeKeyDict } from "react-date-range";
-import { useDebounce } from "../../utils/hooks";
-import { TwitchClipMetadata } from "../../model/clips";
-import { addChannels, clearViewedClips, removeChannels, setChannelnameField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setIsSkipViewed, setMinViewCount, setStartDate, switchIsCalendarShown, useAppStore } from "../../stores/app";
+import { useDebounce } from "../utils/hooks";
+import { TwitchClipMetadata } from "../model/clips";
+import { addChannels, clearViewedClips, removeChannels, setChannelnameField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setIsSkipViewed, setMinViewCount, setStartDate, switchIsCalendarShown, useAppStore } from "../stores/app";
+import { useClipsStore } from "../stores/clips";
 
 
 const ControlsContainer = styled("div", {
@@ -23,7 +24,7 @@ const FlexboxWrap = styled("div", {
 export default function Settings({ scrollTop }: {
     scrollTop: () => void;
 }) {
-    const [clips, setClips] = useState<TwitchClipMetadata[]>([]);
+    const clips = useClipsStore(state => state.clips);
     const channelsField = useAppStore(state => state.channelsField);
     const channels = useAppStore(state => state.channels);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
