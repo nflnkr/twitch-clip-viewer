@@ -7,7 +7,6 @@ interface AppState {
     channels: string[];
     // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
     // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
-    channelIds: number[];
     currentClipIndex: number;
     isClipAutoplay: boolean;
     isInfinitePlay: boolean;
@@ -30,7 +29,6 @@ export const useAppStore = create<AppState>()(
             channelsField: "",
             // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
             // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
-            channelIds: [],
             currentClipIndex: 0,
             isClipAutoplay: true,
             isInfinitePlay: false,
@@ -51,6 +49,7 @@ export const useAppStore = create<AppState>()(
     //         storage: createJSONStorage(() => localStorage),
     //         partialize: state => ({
     //             channels: state.channels,
+    //             channelToIdMap: state.channelToIdMap,
     //             isClipAutoplay: state.isClipAutoplay,
     //             isShowCarousel: state.isShowCarousel,
     //             infinitePlayBuffer: state.infinitePlayBuffer,
@@ -65,7 +64,6 @@ export const useAppStore = create<AppState>()(
 );
 
 export const setChannelnameField = (channelnameField: string) => useAppStore.setState({ channelsField: channelnameField });
-export const setChannelIds = (channelIds: number[]) => useAppStore.setState({ channelIds });
 export const setCurrentClipIndex = (currentClipIndex: number) => useAppStore.setState({ currentClipIndex });
 export const switchIsClipAutoplay = () => useAppStore.setState(state => ({ isClipAutoplay: !state.isClipAutoplay }));
 export const setIsClipAutoplay = (isClipAutoplay: boolean) => useAppStore.setState({ isClipAutoplay });

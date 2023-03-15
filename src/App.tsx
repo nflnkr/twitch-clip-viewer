@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { getBroadcasterIds, getClips } from "./utils/fetchers";
+import { getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, createTheme, styled } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
-import { ChannelnameToIds } from "./model/user";
-import { addChannels, addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setChannelIds, setChannelnameField, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, setIsSkipViewed, useAppStore } from "./stores/app";
+import { addChannels, addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setChannelnameField, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, setIsSkipViewed, useAppStore } from "./stores/app";
 import Settings from "./components/Settings";
 import ClipInfo from "./components/ClipInfo";
 import ClipBox from "./components/ClipBox";
@@ -67,7 +66,6 @@ function App() {
     const channels = useAppStore(state => state.channels);
     // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
     // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
-    const channelIds = useAppStore(state => state.channelIds);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
     const isSkipViewed = useAppStore(state => state.isSkipViewed);
@@ -133,52 +131,8 @@ function App() {
         if (isLandscape) handleSettingsModalClose();
     }, [handleSettingsModalClose, isLandscape]);
 
-    useEffect(function getBroadcasterIdsFromChannelnames() {
-        if (!channels.length) return setChannelIds([]);
-
-        const channelnameToIdString = localStorage.getItem("channelnameToId");
-        if (!channelnameToIdString) {
-            getBroadcasterIds(channels).then(ids => {
-                if (!ids) return;
-
-                localStorage.setItem("channelnameToId", JSON.stringify(ids));
-
-                const channelIds: number[] = [];
-                for (let key in ids) {
-                    channelIds.push(ids[key]);
-                }
-                setChannelIds(channelIds);
-            });
-        } else {
-            const channelToId = JSON.parse(channelnameToIdString) as ChannelnameToIds;
-            const missingIds: string[] = [];
-            channels.forEach(channel => {
-                if (!channelToId[channel]) missingIds.push(channel);
-            });
-            if (missingIds.length) {
-                getBroadcasterIds(missingIds).then(ids => {
-
-                    const newChannelToId: ChannelnameToIds = { ...channelToId, ...ids };
-                    localStorage.setItem("channelnameToId", JSON.stringify(newChannelToId));
-
-                    const channelIds: number[] = [];
-                    channels.forEach(channel => {
-                        channelIds.push(newChannelToId[channel]);
-                    });
-                    setChannelIds(channelIds);
-                });
-            } else {
-                const newChannelIds: number[] = [];
-                channels.forEach(channel => {
-                    newChannelIds.push(channelToId[channel]);
-                });
-                setChannelIds(newChannelIds);
-            }
-        }
-    }, [channels]);
-
     useEffect(function fetchClips() {
-        if (!channelIds.length) return setClips([]);
+        if (!channels.length) return setClips([]);
 
         setClips([]);
 
@@ -186,7 +140,7 @@ function App() {
         includeLastDayDate.setHours(23, 59, 59, 999);
         const abortcontroller = new AbortController();
         getClips({
-            channelIds,
+            channels,
             start: new Date(startDate).toISOString(),
             end: includeLastDayDate.toISOString(),
             minViewCount: debouncedMinViewCount,
@@ -195,7 +149,7 @@ function App() {
         setCurrentClipIndex(0);
 
         return () => abortcontroller.abort();
-    }, [channelIds, debouncedMinViewCount, endDate, startDate]);
+    }, [channels, debouncedMinViewCount, endDate, startDate]);
 
     useEffect(function attachEventHandlers() {
         function keyHandler(e: KeyboardEvent) {

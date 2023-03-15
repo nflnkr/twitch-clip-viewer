@@ -12,7 +12,3 @@ export interface TwitchUserMetadata {
     view_count: number;
     created_at: string;
 }
-
-export type ChannelnameToIds = {
-    [key: string]: number;
-};

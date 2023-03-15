@@ -1,23 +1,26 @@
 import { TwitchClipMetadata } from "../model/clips";
-import { ChannelnameToIds, TwitchUserMetadata } from "../model/user";
+import { TwitchUserMetadata } from "../model/user";
 
 
 const authToken = "lc7ofzrycacy9fw5zceo6z6j7cfrs1";
 const clientId = "sl7qzvmvjfha998253d5d6muxxtglg";
 
-export async function getClips({ channelIds, start, end, minViewCount, signal }: {
-    channelIds: number[];
+export async function getClips({ channels, start, end, minViewCount, signal }: {
+    channels: string[];
     start: string;
     end: string;
     minViewCount: number;
     signal: AbortSignal;
 }) {
-    if (!channelIds.length) return null;
+    if (!channels.length) return null;
 
     const clips: TwitchClipMetadata[] = [];
     try {
-        await Promise.all(channelIds.map(async channelId => {
-            const newClips = await getClipsForBroadcasterId({ broadcasterId: channelId, start, end, minViewCount, signal });
+        await Promise.all(channels.map(async channel => {
+            const broadcasterId = await getBroadcasterId(channel);
+            if (!broadcasterId) return;
+
+            const newClips = await getClipsForBroadcasterId({ broadcasterId, start, end, minViewCount, signal });
             clips.push(...newClips);
         }));
     } catch (e) {
@@ -38,6 +41,7 @@ async function getClipsForBroadcasterId({ broadcasterId, start, end, minViewCoun
 }) {
     let url = `https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=${100}&started_at=${start}&ended_at=${end}`;
     if (cursor) url += `&after=${cursor}`;
+
     const response = await fetch(url, {
         headers: {
             "Authorization": "Bearer " + authToken,
@@ -55,14 +59,9 @@ async function getClipsForBroadcasterId({ broadcasterId, start, end, minViewCoun
     return clips;
 }
 
-export async function getBroadcasterIds(usernames: string[]) {
-    if (!usernames.length) return null;
+async function getBroadcasterId(username: string): Promise<number | null> {
+    let url = `https://api.twitch.tv/helix/users?login=${username}`;
 
-    let url = "https://api.twitch.tv/helix/users?";
-    usernames.slice(0, 100).forEach((username, index) => {
-        if (index !== 0) url += "&";
-        url += `login=${username}`;
-    });
     const response = await fetch(url, {
         headers: {
             "Authorization": "Bearer " + authToken,
@@ -71,14 +70,9 @@ export async function getBroadcasterIds(usernames: string[]) {
     });
     const json = await response.json() as { data: TwitchUserMetadata[]; };
     if (!json.data) return null;
-    const channelToIds: ChannelnameToIds = {};
-    json.data.forEach(userMetaData => {
-        const id = Number(userMetaData.id);
-        if (isNaN(id)) {
-            console.error(`Cannot parse id: ${id}`);
-            throw new Error("Cannot parse id");
-        }
-        channelToIds[userMetaData.login] = id;
-    });
-    return channelToIds;
+
+    const id = Number(json.data[0].id);
+    if (!id) return null;
+
+    return id;
 }

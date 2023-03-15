@@ -54,7 +54,7 @@ export default function ClipBox({ nextClip, prevClip }: {
     const clips = useClipsStore(state => state.clips);
     // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
     // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
-    const channelIds = useAppStore(state => state.channelIds);
+    const channels = useAppStore(state => state.channels);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
@@ -119,7 +119,7 @@ export default function ClipBox({ nextClip, prevClip }: {
                     {clipProgressBar}
                 </>
                 :
-                channelIds.length ?
+                channels.length ?
                     <CenterContentBox><Loading size="xl" /></CenterContentBox>
                     :
                     <CenterContentBox><Text h2>No channels</Text></CenterContentBox>
