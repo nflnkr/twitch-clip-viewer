@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
 
 interface AppState {
-    channelnameField: string;
+    channelsField: string;
     channels: string[];
     // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
     // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
@@ -18,14 +18,16 @@ interface AppState {
     infinitePlayBuffer: number;
     minViewCount: number;
     viewedClips: string[];
-    startDateTimestamp: number;
+    startDate: number;
+    endDate: number;
 }
 
 export const useAppStore = create<AppState>()(
-    persist(
+    // persist(
+    devtools(
         (set, get) => ({
             channels: [],
-            channelnameField: "",
+            channelsField: "",
             // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
             // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
             channelIds: [],
@@ -39,25 +41,30 @@ export const useAppStore = create<AppState>()(
             infinitePlayBuffer: 4,
             minViewCount: 50,
             viewedClips: [],
-            startDateTimestamp: new Date(new Date().setDate(new Date().getDate() - 7)).getTime(),
+            startDate: new Date(new Date().setDate(new Date().getDate() - 7)).getTime(),
+            endDate: new Date().getTime(),
         }),
-        {
-            name: "app",
-            storage: createJSONStorage(() => localStorage),
-            partialize: state => ({
-                channels: state.channels,
-                isClipAutoplay: state.isClipAutoplay,
-                isShowCarousel: state.isShowCarousel,
-                infinitePlayBuffer: state.infinitePlayBuffer,
-                minViewCount: state.minViewCount,
-                viewedClips: state.viewedClips,
-                startDateTimestamp: state.startDateTimestamp,
-            })
-        }
-    )
+        { name: "App" }
+    ),
+    //     {
+    //         name: "app",
+    //         storage: createJSONStorage(() => localStorage),
+    //         partialize: state => ({
+    //             channels: state.channels,
+    //             isClipAutoplay: state.isClipAutoplay,
+    //             isShowCarousel: state.isShowCarousel,
+    //             infinitePlayBuffer: state.infinitePlayBuffer,
+    //             minViewCount: state.minViewCount,
+    //             viewedClips: state.viewedClips,
+    //             startDate: state.startDate,
+    //             endDate: state.endDate,
+    //         }),
+
+    //     }
+    // )
 );
 
-export const setChannelnameField = (channelnameField: string) => useAppStore.setState({ channelnameField });
+export const setChannelnameField = (channelnameField: string) => useAppStore.setState({ channelsField: channelnameField });
 export const setChannelIds = (channelIds: number[]) => useAppStore.setState({ channelIds });
 export const setCurrentClipIndex = (currentClipIndex: number) => useAppStore.setState({ currentClipIndex });
 export const switchIsClipAutoplay = () => useAppStore.setState(state => ({ isClipAutoplay: !state.isClipAutoplay }));
@@ -74,7 +81,8 @@ export const switchIsShowCarousel = () => useAppStore.setState(state => ({ isSho
 export const setIsShowCarousel = (isShowCarousel: boolean) => useAppStore.setState({ isShowCarousel });
 export const setInfinitePlayBuffer = (infinitePlayBuffer: number) => useAppStore.setState({ infinitePlayBuffer });
 export const setMinViewCount = (minViewCount: number) => useAppStore.setState({ minViewCount });
-export const setStartDateTimestamp = (startDateTimestamp: number) => useAppStore.setState({ startDateTimestamp });
+export const setStartDate = (startDate: number) => useAppStore.setState({ startDate });
+export const setEndDate = (endDate: number) => useAppStore.setState({ endDate });
 
 export const addChannels = (channelsToAdd: string[]) => {
     useAppStore.setState({ channels: [...useAppStore.getState().channels, ...channelsToAdd] });
@@ -99,6 +107,7 @@ export const incrementCurrentClipIndex = (maxIndex: number) => {
         currentClipIndex: Math.min(newCurrentClipIndex, maxIndex)
     });
 };
+
 export const decrementCurrentClipIndex = () => {
     const newCurrentClipIndex = useAppStore.getState().currentClipIndex - 1;
     useAppStore.setState({

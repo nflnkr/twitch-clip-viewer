@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TwitchClipEmbed from "./components/TwitchClipEmbed";
 import { getBroadcasterIds, getClips } from "./utils/fetchers";
-import { NextUIProvider, Button, Text, Switch, Input, Badge, createTheme, Link, Loading, styled, keyframes } from "@nextui-org/react";
-import { DateRange, Range } from "react-date-range";
+import { NextUIProvider, Button, Text, createTheme, Link, Loading, styled, keyframes } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
 import ClipCarousel from "./components/ClipCarousel";
 import { TwitchClipMetadata } from "./model/clips";
 import { ChannelnameToIds } from "./model/user";
-import { addChannels, addViewedClip, clearViewedClips, decrementCurrentClipIndex, incrementCurrentClipIndex, removeChannels, setChannelIds, setChannelnameField, setCurrentClipIndex, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setIsSkipViewed, setMinViewCount, setStartDateTimestamp, switchIsCalendarShown, useAppStore } from "./stores/app";
+import { addChannels, addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setChannelIds, setChannelnameField, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, setIsSkipViewed, useAppStore } from "./stores/app";
+import Settings from "./components/Settings/Settings";
 
 
 const theme = createTheme({
@@ -35,33 +35,11 @@ const ControlsAndClipInfoContainer = styled("div", {
     overflow: "auto",
 });
 
-const ControlsContainer = styled("div", {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1em",
-    maxWidth: "26em",
-});
-
 const ClipInfoContainer = styled("div", {
     display: "flex",
     flexDirection: "column",
     gap: "0.25em",
     maxWidth: "25em",
-});
-
-const FlexboxWrap = styled("div", {
-    display: "flex",
-    gap: "1em",
-    flexWrap: "wrap",
-    alignItems: "center",
-});
-
-const FlexboxWrapSpaceBetween = styled("div", {
-    display: "flex",
-    gap: "1em",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
 });
 
 const ModalContainer = styled("div", {
@@ -125,7 +103,7 @@ const ClipProgressBar = styled("div", {
 // TODO find clip by name
 function App() {
     const [clips, setClips] = useState<TwitchClipMetadata[]>([]);
-    const channelnameField = useAppStore(state => state.channelnameField);
+    const channelsField = useAppStore(state => state.channelsField);
     const channels = useAppStore(state => state.channels);
     // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
     // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
@@ -134,19 +112,14 @@ function App() {
     const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
     const isSkipViewed = useAppStore(state => state.isSkipViewed);
-    const isCalendarShown = useAppStore(state => state.isCalendarShown);
     const isSettingsModalShown = useAppStore(state => state.isSettingsModalShown);
     const isShowCarousel = useAppStore(state => state.isShowCarousel);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
     const minViewCount = useAppStore(state => state.minViewCount);
     const viewedClips = useAppStore(state => state.viewedClips);
-    const startDateTimestamp = useAppStore(state => state.startDateTimestamp);
+    const startDate = useAppStore(state => state.startDate);
+    const endDate = useAppStore(state => state.endDate);   
 
-    const [dateRange, setDateRange] = useState<Range[]>([{
-        startDate: new Date(startDateTimestamp),
-        endDate: new Date(),
-        key: "selection"
-    }]);
     const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const appContainer = useRef<HTMLDivElement>(null);
     const debouncedMinViewCount = useDebounce(minViewCount, 1000);
@@ -180,27 +153,27 @@ function App() {
     const addChannel = useCallback(() => {
         setChannelnameField("");
 
-        const newChannelNames = channelnameField.split(" ").map(s => s.toLowerCase()).filter(s => /^[a-zA-Z0-9][\w]{2,24}$/.test(s) && !channels.includes(s));
+        const newChannelNames = channelsField.split(" ").map(s => s.toLowerCase()).filter(s => /^[a-zA-Z0-9][\w]{2,24}$/.test(s) && !channels.includes(s));
         const uniqueChannelNames = [...new Set(newChannelNames)];
 
         if (uniqueChannelNames.length) addChannels(uniqueChannelNames);
-    }, [channelnameField, channels]);
+    }, [channelsField, channels]);
 
-    function handleSettingsModalClose() {
-        setIsSettingsModalShown(false);
-        setIsCalendarShown(false);
+    const scrollTop = useCallback(() => {
         setTimeout(() => {
             appContainer.current?.scrollIntoView({ behavior: "smooth" });
         }, 300);
-    }
+    }, []);
+
+    const handleSettingsModalClose = useCallback(function handleSettingsModalClose() {
+        setIsSettingsModalShown(false);
+        setIsCalendarShown(false);
+        scrollTop();
+    }, [scrollTop]);
 
     useEffect(function resetModalOnResize() {
         if (isLandscape) handleSettingsModalClose();
-    }, [isLandscape]);
-
-    useEffect(function setStartDate() {
-        if (dateRange[0].startDate) setStartDateTimestamp(dateRange[0].startDate.getTime());
-    }, [dateRange]);
+    }, [handleSettingsModalClose, isLandscape]);
 
     useEffect(function getBroadcasterIdsFromChannelnames() {
         if (!channels.length) return setChannelIds([]);
@@ -247,16 +220,16 @@ function App() {
     }, [channels]);
 
     useEffect(function fetchClips() {
-        if (!channelIds.length || !dateRange[0].startDate || !dateRange[0].endDate) return setClips([]);
+        if (!channelIds.length) return setClips([]);
 
         setClips([]);
 
-        const includeLastDayDate = new Date(dateRange[0].endDate.getTime());
+        const includeLastDayDate = new Date(endDate);
         includeLastDayDate.setHours(23, 59, 59, 999);
         const abortcontroller = new AbortController();
         getClips({
             channelIds,
-            start: dateRange[0].startDate.toISOString(),
+            start: new Date(startDate).toISOString(),
             end: includeLastDayDate.toISOString(),
             minViewCount: debouncedMinViewCount,
             signal: abortcontroller.signal
@@ -264,7 +237,7 @@ function App() {
         setCurrentClipIndex(0);
 
         return () => abortcontroller.abort();
-    }, [channelIds, dateRange, debouncedMinViewCount]);
+    }, [channelIds, debouncedMinViewCount, endDate, startDate]);
 
     useEffect(function attachEventHandlers() {
         function keyHandler(e: KeyboardEvent) {
@@ -318,38 +291,6 @@ function App() {
         }
     }, [clipMeta, isSkipViewed, nextClip, viewedClips]);
 
-    function handleLastWeekClick() {
-        setDateRange([{
-            startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
-            endDate: new Date(),
-            key: "selection"
-        }]);
-    }
-
-    function handleLastMonthClick() {
-        setDateRange([{
-            startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-            endDate: new Date(),
-            key: "selection"
-        }]);
-    }
-
-    function handleLastYearClick() {
-        setDateRange([{
-            startDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
-            endDate: new Date(),
-            key: "selection"
-        }]);
-    }
-
-    function handleAlltimeClick() {
-        setDateRange([{
-            startDate: new Date(2011, 5, 6),
-            endDate: new Date(),
-            key: "selection"
-        }]);
-    }
-
     const handleCarouselItemClick = (newIndex: number) => {
         setCurrentClipIndex(newIndex);
         setIsSkipViewed(false);
@@ -360,160 +301,7 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const clip = useMemo(() => clipMeta ? <TwitchClipEmbed key={Math.random()} clip={clipMeta} autoplay={isClipAutoplay} /> : null, [clipMeta]);
 
-    const settingsContainer = (
-        <ControlsContainer>
-            <Input
-                aria-label="new channel"
-                bordered
-                placeholder="New channel"
-                value={channelnameField}
-                onChange={e => setChannelnameField(e.target.value)}
-                contentRight={<Button size="xs" onPress={addChannel} style={{ right: "5em" }}>Add</Button>}
-            />
-            <FlexboxWrap>
-                {channels.map(channel =>
-                    <Badge
-                        color="secondary"
-                        key={channel}
-                        size="md"
-                        onClick={() => removeChannels([channel])}
-                    >{channel}</Badge>
-                )}
-            </FlexboxWrap>
-            {/* <Card variant="bordered">
-                            <Card.Body css={{
-                                padding: 10,
-                                backgroundColor: "#26262e",
-                                flexWrap: "wrap",
-                                flexDirection: "row",
-                                gap: "0.25em"
-                            }}>
-                                {channels.map(channel => (
-                                    <Badge
-                                        color="secondary"
-                                        key={channel}
-                                        size="md"
-                                        onClick={() => setChannels(prev => prev.filter(ch => ch !== channel))}
-                                    >
-                                        {channel}
-                                    </Badge>
-                                ))}
-                            </Card.Body>
-                            <Card.Footer css={{
-                                flexWrap: "wrap",
-                                justifyContent: "space-between"
-                            }}>
-                                <Button css={{ width: "20%" }} size={"xs"}>Delete</Button>
-                                <Button css={{ width: "20%" }} size={"xs"}>Move up</Button>
-                                <Button css={{ width: "20%" }} size={"xs"}>Move down</Button>
-                                <Button css={{ width: "20%" }} size={"xs"}>Merge with</Button>
-                            </Card.Footer>
-                        </Card> */}
-            <Button
-                size="sm"
-                onPress={() => switchIsCalendarShown()}
-            >
-                {`${dateRange[0].startDate?.toLocaleDateString()} - ${dateRange[0].endDate?.toLocaleDateString()}`}
-            </Button>
-            {isCalendarShown &&
-                <DateRange
-                    onChange={item => setDateRange([item.selection])}
-                    maxDate={new Date()}
-                    ranges={dateRange}
-                    direction="vertical"
-                />
-            }
-            <FlexboxWrapSpaceBetween>
-                <Button size="xs" onPress={handleLastWeekClick}>Last week</Button>
-                <Button size="xs" onPress={handleLastMonthClick}>Last month</Button>
-                <Button size="xs" onPress={handleLastYearClick}>Last year</Button>
-                <Button size="xs" onPress={handleAlltimeClick}>All</Button>
-            </FlexboxWrapSpaceBetween>
-            <Input
-                size="sm"
-                aria-label="min views"
-                labelLeft="Min views"
-                type="number"
-                bordered
-                value={minViewCount}
-                onChange={e => setMinViewCount(Number(e.target.value))}
-                css={{
-                    ".nextui-input-label--left": {
-                        whiteSpace: "nowrap",
-                    }
-                }}
-            />
-            <FlexboxWrap css={{ userSelect: "none" }}>
-                {filteredClips.length ? <Text>{currentClipIndex + 1}/{filteredClips.length}</Text> : null}
-            </FlexboxWrap>
-            <FlexboxWrap>
-                <Switch checked={isClipAutoplay} onChange={e => {
-                    if (!e.target.checked) setIsInfinitePlay(false);
-                    setIsClipAutoplay(e.target.checked);
-                }} />
-                <Text>Clip autoplay</Text>
-            </FlexboxWrap>
-            <FlexboxWrap>
-                <Switch checked={isInfinitePlay} onChange={e => {
-                    if (e.target.checked) setIsClipAutoplay(true);
-                    setIsInfinitePlay(e.target.checked);
-                }} />
-                <Text>Auto next</Text>
-            </FlexboxWrap>
-            {isInfinitePlay &&
-                <Input
-                    size="sm"
-                    aria-label="infinite play buffer"
-                    labelLeft="Buffer in seconds"
-                    type="number"
-                    bordered
-                    value={infinitePlayBuffer}
-                    onChange={e => setInfinitePlayBuffer(Number(e.target.value) || 4)}
-                    css={{
-                        ".nextui-input-label--left": {
-                            whiteSpace: "nowrap",
-                        }
-                    }}
-                />
-            }
-            <FlexboxWrap>
-                <Switch checked={isSkipViewed} onChange={e => setIsSkipViewed(e.target.checked)} />
-                <Text>Skip viewed</Text>
-            </FlexboxWrap>
-            <FlexboxWrap>
-                <Switch checked={isShowCarousel} onChange={e => setIsShowCarousel(e.target.checked)} />
-                <Text>Carousel</Text>
-            </FlexboxWrap>
-            <Button
-                size="xs"
-                onPress={() => {
-                    localStorage.removeItem("viewedClips");
-                    clearViewedClips();
-                    setIsSkipViewed(false);
-                }}
-            >
-                Clear viewed clips {viewedClips.length > 0 && `(${viewedClips.length})`}
-            </Button>
-            {isSettingsModalShown &&
-                <Button size="sm" onPress={handleSettingsModalClose}>Close</Button>
-            }
-            {/* <Tooltip
-                color="primary"
-                placement="right"
-                hideArrow
-                content={
-                    <Grid.Container>
-                        <Grid xs={6}>Next clip</Grid>
-                        <Grid xs={6}>➡, N, mouse button 4</Grid>
-                        <Grid xs={6}>Previous clip</Grid>
-                        <Grid xs={6}>⬅, B, mouse button 3</Grid>
-                    </Grid.Container>
-                }
-            >
-                <Button size="xs">Shortcuts</Button>
-            </Tooltip> */}
-        </ControlsContainer>
-    );
+
 
     const clipProgressBar = useMemo(() => (
         clipMeta && isInfinitePlay ?
@@ -588,7 +376,7 @@ function App() {
                         width: isLandscape ? undefined : "100%",
                     }}
                 >
-                    {isLandscape && settingsContainer}
+                    {isLandscape && <Settings scrollTop={scrollTop} />}
                     {clipMeta &&
                         <ClipInfoContainer css={{
                             marginTop: isLandscape ? "2em" : undefined,
@@ -617,9 +405,7 @@ function App() {
                             }}
                             onPress={() => {
                                 setIsSettingsModalShown(true);
-                                setTimeout(() => {
-                                    appContainer.current?.scrollIntoView({ behavior: "smooth" });
-                                }, 300);
+                                scrollTop();
                             }}
                             icon={<IoMdSettings />}
                         >Settings</Button>
@@ -632,7 +418,7 @@ function App() {
                         css={{ zIndex: 101 }}
                         onClick={e => e.stopPropagation()}
                     >
-                        {settingsContainer}
+                        <Settings scrollTop={scrollTop} />
                     </SettingsModalContainer>
                 </ModalContainer>
             }
