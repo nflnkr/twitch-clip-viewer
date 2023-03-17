@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { Button, Text, Switch, Input, Badge, styled } from "@nextui-org/react";
+import { Button, Text, Switch, Input, Badge, styled, useTheme } from "@nextui-org/react";
 import { DateRange, RangeKeyDict } from "react-date-range";
-import { useDebounce } from "../utils/hooks";
-import { clearViewedClips, removeChannels, setChannelnameField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setIsSkipViewed, setMinViewCount, setStartDate, switchIsCalendarShown, useAppStore } from "../stores/app";
-import { useClipsStore } from "../stores/clips";
+import { clearViewedClips, removeChannels, setChannelnameField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setMinViewCount, setTItleFilterField, setStartDate, switchIsCalendarShown, useAppStore, switchIsHideViewed, setIsHideViewed } from "../stores/app";
+import { TwitchClipMetadata } from "../model/clips";
+import { IoMdClose } from "react-icons/io";
 
 
 const ControlsContainer = styled("div", {
@@ -20,17 +20,18 @@ const FlexboxWrap = styled("div", {
     alignItems: "center",
 });
 
-export default function Settings({ scrollTop, addChannel }: {
+export default function Settings({ scrollTop, addChannel, filteredClips }: {
     scrollTop: () => void;
     addChannel: () => void;
+    filteredClips: TwitchClipMetadata[];
 }) {
-    const clips = useClipsStore(state => state.clips);
-    const channelsField = useAppStore(state => state.channelsField);
     const channels = useAppStore(state => state.channels);
+    const channelsField = useAppStore(state => state.channelsField);
+    const titleFilterField = useAppStore(state => state.titleFilterField);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
-    const isSkipViewed = useAppStore(state => state.isSkipViewed);
+    const isHideViewed = useAppStore(state => state.isHideViewed);
     const isCalendarShown = useAppStore(state => state.isCalendarShown);
     const isSettingsModalShown = useAppStore(state => state.isSettingsModalShown);
     const isShowCarousel = useAppStore(state => state.isShowCarousel);
@@ -39,19 +40,13 @@ export default function Settings({ scrollTop, addChannel }: {
     const viewedClips = useAppStore(state => state.viewedClips);
     const startDate = useAppStore(state => state.startDate);
     const endDate = useAppStore(state => state.endDate);
+    const theme = useTheme();
 
     const dateRange = useMemo(() => ({
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         key: "selection"
     }), [endDate, startDate]);
-
-    const debouncedMinViewCount = useDebounce(minViewCount, 1000);
-
-    const filteredClips = useMemo(() => {
-        const filteredByMinViewCount = clips.filter(clip => clip.view_count >= debouncedMinViewCount);
-        return filteredByMinViewCount;
-    }, [clips, debouncedMinViewCount]);
 
     function handleLastWeekClick() {
         setStartDate(new Date(new Date().setDate(new Date().getDate() - 7)).getTime());
@@ -171,6 +166,36 @@ export default function Settings({ scrollTop, addChannel }: {
                     }
                 }}
             />
+            <Input
+                size="sm"
+                aria-label="filter by name"
+                labelLeft="Filter by name"
+                type="text"
+                bordered
+                value={titleFilterField}
+                onChange={e => setTItleFilterField(e.target.value)}
+                css={{
+                    ".nextui-input-label--left": {
+                        whiteSpace: "nowrap",
+                    },
+                }}
+                contentRight={
+                    <Button
+                        icon={<IoMdClose />}
+                        onPress={() => setTItleFilterField("")}
+                        css={{
+                            right: "2px",
+                            height: "20px",
+                            minWidth: "20px",
+                            backgroundColor: "rgb(0 0 0 / 0)",
+                            color: "rgba(255, 255, 255, 0.5)",
+                            ":hover": {
+                                color: "rgba(255, 255, 255, 0.9)",
+                            }
+                        }}
+                    />
+                }
+            />
             <FlexboxWrap css={{ userSelect: "none" }}>
                 {filteredClips.length ? <Text>{currentClipIndex + 1}/{filteredClips.length}</Text> : null}
             </FlexboxWrap>
@@ -205,8 +230,8 @@ export default function Settings({ scrollTop, addChannel }: {
                 />
             }
             <FlexboxWrap>
-                <Switch checked={isSkipViewed} onChange={e => setIsSkipViewed(e.target.checked)} />
-                <Text>Skip viewed</Text>
+                <Switch checked={isHideViewed} onChange={e => switchIsHideViewed()} />
+                <Text>Hide viewed</Text>
             </FlexboxWrap>
             <FlexboxWrap>
                 <Switch checked={isShowCarousel} onChange={e => setIsShowCarousel(e.target.checked)} />
@@ -215,9 +240,8 @@ export default function Settings({ scrollTop, addChannel }: {
             <Button
                 size="xs"
                 onPress={() => {
-                    localStorage.removeItem("viewedClips");
                     clearViewedClips();
-                    setIsSkipViewed(false);
+                    setIsHideViewed(false);
                 }}
             >
                 Clear viewed clips {viewedClips.length > 0 && `(${viewedClips.length})`}

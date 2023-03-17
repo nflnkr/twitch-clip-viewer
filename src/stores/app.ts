@@ -3,14 +3,15 @@ import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
 
 interface AppState {
-    channelsField: string;
     channels: string[];
+    channelsField: string;
+    titleFilterField: string;
     // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
     // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
     currentClipIndex: number;
     isClipAutoplay: boolean;
     isInfinitePlay: boolean;
-    isSkipViewed: boolean;
+    isHideViewed: boolean;
     isCalendarShown: boolean;
     isSettingsModalShown: boolean;
     isShowCarousel: boolean;
@@ -27,12 +28,13 @@ export const useAppStore = create<AppState>()(
         (set, get) => ({
             channels: [],
             channelsField: "",
+            titleFilterField: "",
             // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
             // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
             currentClipIndex: 0,
             isClipAutoplay: true,
             isInfinitePlay: false,
-            isSkipViewed: false,
+            isHideViewed: false,
             isCalendarShown: false,
             isSettingsModalShown: false,
             isShowCarousel: false,
@@ -63,14 +65,15 @@ export const useAppStore = create<AppState>()(
     // )
 );
 
-export const setChannelnameField = (channelnameField: string) => useAppStore.setState({ channelsField: channelnameField });
+export const setChannelnameField = (channelsField: string) => useAppStore.setState({ channelsField });
+export const setTItleFilterField = (titleFilterField: string) => useAppStore.setState({ titleFilterField });
 export const setCurrentClipIndex = (currentClipIndex: number) => useAppStore.setState({ currentClipIndex });
 export const switchIsClipAutoplay = () => useAppStore.setState(state => ({ isClipAutoplay: !state.isClipAutoplay }));
 export const setIsClipAutoplay = (isClipAutoplay: boolean) => useAppStore.setState({ isClipAutoplay });
 export const switchIsInfinitePlay = () => useAppStore.setState(state => ({ isInfinitePlay: !state.isInfinitePlay }));
 export const setIsInfinitePlay = (isInfinitePlay: boolean) => useAppStore.setState({ isInfinitePlay });
-export const switchIsSkipViewed = () => useAppStore.setState(state => ({ isSkipViewed: !state.isSkipViewed }));
-export const setIsSkipViewed = (isSkipViewed: boolean) => useAppStore.setState({ isSkipViewed });
+export const switchIsHideViewed = () => useAppStore.setState(state => ({ isHideViewed: !state.isHideViewed }));
+export const setIsHideViewed = (isHideViewed: boolean) => useAppStore.setState({ isHideViewed });
 export const switchIsCalendarShown = () => useAppStore.setState(state => ({ isCalendarShown: !state.isCalendarShown }));
 export const setIsCalendarShown = (isCalendarShown: boolean) => useAppStore.setState({ isCalendarShown });
 export const switchIsSettingsModalShown = () => useAppStore.setState(state => ({ isSettingsModalShown: !state.isSettingsModalShown }));

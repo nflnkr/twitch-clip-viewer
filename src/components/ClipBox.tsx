@@ -1,11 +1,10 @@
 import { useMemo } from "react";
 import TwitchClipEmbed from "../components/TwitchClipEmbed";
 import { Button, Text, Loading, styled, keyframes } from "@nextui-org/react";
-import { useDebounce } from "../utils/hooks";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
 import ClipCarousel from "../components/ClipCarousel";
-import { setCurrentClipIndex, setIsInfinitePlay, setIsSkipViewed, useAppStore } from "../stores/app";
-import { useClipsStore } from "../stores/clips";
+import { setCurrentClipIndex, setIsInfinitePlay, useAppStore } from "../stores/app";
+import { TwitchClipMetadata } from "../model/clips";
 
 
 const CenterContentBox = styled("div", {
@@ -47,28 +46,19 @@ const ClipProgressBar = styled("div", {
     backgroundColor: "$blue300",
 });
 
-export default function ClipBox({ nextClip, prevClip }: {
+export default function ClipBox({ nextClip, prevClip, filteredClips, clipMeta }: {
     nextClip: () => void;
     prevClip: () => void;
+    filteredClips: TwitchClipMetadata[];
+    clipMeta: TwitchClipMetadata | undefined;
 }) {
-    const clips = useClipsStore(state => state.clips);
-    // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
-    // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
     const channels = useAppStore(state => state.channels);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
     const isShowCarousel = useAppStore(state => state.isShowCarousel);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
-    const minViewCount = useAppStore(state => state.minViewCount);
-    const debouncedMinViewCount = useDebounce(minViewCount, 1000);
 
-    const filteredClips = useMemo(() => {
-        const filteredByMinViewCount = clips.filter(clip => clip.view_count >= debouncedMinViewCount);
-        return filteredByMinViewCount;
-    }, [clips, debouncedMinViewCount]);
-
-    const clipMeta = filteredClips.length ? filteredClips[currentClipIndex] : undefined;
     // disable rerender on isAutoplay change
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const clip = useMemo(() => clipMeta ? <TwitchClipEmbed key={Math.random()} clip={clipMeta} autoplay={isClipAutoplay} /> : null, [clipMeta]);
@@ -86,7 +76,6 @@ export default function ClipBox({ nextClip, prevClip }: {
 
     const handleCarouselItemClick = (newIndex: number) => {
         setCurrentClipIndex(newIndex);
-        setIsSkipViewed(false);
         setIsInfinitePlay(false);
     };
 

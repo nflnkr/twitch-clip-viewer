@@ -3,7 +3,7 @@ import { getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, createTheme, styled } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
-import { addChannels, addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setChannelnameField, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, setIsSkipViewed, useAppStore } from "./stores/app";
+import { addChannels, addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setChannelnameField, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, useAppStore } from "./stores/app";
 import Settings from "./components/Settings";
 import ClipInfo from "./components/ClipInfo";
 import ClipBox from "./components/ClipBox";
@@ -63,28 +63,34 @@ const SettingsModalContainer = styled("div", {
 function App() {
     const clips = useClipsStore(state => state.clips);
     const channelsField = useAppStore(state => state.channelsField);
+    const titleFilterField = useAppStore(state => state.titleFilterField);
     const channels = useAppStore(state => state.channels);
-    // const [channelGroups, setChannelGroups] = useState<ChannelGroup[]>(initialChannelsGroups);
-    // const [selectedChannelGroupId, setSelectedChannelGroupId] = useState<number>(0);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
-    const isSkipViewed = useAppStore(state => state.isSkipViewed);
+    const isHideViewed = useAppStore(state => state.isHideViewed);
     const isSettingsModalShown = useAppStore(state => state.isSettingsModalShown);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
     const minViewCount = useAppStore(state => state.minViewCount);
     const viewedClips = useAppStore(state => state.viewedClips);
     const startDate = useAppStore(state => state.startDate);
     const endDate = useAppStore(state => state.endDate);
-
     const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const appContainer = useRef<HTMLDivElement>(null);
     const debouncedMinViewCount = useDebounce(minViewCount, 1000);
+    const debouncedTitleFilterField = useDebounce(titleFilterField, 1000);
     const isLandscape = useMediaQuery("(min-width: 1200px)");
 
     const filteredClips = useMemo(() => {
-        const filteredByMinViewCount = clips.filter(clip => clip.view_count >= debouncedMinViewCount);
-        return filteredByMinViewCount;
-    }, [clips, debouncedMinViewCount]);
+        let filteredClips = clips.filter(clip => clip.view_count >= debouncedMinViewCount);
+        if (debouncedTitleFilterField) filteredClips = filteredClips.filter(
+            clip => clip.title.toLowerCase().includes(debouncedTitleFilterField.toLowerCase())
+        );
+        if (isHideViewed) filteredClips = filteredClips.filter(
+            clip => !viewedClips.includes(clip.id)
+        );
+
+        return filteredClips;
+    }, [clips, debouncedMinViewCount, debouncedTitleFilterField, isHideViewed, viewedClips]);
 
     const clipMeta = filteredClips.length ? filteredClips[currentClipIndex] : undefined;
 
@@ -101,7 +107,6 @@ function App() {
     }, [clipMeta, filteredClips.length]);
 
     const prevClip = useCallback(() => {
-        setIsSkipViewed(false);
         setIsInfinitePlay(false);
         decrementCurrentClipIndex();
     }, []);
@@ -193,16 +198,9 @@ function App() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clipMeta, isInfinitePlay, nextClip]);
 
-    useEffect(function skipClipIfViewed() {
-        if (!clipMeta) return;
-
-        // TODO infinite rerender on last clip?
-        if (isSkipViewed && viewedClips.includes(clipMeta.id)) {
-            nextClip();
-            // TODO find next not viewed clip
-        }
-    }, [clipMeta, isSkipViewed, nextClip, viewedClips]);
-
+    useEffect(function resetCurrentClipIndex() {
+        setCurrentClipIndex(0);
+    }, [filteredClips]);
 
     return (
         <NextUIProvider theme={theme}>
@@ -214,7 +212,12 @@ function App() {
                     minHeight: isLandscape ? "100vh" : undefined,
                 }}
             >
-                <ClipBox nextClip={nextClip} prevClip={prevClip} />
+                <ClipBox
+                    nextClip={nextClip}
+                    prevClip={prevClip}
+                    filteredClips={filteredClips}
+                    clipMeta={clipMeta}
+                />
                 <ControlsAndClipInfoContainer
                     style={{
                         borderLeft: isLandscape ? "1px solid #363636" : undefined,
@@ -223,7 +226,7 @@ function App() {
                         width: isLandscape ? undefined : "100%",
                     }}
                 >
-                    {isLandscape && <Settings scrollTop={scrollTop} addChannel={addChannel} />}
+                    {isLandscape && <Settings scrollTop={scrollTop} addChannel={addChannel} filteredClips={filteredClips} />}
                     {clipMeta && <ClipInfo clipMeta={clipMeta} />}
                     {!isLandscape &&
                         <Button
@@ -248,7 +251,7 @@ function App() {
                         css={{ zIndex: 101 }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <Settings scrollTop={scrollTop} addChannel={addChannel} />
+                        <Settings scrollTop={scrollTop} addChannel={addChannel} filteredClips={filteredClips} />
                     </SettingsModalContainer>
                 </ModalContainer>
             }
