@@ -7,7 +7,6 @@ const ClipInfoContainer = styled("div", {
     display: "flex",
     flexDirection: "column",
     gap: "0.25em",
-    maxWidth: "25em",
 });
 
 export default function ClipInfo({ clipMeta }: {
@@ -18,6 +17,7 @@ export default function ClipInfo({ clipMeta }: {
     return (
         <ClipInfoContainer css={{
             marginTop: isLandscape ? "2em" : undefined,
+            maxWidth: isLandscape ? "22em" : undefined,
         }}>
             <Text h3 css={{ overflowWrap: "anywhere" }}>{clipMeta.title}</Text>
             <Link

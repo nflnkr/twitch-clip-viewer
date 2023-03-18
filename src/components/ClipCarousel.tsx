@@ -37,40 +37,42 @@ export default function ClipCarousel({ clips, currentClipIndex, handleCarouselIt
     currentClipIndex: number;
     handleCarouselItemClick: (newIndex: number) => void;
 }) {
-    const outerRef = useRef<HTMLDivElement>(null);
+    const listContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(function scrollToNewIndex() {
-        outerRef.current?.scrollTo({
-            left: currentClipIndex * CAROUSEL_ITEM_WIDTH + (CAROUSEL_ITEM_WIDTH - outerRef.current.clientWidth) / 2,
+        listContainerRef.current?.scrollTo({
+            left: currentClipIndex * CAROUSEL_ITEM_WIDTH + (CAROUSEL_ITEM_WIDTH - listContainerRef.current.clientWidth) / 2,
             top: 0,
             behavior: "smooth",
         });
     }, [currentClipIndex]);
 
     useEffect(function attachWheelHandlers() {
+        const cleanupFnRef: { current: (() => void) | null; } = { current: null };
+
         const scrollHandler = (e: globalThis.WheelEvent) => {
-            if (!outerRef.current) return;
+            if (!listContainerRef.current) return;
 
-            const rect = outerRef.current.getBoundingClientRect();
-            if (
-                e.clientX > rect.left &&
-                e.clientX < rect.right &&
-                e.clientY > rect.top &&
-                e.clientY < rect.bottom
-            ) outerRef.current?.scrollBy({ left: e.deltaY });
-
+            e.preventDefault();
+            listContainerRef.current.scrollBy({ left: e.deltaY });
         };
-        document.addEventListener("wheel", scrollHandler);
 
-        return () => document.removeEventListener("wheel", scrollHandler);
-    }, []);
+        // listContainerRef.current is null after first render because it is inside render prop, this is a workaround
+        queueMicrotask(() => {
+            if (!listContainerRef.current) return;
+
+            listContainerRef.current.addEventListener("wheel", scrollHandler);
+            cleanupFnRef.current = () => listContainerRef.current?.removeEventListener("wheel", scrollHandler);
+        });
+        return () => cleanupFnRef.current?.();
+    });
 
     return (
         <CarouselContainer>
             <AutoSizer>
                 {({ height, width }: { height: number, width: number; }) =>
                     <FixedSizeList
-                        outerRef={outerRef}
+                        outerRef={listContainerRef}
                         height={height}
                         width={width}
                         itemCount={clips.length}

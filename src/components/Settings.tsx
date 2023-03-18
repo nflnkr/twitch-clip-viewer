@@ -1,31 +1,51 @@
 import { useMemo } from "react";
-import { Button, Text, Switch, Input, Badge, styled, useTheme } from "@nextui-org/react";
+import { Button, Text, Switch, Input, Badge, styled, Divider, useTheme } from "@nextui-org/react";
 import { DateRange, RangeKeyDict } from "react-date-range";
-import { clearViewedClips, removeChannels, setChannelnameField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setMinViewCount, setTItleFilterField, setStartDate, switchIsCalendarShown, useAppStore, switchIsHideViewed, setIsHideViewed } from "../stores/app";
+import { clearViewedClips, removeChannels, setChannelnameField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setMinViewCount, setTitleFilterField, setStartDate, switchIsCalendarShown, useAppStore, switchIsHideViewed, setIsHideViewed, addChannelGroup } from "../stores/app";
 import { TwitchClipMetadata } from "../model/clips";
 import { IoMdClose } from "react-icons/io";
+import ChannelGroupItem from "./ChannelGroupItem";
 
 
 const ControlsContainer = styled("div", {
     display: "flex",
     flexDirection: "column",
-    gap: "1em",
-    maxWidth: "26em",
+    gap: "12px",
+});
+
+const Flexbox = styled("div", {
+    display: "flex",
+});
+
+const FlexColumn = styled("div", {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1px",
 });
 
 const FlexboxWrap = styled("div", {
     display: "flex",
-    gap: "1em",
+    gap: "10px",
     flexWrap: "wrap",
     alignItems: "center",
 });
 
-export default function Settings({ scrollTop, addChannel, filteredClips }: {
+const Grid = styled("div", {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gridAutoRows: "1fr",
+    gap: "6px",
+});
+
+export default function Settings({ scrollTop, addChannel, filteredClips, totalClips }: {
     scrollTop: () => void;
     addChannel: () => void;
     filteredClips: TwitchClipMetadata[];
+    totalClips: number;
 }) {
     const channels = useAppStore(state => state.channels);
+    const channelGroups = useAppStore(state => state.channelGroups);
+    const selectedChannelGroupIndex = useAppStore(state => state.selectedChannelGroupIndex);
     const channelsField = useAppStore(state => state.channelsField);
     const titleFilterField = useAppStore(state => state.titleFilterField);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
@@ -83,6 +103,14 @@ export default function Settings({ scrollTop, addChannel, filteredClips }: {
         setEndDate(newEndDate);
     }
 
+    function handleCreateGroup() {
+        addChannelGroup({
+            channels: channels.slice(),
+            minViews: minViewCount,
+            titleFilter: titleFilterField,
+        });
+    }
+
     return (
         <ControlsContainer>
             <Input
@@ -93,64 +121,15 @@ export default function Settings({ scrollTop, addChannel, filteredClips }: {
                 onChange={e => setChannelnameField(e.target.value)}
                 contentRight={<Button size="xs" onPress={addChannel} style={{ right: "5em" }}>Add</Button>}
             />
-            <FlexboxWrap>
+            <FlexboxWrap css={{ gap: "2px" }}>
                 {channels.map(channel =>
                     <Badge
                         color="secondary"
                         key={channel}
-                        size="md"
+                        size="sm"
                         onClick={() => removeChannels([channel])}
                     >{channel}</Badge>
                 )}
-            </FlexboxWrap>
-            {/* <Card variant="bordered">
-                        <Card.Body css={{
-                            padding: 10,
-                            backgroundColor: "#26262e",
-                            flexWrap: "wrap",
-                            flexDirection: "row",
-                            gap: "0.25em"
-                        }}>
-                            {channels.map(channel => (
-                                <Badge
-                                    color="secondary"
-                                    key={channel}
-                                    size="md"
-                                    onClick={() => setChannels(prev => prev.filter(ch => ch !== channel))}
-                                >
-                                    {channel}
-                                </Badge>
-                            ))}
-                        </Card.Body>
-                        <Card.Footer css={{
-                            flexWrap: "wrap",
-                            justifyContent: "space-between"
-                        }}>
-                            <Button css={{ width: "20%" }} size={"xs"}>Delete</Button>
-                            <Button css={{ width: "20%" }} size={"xs"}>Move up</Button>
-                            <Button css={{ width: "20%" }} size={"xs"}>Move down</Button>
-                            <Button css={{ width: "20%" }} size={"xs"}>Merge with</Button>
-                        </Card.Footer>
-                    </Card> */}
-            <Button
-                size="sm"
-                onPress={() => switchIsCalendarShown()}
-            >
-                {`${dateRange.startDate?.toLocaleDateString()} - ${dateRange.endDate?.toLocaleDateString()}`}
-            </Button>
-            {isCalendarShown &&
-                <DateRange
-                    onChange={handleRangeChange}
-                    maxDate={new Date()}
-                    ranges={[dateRange]}
-                    direction="vertical"
-                />
-            }
-            <FlexboxWrap css={{ justifyContent: "space-between" }}>
-                <Button size="xs" onPress={handleLastWeekClick}>Last week</Button>
-                <Button size="xs" onPress={handleLastMonthClick}>Last month</Button>
-                <Button size="xs" onPress={handleLastYearClick}>Last year</Button>
-                <Button size="xs" onPress={handleAlltimeClick}>All</Button>
             </FlexboxWrap>
             <Input
                 size="sm"
@@ -173,16 +152,16 @@ export default function Settings({ scrollTop, addChannel, filteredClips }: {
                 type="text"
                 bordered
                 value={titleFilterField}
-                onChange={e => setTItleFilterField(e.target.value)}
+                onChange={e => setTitleFilterField(e.target.value)}
                 css={{
                     ".nextui-input-label--left": {
                         whiteSpace: "nowrap",
                     },
                 }}
-                contentRight={
+                contentRight={titleFilterField &&
                     <Button
                         icon={<IoMdClose />}
-                        onPress={() => setTItleFilterField("")}
+                        onPress={() => setTitleFilterField("")}
                         css={{
                             right: "2px",
                             height: "20px",
@@ -196,23 +175,88 @@ export default function Settings({ scrollTop, addChannel, filteredClips }: {
                     />
                 }
             />
-            <FlexboxWrap css={{ userSelect: "none" }}>
-                {filteredClips.length ? <Text>{currentClipIndex + 1}/{filteredClips.length}</Text> : null}
-            </FlexboxWrap>
-            <FlexboxWrap>
-                <Switch checked={isClipAutoplay} onChange={e => {
-                    if (!e.target.checked) setIsInfinitePlay(false);
-                    setIsClipAutoplay(e.target.checked);
-                }} />
-                <Text>Clip autoplay</Text>
-            </FlexboxWrap>
-            <FlexboxWrap>
-                <Switch checked={isInfinitePlay} onChange={e => {
-                    if (e.target.checked) setIsClipAutoplay(true);
-                    setIsInfinitePlay(e.target.checked);
-                }} />
-                <Text>Auto next</Text>
-            </FlexboxWrap>
+            <Button size="sm" onPress={handleCreateGroup}>Create group</Button>
+            {channelGroups.length > 0 &&
+                <FlexColumn css={{ gap: theme.theme?.space.xs }}>
+                    {channelGroups.map((channelGroup, index) =>
+                        <ChannelGroupItem
+                            key={channelGroup.id}
+                            channelGroup={channelGroup}
+                            index={index}
+                            isSelected={index === selectedChannelGroupIndex}
+                        />
+                    )}
+                </FlexColumn>
+            }
+            <Divider />
+            <FlexColumn>
+                <Button
+                    size="sm"
+                    onPress={() => switchIsCalendarShown()}
+                    css={{
+                        borderBottomLeftRadius: 0,
+                        borderBottomRightRadius: 0,
+                    }}
+                >
+                    {`${dateRange.startDate?.toLocaleDateString()} - ${dateRange.endDate?.toLocaleDateString()}`}
+                </Button>
+                <Flexbox css={{
+                    gap: "1px",
+                    "> button": {
+                        borderRadius: 0,
+                        flex: "1 1 25%",
+                        minWidth: "min-content",
+                        "&:first-of-type": {
+                            borderBottomLeftRadius: theme.theme?.radii.sm,
+                        },
+                        "&:last-of-type": {
+                            borderBottomRightRadius: theme.theme?.radii.sm,
+                        },
+                    }
+                }}>
+                    <Button size="xs" onPress={handleLastWeekClick}>Last week</Button>
+                    <Button size="xs" onPress={handleLastMonthClick}>Last month</Button>
+                    <Button size="xs" onPress={handleLastYearClick}>Last year</Button>
+                    <Button size="xs" onPress={handleAlltimeClick}>All</Button>
+                </Flexbox>
+            </FlexColumn>
+            {isCalendarShown &&
+                <DateRange
+                    onChange={handleRangeChange}
+                    maxDate={new Date()}
+                    ranges={[dateRange]}
+                    direction="vertical"
+                />
+            }
+            {isHideViewed ?
+                <Text>Remaining: {filteredClips.length - 1}</Text>
+                :
+                <Text>{currentClipIndex + 1}/{totalClips}</Text>
+            }
+            <Grid>
+                <FlexboxWrap>
+                    <Switch size="sm" checked={isHideViewed} onChange={e => switchIsHideViewed()} />
+                    <Text>Hide viewed</Text>
+                </FlexboxWrap>
+                <FlexboxWrap>
+                    <Switch size="sm" checked={isShowCarousel} onChange={e => setIsShowCarousel(e.target.checked)} />
+                    <Text>Carousel</Text>
+                </FlexboxWrap>
+                <FlexboxWrap>
+                    <Switch size="sm" checked={isClipAutoplay} onChange={e => {
+                        if (!e.target.checked) setIsInfinitePlay(false);
+                        setIsClipAutoplay(e.target.checked);
+                    }} />
+                    <Text>Clip autoplay</Text>
+                </FlexboxWrap>
+                <FlexboxWrap>
+                    <Switch size="sm" checked={isInfinitePlay} onChange={e => {
+                        if (e.target.checked) setIsClipAutoplay(true);
+                        setIsInfinitePlay(e.target.checked);
+                    }} />
+                    <Text>Auto next</Text>
+                </FlexboxWrap>
+            </Grid>
             {isInfinitePlay &&
                 <Input
                     size="sm"
@@ -229,14 +273,6 @@ export default function Settings({ scrollTop, addChannel, filteredClips }: {
                     }}
                 />
             }
-            <FlexboxWrap>
-                <Switch checked={isHideViewed} onChange={e => switchIsHideViewed()} />
-                <Text>Hide viewed</Text>
-            </FlexboxWrap>
-            <FlexboxWrap>
-                <Switch checked={isShowCarousel} onChange={e => setIsShowCarousel(e.target.checked)} />
-                <Text>Carousel</Text>
-            </FlexboxWrap>
             <Button
                 size="xs"
                 onPress={() => {

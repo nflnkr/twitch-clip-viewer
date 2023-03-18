@@ -5,6 +5,7 @@ import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
 import ClipCarousel from "../components/ClipCarousel";
 import { setCurrentClipIndex, setIsInfinitePlay, useAppStore } from "../stores/app";
 import { TwitchClipMetadata } from "../model/clips";
+import okayegImage from "../images/okayeg.png";
 
 
 const CenterContentBox = styled("div", {
@@ -12,13 +13,14 @@ const CenterContentBox = styled("div", {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
+    gap: "1em",
 });
 
 const ClipContainer = styled("div", {
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    width: "100%",
+    flexGrow: 1,
     maxHeight: "100vh",
     minHeight: "160px",
 });
@@ -111,7 +113,10 @@ export default function ClipBox({ nextClip, prevClip, filteredClips, clipMeta }:
                 channels.length ?
                     <CenterContentBox><Loading size="xl" /></CenterContentBox>
                     :
-                    <CenterContentBox><Text h2>No channels</Text></CenterContentBox>
+                    <CenterContentBox>
+                        <Text h2>No channels</Text>
+                        <img alt="okayeg" src={okayegImage} />
+                    </CenterContentBox>
             }
         </ClipContainer>
     );

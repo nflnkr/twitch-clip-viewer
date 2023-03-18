@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { getClips } from "./utils/fetchers";
-import { NextUIProvider, Button, createTheme, styled } from "@nextui-org/react";
+import { NextUIProvider, Button, createTheme, styled, useTheme } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
 import { addChannels, addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setChannelnameField, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, useAppStore } from "./stores/app";
@@ -10,7 +10,7 @@ import ClipBox from "./components/ClipBox";
 import { setClips, useClipsStore } from "./stores/clips";
 
 
-const theme = createTheme({
+const nextTheme = createTheme({
     type: "dark",
     theme: {
         colors: {
@@ -28,7 +28,8 @@ const AppContainer = styled("main", {
 const ControlsAndClipInfoContainer = styled("div", {
     display: "flex",
     minWidth: "fit-content",
-    flex: "1",
+    width: "25rem",
+    maxHeight: "100dvh",
     padding: "1em",
     overflow: "auto",
 });
@@ -55,11 +56,10 @@ const SettingsModalContainer = styled("div", {
 });
 
 // TODO concurrent fetch
-// TODO groups of streamers
 // TODO capture and stop MB3/4 events before iframe
 // TODO show errors
 // TODO collapse settings bar/ hide/show on hover
-// TODO find clip by name
+// TODO en/ru
 function App() {
     const clips = useClipsStore(state => state.clips);
     const channelsField = useAppStore(state => state.channelsField);
@@ -79,9 +79,14 @@ function App() {
     const debouncedMinViewCount = useDebounce(minViewCount, 1000);
     const debouncedTitleFilterField = useDebounce(titleFilterField, 1000);
     const isLandscape = useMediaQuery("(min-width: 1200px)");
+    const theme = useTheme();
+
+    const filteredClipsByMinViews = useMemo(() => {
+        return clips.filter(clip => clip.view_count >= debouncedMinViewCount);
+    }, [clips, debouncedMinViewCount]);
 
     const filteredClips = useMemo(() => {
-        let filteredClips = clips.filter(clip => clip.view_count >= debouncedMinViewCount);
+        let filteredClips = filteredClipsByMinViews;
         if (debouncedTitleFilterField) filteredClips = filteredClips.filter(
             clip => clip.title.toLowerCase().includes(debouncedTitleFilterField.toLowerCase())
         );
@@ -90,7 +95,7 @@ function App() {
         );
 
         return filteredClips;
-    }, [clips, debouncedMinViewCount, debouncedTitleFilterField, isHideViewed, viewedClips]);
+    }, [debouncedTitleFilterField, filteredClipsByMinViews, isHideViewed, viewedClips]);
 
     const clipMeta = filteredClips.length ? filteredClips[currentClipIndex] : undefined;
 
@@ -202,8 +207,17 @@ function App() {
         setCurrentClipIndex(0);
     }, [filteredClips]);
 
+    const settings = (
+        <Settings
+            scrollTop={scrollTop}
+            addChannel={addChannel}
+            filteredClips={filteredClips}
+            totalClips={filteredClipsByMinViews.length}
+        />
+    )
+
     return (
-        <NextUIProvider theme={theme}>
+        <NextUIProvider theme={nextTheme}>
             <AppContainer
                 ref={appContainer}
                 style={{
@@ -218,15 +232,13 @@ function App() {
                     filteredClips={filteredClips}
                     clipMeta={clipMeta}
                 />
-                <ControlsAndClipInfoContainer
-                    style={{
-                        borderLeft: isLandscape ? "1px solid #363636" : undefined,
-                        flexDirection: isLandscape ? "column" : "row",
-                        justifyContent: isLandscape ? undefined : "space-between",
-                        width: isLandscape ? undefined : "100%",
-                    }}
-                >
-                    {isLandscape && <Settings scrollTop={scrollTop} addChannel={addChannel} filteredClips={filteredClips} />}
+                <ControlsAndClipInfoContainer style={{
+                    borderLeft: isLandscape ? `1px solid ${theme.theme?.colors.border}` : undefined,
+                    flexDirection: isLandscape ? "column" : "row",
+                    justifyContent: isLandscape ? undefined : "space-between",
+                    width: isLandscape ? undefined : "100%",
+                }}>
+                    {isLandscape && settings}
                     {clipMeta && <ClipInfo clipMeta={clipMeta} />}
                     {!isLandscape &&
                         <Button
@@ -251,7 +263,7 @@ function App() {
                         css={{ zIndex: 101 }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <Settings scrollTop={scrollTop} addChannel={addChannel} filteredClips={filteredClips} />
+                        {settings}
                     </SettingsModalContainer>
                 </ModalContainer>
             }
