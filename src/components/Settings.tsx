@@ -244,7 +244,7 @@ export default function Settings({ scrollTop }: {
                     <Text>Clip autoplay</Text>
                 </FlexboxWrap>
                 <FlexboxWrap>
-                    <Switch size="sm" disabled checked={isInfinitePlay} onChange={e => {
+                    <Switch size="sm" disabled={isHideViewed} checked={isInfinitePlay} onChange={e => {
                         if (e.target.checked) setIsClipAutoplay(true);
                         setIsInfinitePlay(e.target.checked);
                     }} />

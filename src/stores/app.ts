@@ -76,7 +76,6 @@ export const switchIsClipAutoplay = () => useAppStore.setState(state => ({ isCli
 export const setIsClipAutoplay = (isClipAutoplay: boolean) => useAppStore.setState({ isClipAutoplay });
 export const switchIsInfinitePlay = () => useAppStore.setState(state => ({ isInfinitePlay: !state.isInfinitePlay }));
 export const setIsInfinitePlay = (isInfinitePlay: boolean) => useAppStore.setState({ isInfinitePlay });
-export const switchIsHideViewed = () => useAppStore.setState(state => ({ isHideViewed: !state.isHideViewed }));
 export const setIsHideViewed = (isHideViewed: boolean) => useAppStore.setState({ isHideViewed });
 export const switchIsCalendarShown = () => useAppStore.setState(state => ({ isCalendarShown: !state.isCalendarShown }));
 export const setIsCalendarShown = (isCalendarShown: boolean) => useAppStore.setState({ isCalendarShown });
@@ -88,6 +87,13 @@ export const setIsShowCarousel = (isShowCarousel: boolean) => useAppStore.setSta
 export const setInfinitePlayBuffer = (infinitePlayBuffer: number) => useAppStore.setState({ infinitePlayBuffer });
 export const setStartDate = (startDate: number) => useAppStore.setState({ startDate });
 export const setEndDate = (endDate: number) => useAppStore.setState({ endDate });
+
+export const switchIsHideViewed = () => {
+    useAppStore.setState(state => ({
+        isHideViewed: !state.isHideViewed,
+        isInfinitePlay: !state.isHideViewed ? false : state.isInfinitePlay,
+    }));
+};
 
 export const setMinViewCount = (minViewCount: number) => {
     useAppStore.setState({ minViewCount });
@@ -149,7 +155,8 @@ export const incrementCurrentClipIndex = (maxIndex: number) => {
 export const decrementCurrentClipIndex = () => {
     const newCurrentClipIndex = useAppStore.getState().currentClipIndex - 1;
     useAppStore.setState({
-        currentClipIndex: Math.max(newCurrentClipIndex, 0)
+        currentClipIndex: Math.max(newCurrentClipIndex, 0),
+        isInfinitePlay: false,
     });
 };
 

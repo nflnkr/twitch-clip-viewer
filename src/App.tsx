@@ -99,7 +99,7 @@ function App() {
 
     const clipMeta = filteredClips.length ? filteredClips[currentClipIndex] : undefined;
 
-    const nextClip = useCallback(() => {
+    const nextClip = useCallback(() => { // TODO move to action
         if (!clipMeta) return;
 
         if (nextClipTimeoutRef.current) {
@@ -110,11 +110,6 @@ function App() {
         addViewedClips([clipMeta.id]);
         incrementCurrentClipIndex(filteredClips.length - 1);
     }, [clipMeta, filteredClips.length]);
-
-    const prevClip = useCallback(() => {
-        setIsInfinitePlay(false);
-        decrementCurrentClipIndex();
-    }, []);
 
     const scrollTop = useCallback(() => {
         setTimeout(() => {
@@ -168,11 +163,11 @@ function App() {
             if ((e.target as HTMLElement).tagName === "INPUT") return;
 
             if (e.code === "KeyN" || e.code === "ArrowRight") return nextClip();
-            if (e.code === "KeyB" || e.code === "ArrowLeft") return prevClip();
+            if (e.code === "KeyB" || e.code === "ArrowLeft") return decrementCurrentClipIndex();
         }
         function mouseHandler(e: MouseEvent) {
             e.preventDefault();
-            if (e.button === 3) return prevClip();
+            if (e.button === 3) return decrementCurrentClipIndex();
             if (e.button === 4) return nextClip();
         }
         document.addEventListener("keydown", keyHandler);
@@ -181,9 +176,9 @@ function App() {
             document.removeEventListener("keydown", keyHandler);
             document.removeEventListener("mouseup", mouseHandler);
         };
-    }, [nextClip, prevClip]);
+    }, [nextClip]);
 
-    useEffect(function startInfinitePlayTimer() {
+    useEffect(function startInfinitePlayTimer() { // TODO fix this feature
         if ((!isInfinitePlay && nextClipTimeoutRef.current) || !clipMeta) {
             if (!nextClipTimeoutRef.current) return;
             clearTimeout(nextClipTimeoutRef.current);
@@ -221,7 +216,6 @@ function App() {
             >
                 <ClipBox
                     nextClip={nextClip}
-                    prevClip={prevClip}
                     filteredClips={filteredClips}
                     clipMeta={clipMeta}
                 />

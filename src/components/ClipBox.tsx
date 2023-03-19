@@ -3,7 +3,7 @@ import TwitchClipEmbed from "../components/TwitchClipEmbed";
 import { Button, Text, Loading, styled, keyframes } from "@nextui-org/react";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
 import ClipCarousel from "../components/ClipCarousel";
-import { setCurrentClipIndex, setIsInfinitePlay, useAppStore } from "../stores/app";
+import { decrementCurrentClipIndex, setCurrentClipIndex, setIsInfinitePlay, useAppStore } from "../stores/app";
 import { TwitchClipMetadata } from "../model/clips";
 import okayegImage from "../images/okayeg.png";
 
@@ -47,9 +47,8 @@ const ClipProgressBar = styled("div", {
     backgroundColor: "$blue300",
 });
 
-export default function ClipBox({ nextClip, prevClip, filteredClips, clipMeta }: {
+export default function ClipBox({ nextClip, filteredClips, clipMeta }: {
     nextClip: () => void;
-    prevClip: () => void;
     filteredClips: TwitchClipMetadata[];
     clipMeta: TwitchClipMetadata | undefined;
 }) {
@@ -101,7 +100,7 @@ export default function ClipBox({ nextClip, prevClip, filteredClips, clipMeta }:
                                 <ControlsButton
                                     size="md"
                                     disabled={currentClipIndex === 0}
-                                    onPress={prevClip}
+                                    onPress={decrementCurrentClipIndex}
                                     icon={<ImArrowLeft2 />}
                                 />
                                 <ControlsButton
