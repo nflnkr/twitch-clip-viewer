@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import TwitchClipEmbed from "../components/TwitchClipEmbed";
 import { Button, Text, Loading, styled, keyframes } from "@nextui-org/react";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
@@ -80,10 +80,6 @@ export default function ClipBox({ nextClip, prevClip, filteredClips, clipMeta }:
         setCurrentClipIndex(newIndex);
         setIsInfinitePlay(false);
     };
-
-    useEffect(function pringIsLoading() {
-        console.log("isLoading :>> ", isLoading);
-    }, [isLoading]);
 
     return (
         <ClipContainer>
