@@ -1,15 +1,15 @@
 import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
-import { ChannelGroup } from "../model/channelgroup";
+import { ChannelPreset } from "../model/channelPreset";
 
 
 interface AppState {
     channels: string[];
     channelsField: string;
     titleFilterField: string;
-    channelGroups: ChannelGroup[];
-    selectedChannelGroupIndex: number | null;
+    channelPresets: ChannelPreset[];
+    selectedChannelPresetIndex: number | null;
     currentClipIndex: number;
     isClipAutoplay: boolean;
     isInfinitePlay: boolean;
@@ -22,6 +22,7 @@ interface AppState {
     viewedClips: string[];
     startDate: number;
     endDate: number;
+    isLoading: boolean;
 }
 
 export const useAppStore = create<AppState>()(
@@ -31,8 +32,8 @@ export const useAppStore = create<AppState>()(
                 channels: [],
                 channelsField: "",
                 titleFilterField: "",
-                channelGroups: [],
-                selectedChannelGroupIndex: null,
+                channelPresets: [],
+                selectedChannelPresetIndex: null,
                 currentClipIndex: 0,
                 isClipAutoplay: true,
                 isInfinitePlay: false,
@@ -45,16 +46,18 @@ export const useAppStore = create<AppState>()(
                 viewedClips: [],
                 startDate: new Date(new Date().setDate(new Date().getDate() - 7)).getTime(),
                 endDate: new Date().getTime(),
+                isLoading: false,
             }),
             { name: "App" }
         ),
         {
+            version: 0,
             name: "app",
             storage: createJSONStorage(() => localStorage),
             partialize: state => ({
                 channels: state.channels,
-                channelGroups: state.channelGroups,
-                selectedChannelGroupIndex: state.selectedChannelGroupIndex,
+                channelPresets: state.channelPresets,
+                selectedChannelPresetIndex: state.selectedChannelPresetIndex,
                 isClipAutoplay: state.isClipAutoplay,
                 isShowCarousel: state.isShowCarousel,
                 infinitePlayBuffer: state.infinitePlayBuffer,
@@ -67,7 +70,7 @@ export const useAppStore = create<AppState>()(
     )
 );
 
-export const setChannelnameField = (channelsField: string) => useAppStore.setState({ channelsField });
+export const setChannelsField = (channelsField: string) => useAppStore.setState({ channelsField });
 export const setCurrentClipIndex = (currentClipIndex: number) => useAppStore.setState({ currentClipIndex });
 export const switchIsClipAutoplay = () => useAppStore.setState(state => ({ isClipAutoplay: !state.isClipAutoplay }));
 export const setIsClipAutoplay = (isClipAutoplay: boolean) => useAppStore.setState({ isClipAutoplay });
@@ -77,29 +80,50 @@ export const switchIsHideViewed = () => useAppStore.setState(state => ({ isHideV
 export const setIsHideViewed = (isHideViewed: boolean) => useAppStore.setState({ isHideViewed });
 export const switchIsCalendarShown = () => useAppStore.setState(state => ({ isCalendarShown: !state.isCalendarShown }));
 export const setIsCalendarShown = (isCalendarShown: boolean) => useAppStore.setState({ isCalendarShown });
+export const setIsLoading = (isLoading: boolean) => useAppStore.setState({ isLoading });
 export const switchIsSettingsModalShown = () => useAppStore.setState(state => ({ isSettingsModalShown: !state.isSettingsModalShown }));
 export const setIsSettingsModalShown = (isSettingsModalShown: boolean) => useAppStore.setState({ isSettingsModalShown });
 export const switchIsShowCarousel = () => useAppStore.setState(state => ({ isShowCarousel: !state.isShowCarousel }));
 export const setIsShowCarousel = (isShowCarousel: boolean) => useAppStore.setState({ isShowCarousel });
 export const setInfinitePlayBuffer = (infinitePlayBuffer: number) => useAppStore.setState({ infinitePlayBuffer });
-export const setMinViewCount = (minViewCount: number) => useAppStore.setState({ minViewCount });
 export const setStartDate = (startDate: number) => useAppStore.setState({ startDate });
 export const setEndDate = (endDate: number) => useAppStore.setState({ endDate });
 
-export const setSelectedChannelGroupIndex = (selectedChannelGroupIndex: number | null) => {
-    const state = useAppStore.getState();
-    useAppStore.setState({
-        selectedChannelGroupIndex,
-        titleFilterField: selectedChannelGroupIndex === null ? state.titleFilterField : state.channelGroups[selectedChannelGroupIndex].titleFilter,
-        minViewCount: selectedChannelGroupIndex === null ? state.minViewCount : state.channelGroups[selectedChannelGroupIndex].minViews,
-        channels: selectedChannelGroupIndex === null ? state.channels.slice() : state.channelGroups[selectedChannelGroupIndex].channels.slice(),
-    });
+export const setMinViewCount = (minViewCount: number) => {
+    useAppStore.setState({ minViewCount });
 };
 
-export const setTitleFilterField = (titleFilterField: string) => useAppStore.setState({ titleFilterField: titleFilterField.trim() });
+export const setSelectedChannelPresetIndex = (selectedChannelPresetIndex: number | null) => {
+    const state = useAppStore.getState();
 
-export const addChannels = (channelsToAdd: string[]) => {
-    useAppStore.setState({ channels: [...useAppStore.getState().channels, ...channelsToAdd] });
+    const newState = selectedChannelPresetIndex === null ? {
+        ...state,
+    } : {
+        ...state,
+        selectedChannelPresetIndex,
+        titleFilterField: state.channelPresets[selectedChannelPresetIndex].titleFilter,
+        minViewCount: state.channelPresets[selectedChannelPresetIndex].minViews,
+        channels: state.channelPresets[selectedChannelPresetIndex].channels.slice(),
+    };
+
+    useAppStore.setState(newState);
+};
+
+export const setTitleFilterField = (titleFilterField: string) => {
+    useAppStore.setState({ titleFilterField: titleFilterField.trim() });
+};
+
+export const addChannels = () => {
+    const state = useAppStore.getState();
+
+    const filteredNewChannels = state.channelsField.split(" ").map(s => s.toLowerCase()).filter(s => /^[a-zA-Z0-9][\w]{2,24}$/.test(s));
+    const newChannels = [...state.channels, ...filteredNewChannels];
+    const uniqueChannels = [...new Set(newChannels)];
+
+    useAppStore.setState({
+        channels: uniqueChannels,
+        channelsField: "",
+    });
 };
 
 export const removeChannels = (channelsToRemove: string[]) => {
@@ -107,10 +131,10 @@ export const removeChannels = (channelsToRemove: string[]) => {
     useAppStore.setState({ channels });
 };
 
-export const addViewedClip = (clipToAdd: string) => {
-    const viewedClips = useAppStore.getState().viewedClips;
-    if (viewedClips.includes(clipToAdd)) return;
-    useAppStore.setState({ viewedClips: [...useAppStore.getState().viewedClips, clipToAdd] });
+export const addViewedClips = (clipsToAdd: string[]) => {
+    const viewedClips = [...useAppStore.getState().viewedClips, ...clipsToAdd];
+    const uniqueViewedClips = [...new Set(viewedClips)];
+    useAppStore.setState({ viewedClips: uniqueViewedClips });
 };
 
 export const clearViewedClips = () => useAppStore.setState({ viewedClips: [] });
@@ -129,21 +153,52 @@ export const decrementCurrentClipIndex = () => {
     });
 };
 
-export const addChannelGroup = (channelGroup: Omit<ChannelGroup, "id">) => {
-    if (!channelGroup.channels.length) return;
+export const addChannelPreset = () => {
+    const state = useAppStore.getState();
+    if (!state.channels.length) return;
+
     useAppStore.setState({
-        channelGroups: [{
-            ...channelGroup,
-            id: nanoid(),
-        }, ...useAppStore.getState().channelGroups],
-        selectedChannelGroupIndex: 0,
-        channels: [],
-        titleFilterField: "",
+        channelPresets: [
+            {
+                channels: state.channels.slice(),
+                minViews: state.minViewCount,
+                titleFilter: state.titleFilterField,
+                id: nanoid(),
+            },
+            ...state.channelPresets,
+        ],
     });
 };
 
-export const removeChannelGroup = (channelGroupId: string) => {
+export const updateChannelPreset = () => {
+    const state = useAppStore.getState();
+    if (!state.channels.length || state.selectedChannelPresetIndex === null) return;
+
+    const newChannelPresets: ChannelPreset[] = state.channelPresets.slice();
+    newChannelPresets[state.selectedChannelPresetIndex] = {
+        channels: state.channels.slice(),
+        minViews: state.minViewCount,
+        titleFilter: state.titleFilterField,
+        id: state.channelPresets[state.selectedChannelPresetIndex].id,
+    };
+    useAppStore.setState({ channelPresets: newChannelPresets });
+};
+
+export const removeChannelPreset = (channelPresetId: string) => {
     useAppStore.setState({
-        channelGroups: useAppStore.getState().channelGroups.filter(channelGroup => channelGroup.id !== channelGroupId)
+        channelPresets: useAppStore.getState().channelPresets.filter(channelPreset => channelPreset.id !== channelPresetId)
     });
 };
+
+
+function migrateOldStorage<T>(oldKey: string, setState: (arg: T) => void) {
+    const string = localStorage.getItem(oldKey);
+    if (string) {
+        const value = JSON.parse(string) as T;
+        setState(value);
+        localStorage.removeItem(oldKey);
+    }
+}
+
+migrateOldStorage("viewedClips", addViewedClips);
+migrateOldStorage("channels", addChannels);

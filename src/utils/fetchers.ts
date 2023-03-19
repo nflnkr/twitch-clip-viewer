@@ -17,14 +17,13 @@ export async function getClips({ channels, start, end, minViewCount, signal }: {
     const clips: TwitchClipMetadata[] = [];
     try {
         await Promise.all(channels.map(async channel => {
-            const broadcasterId = await getBroadcasterId(channel);
+            const broadcasterId = await getBroadcasterId(channel, signal);
             if (!broadcasterId) return;
 
             const newClips = await getClipsForBroadcasterId({ broadcasterId, start, end, minViewCount, signal });
             clips.push(...newClips);
         }));
     } catch (e) {
-        console.log("Error", e);
         return null;
     }
     clips.sort((a, b) => b.view_count - a.view_count);
@@ -59,14 +58,15 @@ async function getClipsForBroadcasterId({ broadcasterId, start, end, minViewCoun
     return clips;
 }
 
-async function getBroadcasterId(username: string): Promise<number | null> {
+async function getBroadcasterId(username: string, signal: AbortSignal): Promise<number | null> {
     let url = `https://api.twitch.tv/helix/users?login=${username}`;
 
     const response = await fetch(url, {
         headers: {
             "Authorization": "Bearer " + authToken,
             "Client-Id": clientId
-        }
+        },
+        signal,
     });
     const json = await response.json() as { data: TwitchUserMetadata[]; };
     if (!json.data) return null;

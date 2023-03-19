@@ -1,5 +1,6 @@
 import { Text, Link, styled } from "@nextui-org/react";
 import { TwitchClipMetadata } from "../model/clips";
+import { useAppStore } from "../stores/app";
 import { useMediaQuery } from "../utils/hooks";
 
 
@@ -7,18 +8,27 @@ const ClipInfoContainer = styled("div", {
     display: "flex",
     flexDirection: "column",
     gap: "0.25em",
+    p: "1em",
 });
 
-export default function ClipInfo({ clipMeta }: {
+export default function ClipInfo({ clipMeta, filteredClips, totalClips }: {
     clipMeta: TwitchClipMetadata;
+    filteredClips: TwitchClipMetadata[];
+    totalClips: number;
 }) {
+    const currentClipIndex = useAppStore(state => state.currentClipIndex);
+    const isHideViewed = useAppStore(state => state.isHideViewed);
     const isLandscape = useMediaQuery("(min-width: 1200px)");
 
     return (
         <ClipInfoContainer css={{
-            marginTop: isLandscape ? "2em" : undefined,
-            maxWidth: isLandscape ? "22em" : undefined,
+            maxWidth: isLandscape ? "24em" : undefined,
         }}>
+            {isHideViewed ?
+                <Text size="small">Remaining: {filteredClips.length - 1}</Text>
+                :
+                totalClips > 0 && <Text size="small">{currentClipIndex + 1}/{totalClips}</Text>
+            }
             <Text h3 css={{ overflowWrap: "anywhere" }}>{clipMeta.title}</Text>
             <Link
                 target="_blank"

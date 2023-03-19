@@ -1,23 +1,23 @@
-import { ChannelGroup } from "../model/channelgroup";
+import { ChannelPreset } from "../model/channelPreset";
 import { Text, Badge, Card, Button } from "@nextui-org/react";
-import { removeChannelGroup, setSelectedChannelGroupIndex } from "../stores/app";
+import { removeChannelPreset, setSelectedChannelPresetIndex } from "../stores/app";
 import { IoMdClose } from "react-icons/io";
 
 
 interface Props {
-    channelGroup: ChannelGroup;
+    channelPreset: ChannelPreset;
     index: number;
     isSelected?: boolean;
 }
 
-export default function ChannelGroupItem({ channelGroup, index, isSelected }: Props) {
+export default function ChannelPresetItem({ channelPreset, index, isSelected }: Props) {
 
     return (
         <Card
             isHoverable
             isPressable
             variant="bordered"
-            onPress={() => setSelectedChannelGroupIndex(index)}
+            onPress={() => setSelectedChannelPresetIndex(index)}
             css={{
                 boxShadow: isSelected ? "rgb(89 140 203 / 10%) 0px 2px 10px 0px" : undefined,
             }}
@@ -27,8 +27,8 @@ export default function ChannelGroupItem({ channelGroup, index, isSelected }: Pr
                 px: "8px",
                 backgroundColor: isSelected ? "$primaryDark" : undefined,
             }}>
-                <Text size="small">Min views: {channelGroup.minViews}</Text>
-                {channelGroup.titleFilter &&
+                <Text size="small">Min views: {channelPreset.minViews}</Text>
+                {channelPreset.titleFilter &&
                     <Text
                         size="small"
                         css={{
@@ -36,11 +36,11 @@ export default function ChannelGroupItem({ channelGroup, index, isSelected }: Pr
                             overflow: "hidden",
                             whiteSpace: "nowrap",
                         }}
-                    >, Filter: {channelGroup.titleFilter}</Text>
+                    >, Filter: {channelPreset.titleFilter}</Text>
                 }
                 <Button
                     icon={<IoMdClose />}
-                    onPress={() => removeChannelGroup(channelGroup.id)}
+                    onPress={() => removeChannelPreset(channelPreset.id)}
                     css={{
                         ml: "auto",
                         height: "20px",
@@ -61,10 +61,10 @@ export default function ChannelGroupItem({ channelGroup, index, isSelected }: Pr
                 flexDirection: "row",
                 gap: "2px",
             }}>
-                {channelGroup.channels.map(channel => (
+                {channelPreset.channels.map(channel => (
                     <Badge
                         color="secondary"
-                        key={`${channelGroup.id}-${channel}`}
+                        key={`${channelPreset.id}-${channel}`}
                         size="sm"
                     >{channel}</Badge>
                 ))}

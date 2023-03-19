@@ -1,6 +1,6 @@
 
 
-export interface ChannelGroup {
+export interface ChannelPreset {
     id: string;
     channels: string[];
     minViews: number;

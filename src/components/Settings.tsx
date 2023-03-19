@@ -1,16 +1,16 @@
 import { useMemo } from "react";
 import { Button, Text, Switch, Input, Badge, styled, Divider, useTheme } from "@nextui-org/react";
 import { DateRange, RangeKeyDict } from "react-date-range";
-import { clearViewedClips, removeChannels, setChannelnameField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setMinViewCount, setTitleFilterField, setStartDate, switchIsCalendarShown, useAppStore, switchIsHideViewed, setIsHideViewed, addChannelGroup } from "../stores/app";
-import { TwitchClipMetadata } from "../model/clips";
+import { clearViewedClips, removeChannels, setChannelsField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setMinViewCount, setTitleFilterField, setStartDate, switchIsCalendarShown, useAppStore, switchIsHideViewed, setIsHideViewed, addChannelPreset, updateChannelPreset, addChannels } from "../stores/app";
 import { IoMdClose } from "react-icons/io";
-import ChannelGroupItem from "./ChannelGroupItem";
+import ChannelPresetItem from "./ChannelPresetItem";
 
 
 const ControlsContainer = styled("div", {
     display: "flex",
     flexDirection: "column",
     gap: "12px",
+    p: "1em",
 });
 
 const Flexbox = styled("div", {
@@ -37,18 +37,14 @@ const Grid = styled("div", {
     gap: "6px",
 });
 
-export default function Settings({ scrollTop, addChannel, filteredClips, totalClips }: {
+export default function Settings({ scrollTop }: {
     scrollTop: () => void;
-    addChannel: () => void;
-    filteredClips: TwitchClipMetadata[];
-    totalClips: number;
 }) {
     const channels = useAppStore(state => state.channels);
-    const channelGroups = useAppStore(state => state.channelGroups);
-    const selectedChannelGroupIndex = useAppStore(state => state.selectedChannelGroupIndex);
+    const channelPresets = useAppStore(state => state.channelPresets);
+    const selectedChannelPresetIndex = useAppStore(state => state.selectedChannelPresetIndex);
     const channelsField = useAppStore(state => state.channelsField);
     const titleFilterField = useAppStore(state => state.titleFilterField);
-    const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
     const isHideViewed = useAppStore(state => state.isHideViewed);
@@ -103,14 +99,6 @@ export default function Settings({ scrollTop, addChannel, filteredClips, totalCl
         setEndDate(newEndDate);
     }
 
-    function handleCreateGroup() {
-        addChannelGroup({
-            channels: channels.slice(),
-            minViews: minViewCount,
-            titleFilter: titleFilterField,
-        });
-    }
-
     return (
         <ControlsContainer>
             <Input
@@ -118,8 +106,8 @@ export default function Settings({ scrollTop, addChannel, filteredClips, totalCl
                 bordered
                 placeholder="New channel"
                 value={channelsField}
-                onChange={e => setChannelnameField(e.target.value)}
-                contentRight={<Button size="xs" onPress={addChannel} style={{ right: "5em" }}>Add</Button>}
+                onChange={e => setChannelsField(e.target.value)}
+                contentRight={<Button size="xs" onPress={addChannels} style={{ right: "5em" }}>Add</Button>}
             />
             <FlexboxWrap css={{ gap: "2px" }}>
                 {channels.map(channel =>
@@ -148,7 +136,7 @@ export default function Settings({ scrollTop, addChannel, filteredClips, totalCl
             <Input
                 size="sm"
                 aria-label="filter by name"
-                labelLeft="Filter by name"
+                labelLeft="Name contains"
                 type="text"
                 bordered
                 value={titleFilterField}
@@ -175,15 +163,26 @@ export default function Settings({ scrollTop, addChannel, filteredClips, totalCl
                     />
                 }
             />
-            <Button size="sm" onPress={handleCreateGroup}>Create group</Button>
-            {channelGroups.length > 0 &&
+            <Flexbox css={{
+                gap: "6px", // TODO replace all gaps with theme spacing
+                width: "100%",
+                "& > *": {
+                    flex: "1 1 50%",
+                    minWidth: "min-content",
+                }
+            }}>
+                <Button size="sm" onPress={addChannelPreset}>Create preset</Button>
+                <Button size="sm" onPress={updateChannelPreset} disabled={selectedChannelPresetIndex === null}>Update preset</Button>
+            </Flexbox>
+
+            {channelPresets.length > 0 &&
                 <FlexColumn css={{ gap: theme.theme?.space.xs }}>
-                    {channelGroups.map((channelGroup, index) =>
-                        <ChannelGroupItem
-                            key={channelGroup.id}
-                            channelGroup={channelGroup}
+                    {channelPresets.map((channelPreset, index) =>
+                        <ChannelPresetItem
+                            key={channelPreset.id}
+                            channelPreset={channelPreset}
                             index={index}
-                            isSelected={index === selectedChannelGroupIndex}
+                            isSelected={index === selectedChannelPresetIndex}
                         />
                     )}
                 </FlexColumn>
@@ -227,11 +226,6 @@ export default function Settings({ scrollTop, addChannel, filteredClips, totalCl
                     ranges={[dateRange]}
                     direction="vertical"
                 />
-            }
-            {isHideViewed ?
-                <Text>Remaining: {filteredClips.length - 1}</Text>
-                :
-                <Text>{currentClipIndex + 1}/{totalClips}</Text>
             }
             <Grid>
                 <FlexboxWrap>

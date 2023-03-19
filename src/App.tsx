@@ -3,7 +3,7 @@ import { getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, createTheme, styled, useTheme } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
-import { addChannels, addViewedClip, decrementCurrentClipIndex, incrementCurrentClipIndex, setChannelnameField, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, useAppStore } from "./stores/app";
+import { addChannels, addViewedClips, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsLoading, setIsSettingsModalShown, useAppStore } from "./stores/app";
 import Settings from "./components/Settings";
 import ClipInfo from "./components/ClipInfo";
 import ClipBox from "./components/ClipBox";
@@ -30,7 +30,6 @@ const ControlsAndClipInfoContainer = styled("div", {
     minWidth: "fit-content",
     width: "25rem",
     maxHeight: "100dvh",
-    padding: "1em",
     overflow: "auto",
 });
 
@@ -49,20 +48,20 @@ const SettingsModalContainer = styled("div", {
     border: "1px solid $gray400",
     borderRadius: "4px",
     boxShadow: "$sm",
-    padding: "1em",
     marginTop: "1em",
     marginBottom: "1em",
     height: "max-content",
 });
 
+const DEBOUNCE_TIME = 500;
+
 // TODO concurrent fetch
 // TODO capture and stop MB3/4 events before iframe
-// TODO show errors
+// TODO handle errors
 // TODO collapse settings bar/ hide/show on hover
 // TODO en/ru
 function App() {
     const clips = useClipsStore(state => state.clips);
-    const channelsField = useAppStore(state => state.channelsField);
     const titleFilterField = useAppStore(state => state.titleFilterField);
     const channels = useAppStore(state => state.channels);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
@@ -76,8 +75,9 @@ function App() {
     const endDate = useAppStore(state => state.endDate);
     const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const appContainer = useRef<HTMLDivElement>(null);
-    const debouncedMinViewCount = useDebounce(minViewCount, 1000);
-    const debouncedTitleFilterField = useDebounce(titleFilterField, 1000);
+    const debouncedMinViewCount = useDebounce(minViewCount, DEBOUNCE_TIME);
+    const debouncedTitleFilterField = useDebounce(titleFilterField, DEBOUNCE_TIME);
+    const debouncedChannels = useDebounce(channels, DEBOUNCE_TIME);
     const isLandscape = useMediaQuery("(min-width: 1200px)");
     const theme = useTheme();
 
@@ -107,7 +107,7 @@ function App() {
             nextClipTimeoutRef.current = null;
         }
 
-        addViewedClip(clipMeta.id);
+        addViewedClips([clipMeta.id]);
         incrementCurrentClipIndex(filteredClips.length - 1);
     }, [clipMeta, filteredClips.length]);
 
@@ -115,15 +115,6 @@ function App() {
         setIsInfinitePlay(false);
         decrementCurrentClipIndex();
     }, []);
-
-    const addChannel = useCallback(() => {
-        setChannelnameField("");
-
-        const newChannelNames = channelsField.split(" ").map(s => s.toLowerCase()).filter(s => /^[a-zA-Z0-9][\w]{2,24}$/.test(s) && !channels.includes(s));
-        const uniqueChannelNames = [...new Set(newChannelNames)];
-
-        if (uniqueChannelNames.length) addChannels(uniqueChannelNames);
-    }, [channelsField, channels]);
 
     const scrollTop = useCallback(() => {
         setTimeout(() => {
@@ -142,29 +133,36 @@ function App() {
     }, [handleSettingsModalClose, isLandscape]);
 
     useEffect(function fetchClips() {
-        if (!channels.length) return setClips([]);
-
+        setIsLoading(true);
         setClips([]);
+        setCurrentClipIndex(0);
+
+        if (!debouncedChannels.length) return;
 
         const includeLastDayDate = new Date(endDate);
         includeLastDayDate.setHours(23, 59, 59, 999);
         const abortcontroller = new AbortController();
         getClips({
-            channels,
+            channels: debouncedChannels,
             start: new Date(startDate).toISOString(),
             end: includeLastDayDate.toISOString(),
             minViewCount: debouncedMinViewCount,
             signal: abortcontroller.signal
-        }).then(clips => clips && setClips(clips));
-        setCurrentClipIndex(0);
+        }).then(clips => {
+            if (clips) setClips(clips ?? []);
+            if (clips) setIsLoading(false);
+        })
 
-        return () => abortcontroller.abort();
-    }, [channels, debouncedMinViewCount, endDate, startDate]);
+        return () => {
+            abortcontroller.abort();
+            setIsLoading(false);
+        };
+    }, [debouncedChannels, debouncedMinViewCount, endDate, startDate]);
 
     useEffect(function attachEventHandlers() {
         function keyHandler(e: KeyboardEvent) {
             if (e.code === "Enter" || e.code === "NumpadEnter") {
-                addChannel();
+                addChannels();
             }
 
             if ((e.target as HTMLElement).tagName === "INPUT") return;
@@ -183,7 +181,7 @@ function App() {
             document.removeEventListener("keydown", keyHandler);
             document.removeEventListener("mouseup", mouseHandler);
         };
-    }, [addChannel, nextClip, prevClip]);
+    }, [nextClip, prevClip]);
 
     useEffect(function startInfinitePlayTimer() {
         if ((!isInfinitePlay && nextClipTimeoutRef.current) || !clipMeta) {
@@ -208,13 +206,8 @@ function App() {
     }, [filteredClips]);
 
     const settings = (
-        <Settings
-            scrollTop={scrollTop}
-            addChannel={addChannel}
-            filteredClips={filteredClips}
-            totalClips={filteredClipsByMinViews.length}
-        />
-    )
+        <Settings scrollTop={scrollTop} />
+    );
 
     return (
         <NextUIProvider theme={nextTheme}>
@@ -239,13 +232,14 @@ function App() {
                     width: isLandscape ? undefined : "100%",
                 }}>
                     {isLandscape && settings}
-                    {clipMeta && <ClipInfo clipMeta={clipMeta} />}
+                    {clipMeta && <ClipInfo clipMeta={clipMeta} filteredClips={filteredClips} totalClips={filteredClipsByMinViews.length} />}
                     {!isLandscape &&
                         <Button
                             css={{
                                 minWidth: "40px",
                                 minHeight: "40px",
                                 paddingLeft: "2.5em",
+                                m: "1em",
                                 marginLeft: "auto",
                             }}
                             onPress={() => {
