@@ -73,7 +73,7 @@ function App() {
     const viewedClips = useAppStore(state => state.viewedClips);
     const startDate = useAppStore(state => state.startDate);
     const endDate = useAppStore(state => state.endDate);
-    const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>();
     const appContainer = useRef<HTMLDivElement>(null);
     const debouncedMinViewCount = useDebounce(minViewCount, DEBOUNCE_TIME);
     const debouncedTitleFilterField = useDebounce(titleFilterField, DEBOUNCE_TIME);
@@ -108,8 +108,8 @@ function App() {
         }
 
         addViewedClips([clipMeta.id]);
-        incrementCurrentClipIndex(filteredClips.length - 1);
-    }, [clipMeta, filteredClips.length]);
+        if (!isInfinitePlay) incrementCurrentClipIndex(filteredClips.length - 1);
+    }, [clipMeta, filteredClips.length, isInfinitePlay]);
 
     const scrollTop = useCallback(() => {
         setTimeout(() => {
@@ -146,7 +146,7 @@ function App() {
         }).then(clips => {
             if (clips) setClips(clips ?? []);
             if (clips) setIsLoading(false);
-        })
+        });
 
         return () => {
             abortcontroller.abort();
@@ -193,8 +193,7 @@ function App() {
                 else setIsInfinitePlay(false);
             }, (clipMeta.duration + infinitePlayBuffer) * 1000);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [clipMeta, isInfinitePlay, nextClip]);
+    }, [clipMeta, infinitePlayBuffer, isInfinitePlay, nextClip]);
 
     useEffect(function resetCurrentClipIndex() {
         setCurrentClipIndex(0);
