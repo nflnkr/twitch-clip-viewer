@@ -88,12 +88,7 @@ export const setInfinitePlayBuffer = (infinitePlayBuffer: number) => useAppStore
 export const setStartDate = (startDate: number) => useAppStore.setState({ startDate });
 export const setEndDate = (endDate: number) => useAppStore.setState({ endDate });
 
-export const switchIsHideViewed = () => {
-    useAppStore.setState(state => ({
-        isHideViewed: !state.isHideViewed,
-        isInfinitePlay: !state.isHideViewed ? false : state.isInfinitePlay,
-    }));
-};
+export const switchIsHideViewed = () => useAppStore.setState(state => ({ isHideViewed: !state.isHideViewed }));
 
 export const setMinViewCount = (minViewCount: number) => {
     useAppStore.setState({ minViewCount });
