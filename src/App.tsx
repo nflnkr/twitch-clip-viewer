@@ -108,8 +108,8 @@ function App() {
         }
 
         addViewedClips([clipMeta.id]);
-        if (!isInfinitePlay) incrementCurrentClipIndex(filteredClips.length - 1);
-    }, [clipMeta, filteredClips.length, isInfinitePlay]);
+        if (!isHideViewed) incrementCurrentClipIndex(filteredClips.length - 1);
+    }, [clipMeta, filteredClips.length, isHideViewed]);
 
     const scrollTop = useCallback(() => {
         setTimeout(() => {
@@ -178,7 +178,7 @@ function App() {
         };
     }, [nextClip]);
 
-    useEffect(function startInfinitePlayTimer() { // TODO fix this feature
+    useEffect(function startInfinitePlayTimer() {
         if ((!isInfinitePlay && nextClipTimeoutRef.current) || !clipMeta) {
             if (!nextClipTimeoutRef.current) return;
             clearTimeout(nextClipTimeoutRef.current);
