@@ -11,6 +11,7 @@ const ControlsContainer = styled("div", {
     flexDirection: "column",
     gap: "12px",
     p: "1em",
+    width: "inherit",
 });
 
 const Flexbox = styled("div", {
