@@ -11,10 +11,9 @@ const ClipInfoContainer = styled("div", {
     p: "1em",
 });
 
-export default function ClipInfo({ clipMeta, filteredClips, totalClips }: {
+export default function ClipInfo({ clipMeta, filteredClips }: {
     clipMeta: TwitchClipMetadata;
     filteredClips: TwitchClipMetadata[];
-    totalClips: number;
 }) {
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isHideViewed = useAppStore(state => state.isHideViewed);
@@ -27,7 +26,7 @@ export default function ClipInfo({ clipMeta, filteredClips, totalClips }: {
             {isHideViewed ?
                 <Text size="small">Remaining: {filteredClips.length - 1}</Text>
                 :
-                totalClips > 0 && <Text size="small">{currentClipIndex + 1}/{totalClips}</Text>
+                filteredClips.length > 0 && <Text size="small">{currentClipIndex + 1}/{filteredClips.length}</Text>
             }
             <Text h3 css={{ overflowWrap: "anywhere" }}>{clipMeta.title}</Text>
             <Link

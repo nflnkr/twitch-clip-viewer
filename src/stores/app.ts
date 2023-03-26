@@ -64,7 +64,6 @@ export const useAppStore = create<AppState>()(
                 minViewCount: state.minViewCount,
                 viewedClips: state.viewedClips,
                 startDate: state.startDate,
-                endDate: state.endDate,
             }),
         }
     )
@@ -132,6 +131,10 @@ export const removeChannels = (channelsToRemove: string[]) => {
     useAppStore.setState({ channels });
 };
 
+export const clearChannels = () => {
+    useAppStore.setState({ channels: [] });
+};
+
 export const addViewedClips = (clipsToAdd: string[]) => {
     const viewedClips = [...useAppStore.getState().viewedClips, ...clipsToAdd];
     const uniqueViewedClips = [...new Set(viewedClips)];
@@ -142,8 +145,8 @@ export const clearViewedClips = () => useAppStore.setState({ viewedClips: [] });
 
 export const incrementCurrentClipIndex = (maxIndex: number) => {
     const newCurrentClipIndex = useAppStore.getState().currentClipIndex + 1;
-    useAppStore.setState({
-        currentClipIndex: Math.min(newCurrentClipIndex, maxIndex)
+    if (newCurrentClipIndex <= maxIndex) useAppStore.setState({
+        currentClipIndex: newCurrentClipIndex,
     });
 };
 

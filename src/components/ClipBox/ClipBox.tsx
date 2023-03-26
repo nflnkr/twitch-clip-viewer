@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import TwitchClipEmbed from "../components/TwitchClipEmbed";
+import TwitchClipEmbed from "./TwitchClipEmbed";
 import { Button, Text, Loading, styled, keyframes } from "@nextui-org/react";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
-import ClipCarousel from "../components/ClipCarousel";
-import { decrementCurrentClipIndex, setCurrentClipIndex, setIsInfinitePlay, useAppStore } from "../stores/app";
-import { TwitchClipMetadata } from "../model/clips";
-import okayegImage from "../images/okayeg.png";
+import ClipCarousel from "./ClipCarousel";
+import { decrementCurrentClipIndex, setCurrentClipIndex, setIsInfinitePlay, useAppStore } from "../../stores/app";
+import { TwitchClipMetadata } from "../../model/clips";
+import okayegImage from "../../images/okayeg.png";
 
 
 const CenterContentBox = styled("div", {
@@ -59,6 +59,7 @@ export default function ClipBox({ nextClip, filteredClips, clipMeta }: {
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
     const isShowCarousel = useAppStore(state => state.isShowCarousel);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
+    const isHideViewed = useAppStore(state => state.isHideViewed);
 
     // disable rerender on isAutoplay change
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,13 +68,13 @@ export default function ClipBox({ nextClip, filteredClips, clipMeta }: {
     const clipProgressBar = useMemo(() => (
         clipMeta && isInfinitePlay ?
             <ClipProgressBar
-                key={clipMeta.id + isInfinitePlay.toString()}
+                key={clipMeta.id + isInfinitePlay.toString() + isHideViewed.toString()}
                 css={{
                     animation: `${sliderAnimation} ${(clipMeta.duration + infinitePlayBuffer).toFixed(0)}s linear`,
                 }}
             /> : null
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [clipMeta, isInfinitePlay]);
+    ), [clipMeta, isInfinitePlay, isHideViewed]);
 
     const handleCarouselItemClick = (newIndex: number) => {
         setCurrentClipIndex(newIndex);

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { getClips } from "./utils/fetchers";
-import { NextUIProvider, Button, createTheme, styled, useTheme } from "@nextui-org/react";
+import { NextUIProvider, Button, createTheme, styled, useTheme, Badge } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
 import { addChannels, addViewedClips, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsLoading, setIsSettingsModalShown, useAppStore } from "./stores/app";
-import Settings from "./components/Settings";
+import Settings from "./components/Settings/Settings";
 import ClipInfo from "./components/ClipInfo";
-import ClipBox from "./components/ClipBox";
+import ClipBox from "./components/ClipBox/ClipBox";
 import { setClips, useClipsStore } from "./stores/clips";
 
 
@@ -30,7 +30,8 @@ const ControlsAndClipInfoContainer = styled("div", {
     minWidth: "fit-content",
     width: "25rem",
     maxHeight: "100dvh",
-    overflow: "auto",
+    overflowY: "auto",
+    overflowX: "hidden",
 });
 
 const ModalContainer = styled("div", {
@@ -51,6 +52,10 @@ const SettingsModalContainer = styled("div", {
     marginTop: "1em",
     marginBottom: "1em",
     height: "max-content",
+});
+
+export const StyledBadge = styled(Badge, {
+    userSelect: "none",
 });
 
 const DEBOUNCE_TIME = 500;
@@ -181,6 +186,7 @@ function App() {
     useEffect(function startInfinitePlayTimer() {
         if ((!isInfinitePlay && nextClipTimeoutRef.current) || !clipMeta) {
             if (!nextClipTimeoutRef.current) return;
+
             clearTimeout(nextClipTimeoutRef.current);
             nextClipTimeoutRef.current = null;
             return;
@@ -194,6 +200,20 @@ function App() {
             }, (clipMeta.duration + infinitePlayBuffer) * 1000);
         }
     }, [clipMeta, infinitePlayBuffer, isInfinitePlay, nextClip]);
+
+    useEffect(function resetInfinitePlayTimer() {
+        if (!nextClipTimeoutRef.current || !clipMeta) return;
+
+        clearTimeout(nextClipTimeoutRef.current);
+        nextClipTimeoutRef.current = null;
+
+        nextClipTimeoutRef.current = setTimeout(() => {
+            nextClipTimeoutRef.current = null;
+            if (!document.hidden) return nextClip();
+            else setIsInfinitePlay(false);
+        }, (clipMeta.duration + infinitePlayBuffer) * 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isHideViewed]);
 
     useEffect(function resetCurrentClipIndex() {
         setCurrentClipIndex(0);
@@ -225,7 +245,7 @@ function App() {
                     width: isLandscape ? undefined : "100%",
                 }}>
                     {isLandscape && settings}
-                    {clipMeta && <ClipInfo clipMeta={clipMeta} filteredClips={filteredClips} totalClips={filteredClipsByMinViews.length} />}
+                    {clipMeta && <ClipInfo clipMeta={clipMeta} filteredClips={filteredClips} />}
                     {!isLandscape &&
                         <Button
                             css={{

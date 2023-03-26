@@ -1,7 +1,8 @@
-import { ChannelPreset } from "../model/channelPreset";
-import { Text, Badge, Card, Button } from "@nextui-org/react";
-import { removeChannelPreset, setSelectedChannelPresetIndex } from "../stores/app";
+import { ChannelPreset } from "../../model/channelPreset";
+import { Text, Card, Button } from "@nextui-org/react";
+import { removeChannelPreset, setSelectedChannelPresetIndex } from "../../stores/app";
 import { IoMdClose } from "react-icons/io";
+import { StyledBadge } from "../../App";
 
 
 interface Props {
@@ -62,11 +63,11 @@ export default function ChannelPresetItem({ channelPreset, index, isSelected }: 
                 gap: "2px",
             }}>
                 {channelPreset.channels.map(channel => (
-                    <Badge
+                    <StyledBadge
                         color="secondary"
                         key={`${channelPreset.id}-${channel}`}
                         size="sm"
-                    >{channel}</Badge>
+                    >{channel}</StyledBadge>
                 ))}
             </Card.Body>
         </Card>

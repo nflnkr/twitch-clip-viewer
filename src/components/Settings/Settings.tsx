@@ -1,9 +1,10 @@
 import { useMemo } from "react";
-import { Button, Text, Switch, Input, Badge, styled, Divider, useTheme } from "@nextui-org/react";
+import { Button, Text, Switch, Input, styled, Divider, useTheme, Card } from "@nextui-org/react";
 import { DateRange, RangeKeyDict } from "react-date-range";
-import { clearViewedClips, removeChannels, setChannelsField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setMinViewCount, setTitleFilterField, setStartDate, switchIsCalendarShown, useAppStore, switchIsHideViewed, setIsHideViewed, addChannelPreset, updateChannelPreset, addChannels } from "../stores/app";
+import { clearViewedClips, removeChannels, setChannelsField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setMinViewCount, setTitleFilterField, setStartDate, switchIsCalendarShown, useAppStore, switchIsHideViewed, setIsHideViewed, addChannelPreset, updateChannelPreset, addChannels, clearChannels } from "../../stores/app";
 import { IoMdClose } from "react-icons/io";
 import ChannelPresetItem from "./ChannelPresetItem";
+import { StyledBadge } from "../../App";
 
 
 const ControlsContainer = styled("div", {
@@ -11,6 +12,7 @@ const ControlsContainer = styled("div", {
     flexDirection: "column",
     gap: "12px",
     p: "1em",
+    width: "inherit",
 });
 
 const Flexbox = styled("div", {
@@ -109,16 +111,42 @@ export default function Settings({ scrollTop }: {
                 onChange={e => setChannelsField(e.target.value)}
                 contentRight={<Button size="xs" onPress={addChannels} style={{ right: "5em" }}>Add</Button>}
             />
-            <FlexboxWrap css={{ gap: "2px" }}>
-                {channels.map(channel =>
-                    <Badge
-                        color="secondary"
-                        key={channel}
-                        size="sm"
-                        onClick={() => removeChannels([channel])}
-                    >{channel}</Badge>
-                )}
-            </FlexboxWrap>
+            {channels.length > 0 &&
+                <Card variant="bordered">
+                    <Card.Body css={{
+                        p: "4px",
+                        backgroundColor: "#26262e",
+                        flexDirection: "row",
+                        alignItems: "center",
+                    }}>
+                        <FlexboxWrap css={{ gap: "2px" }}>
+                            {channels.map(channel => (
+                                <StyledBadge
+                                    color="secondary"
+                                    key={channel}
+                                    size="sm"
+                                    onClick={() => removeChannels([channel])}
+                                >{channel}</StyledBadge>
+                            ))}
+                        </FlexboxWrap>
+                        <Button
+                            icon={<IoMdClose />}
+                            onPress={clearChannels}
+                            css={{
+                                ml: "auto",
+                                height: "20px",
+                                minWidth: "20px",
+                                width: "20px",
+                                backgroundColor: "rgb(0 0 0 / 0)",
+                                color: "rgba(255, 255, 255, 0.5)",
+                                "&:hover": {
+                                    color: "rgba(255, 255, 255, 0.9)",
+                                }
+                            }}
+                        />
+                    </Card.Body>
+                </Card>
+            }
             <Input
                 size="sm"
                 aria-label="min views"
@@ -279,21 +307,6 @@ export default function Settings({ scrollTop }: {
             {isSettingsModalShown &&
                 <Button size="sm" onPress={handleSettingsModalClose}>Close</Button>
             }
-            {/* <Tooltip
-            color="primary"
-            placement="right"
-            hideArrow
-            content={
-                <Grid.Container>
-                    <Grid xs={6}>Next clip</Grid>
-                    <Grid xs={6}>➡, N, mouse button 4</Grid>
-                    <Grid xs={6}>Previous clip</Grid>
-                    <Grid xs={6}>⬅, B, mouse button 3</Grid>
-                </Grid.Container>
-            }
-        >
-            <Button size="xs">Shortcuts</Button>
-        </Tooltip> */}
         </ControlsContainer>
     );
 }

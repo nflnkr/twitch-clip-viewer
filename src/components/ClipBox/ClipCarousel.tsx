@@ -2,7 +2,7 @@ import { css, styled, Text } from "@nextui-org/react";
 import { FixedSizeList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { useEffect, useRef } from "react";
-import { TwitchClipMetadata } from "../model/clips";
+import { TwitchClipMetadata } from "../../model/clips";
 
 
 const CAROUSEL_HEIGHT = 140;
