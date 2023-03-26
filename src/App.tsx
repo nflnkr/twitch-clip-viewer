@@ -30,7 +30,8 @@ const ControlsAndClipInfoContainer = styled("div", {
     minWidth: "fit-content",
     width: "25rem",
     maxHeight: "100dvh",
-    overflow: "auto",
+    overflowY: "auto",
+    overflowX: "hidden",
 });
 
 const ModalContainer = styled("div", {
