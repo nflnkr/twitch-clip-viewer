@@ -209,7 +209,7 @@ function App() {
 
         nextClipTimeoutRef.current = setTimeout(() => {
             nextClipTimeoutRef.current = null;
-            if (!document.hidden) return nextClip();
+            if (document.visibilityState === "visible") return nextClip();
             else setIsInfinitePlay(false);
         }, (clipMeta.duration + infinitePlayBuffer) * 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
