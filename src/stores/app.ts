@@ -96,7 +96,7 @@ export const setMinViewCount = (minViewCount: number) => {
 export const setSelectedChannelPresetIndex = (selectedChannelPresetIndex: number | null) => {
     const state = useAppStore.getState();
 
-    const newState = selectedChannelPresetIndex === null ? {
+    const newState: Partial<AppState> = selectedChannelPresetIndex === null ? {
         ...state,
     } : {
         ...state,
@@ -104,6 +104,7 @@ export const setSelectedChannelPresetIndex = (selectedChannelPresetIndex: number
         titleFilterField: state.channelPresets[selectedChannelPresetIndex].titleFilter,
         minViewCount: state.channelPresets[selectedChannelPresetIndex].minViews,
         channels: state.channelPresets[selectedChannelPresetIndex].channels.slice(),
+        isInfinitePlay: false,
     };
 
     useAppStore.setState(newState);
