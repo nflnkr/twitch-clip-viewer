@@ -98,6 +98,7 @@ export const setSelectedChannelPresetIndex = (selectedChannelPresetIndex: number
 
     const newState: Partial<AppState> = selectedChannelPresetIndex === null ? {
         ...state,
+        isInfinitePlay: false,
     } : {
         ...state,
         selectedChannelPresetIndex,
