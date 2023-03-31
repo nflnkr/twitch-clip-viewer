@@ -44,7 +44,7 @@ export const useAppStore = create<AppState>()(
                 infinitePlayBuffer: 4,
                 minViewCount: 50,
                 viewedClips: [],
-                startDate: new Date(new Date().setDate(new Date().getDate() - 7)).getTime(),
+                startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).getTime(),
                 endDate: new Date().getTime(),
                 isLoading: false,
             }),
