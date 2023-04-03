@@ -23,6 +23,7 @@ interface AppState {
     viewedClips: string[];
     startDate: number;
     endDate: number;
+    isLoading: boolean;
 }
 
 export const useAppStore = create<AppState>()(
@@ -46,6 +47,7 @@ export const useAppStore = create<AppState>()(
                 viewedClips: [],
                 startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).getTime(),
                 endDate: new Date().getTime(),
+                isLoading: false,
             }),
             { name: "App" }
         ),
@@ -83,6 +85,7 @@ export const setIsShowCarousel = (isShowCarousel: boolean) => useAppStore.setSta
 export const setInfinitePlayBuffer = (infinitePlayBuffer: number) => useAppStore.setState({ infinitePlayBuffer });
 export const setStartDate = (startDate: number) => useAppStore.setState({ startDate });
 export const setEndDate = (endDate: number) => useAppStore.setState({ endDate });
+export const setIsLoading = (isLoading: boolean) => useAppStore.setState({ isLoading });
 
 export const setMinViewCount = (minViewCount: number) => {
     useAppStore.setState({ minViewCount });

@@ -3,7 +3,7 @@ import { getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, createTheme, styled, useTheme, Badge } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
-import { addChannels, addClips, addViewedClips, clearClips, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, useAppStore } from "./stores/app";
+import { addChannels, addClips, addViewedClips, clearClips, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsLoading, setIsSettingsModalShown, useAppStore } from "./stores/app";
 import Settings from "./components/Settings/Settings";
 import ClipInfo from "./components/ClipInfo";
 import ClipBox from "./components/ClipBox/ClipBox";
@@ -130,6 +130,10 @@ function App() {
 
         if (!debouncedChannels.length) return;
 
+        setTimeout(() => {
+            setIsLoading(true);
+        }, 100);
+
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
         const end = new Date(endDate);
@@ -143,7 +147,9 @@ function App() {
             minViewCount: debouncedMinViewCount,
             signal: abortcontroller.signal,
             onNewClips: addClips,
-        }).catch(console.log);
+        }).catch(console.log).finally(() => {
+            setIsLoading(false);
+        });
 
         return () => {
             abortcontroller.abort();
@@ -219,7 +225,7 @@ function App() {
                     width: isLandscape ? undefined : "100%",
                 }}>
                     {isLandscape && settings}
-                    {clipMeta && <ClipInfo clipMeta={clipMeta} filteredClips={filteredClips} />}
+                    <ClipInfo clipMeta={clipMeta} filteredClips={filteredClips} />
                     {!isLandscape &&
                         <Button
                             css={{

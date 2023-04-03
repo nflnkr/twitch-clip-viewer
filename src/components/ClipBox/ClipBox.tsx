@@ -80,9 +80,7 @@ export default function ClipBox({ nextClip, filteredClips, clipMeta }: {
         setIsInfinitePlay(false);
     };
 
-    // const loading = <CenterContentBox><Loading size="xl" /></CenterContentBox>
-
-    return (
+     return (
         <ClipContainer>
             {channels.length > 0 ?
                 filteredClips.length && clipMeta ?
