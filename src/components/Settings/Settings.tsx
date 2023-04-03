@@ -295,7 +295,7 @@ export default function Settings({ scrollTop }: {
                     size="xs"
                     onPress={clearViewedClips}
                 >
-                    Reset viewed {viewedClips.length > 0 && `(${viewedClips.length})`}
+                    Reset viewed clips {viewedClips.length > 0 && `(${viewedClips.length})`}
                 </Button>
             </Flexbox>
             {isSettingsModalShown &&
