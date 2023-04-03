@@ -3,11 +3,10 @@ import { getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, createTheme, styled, useTheme, Badge } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
-import { addChannels, addViewedClips, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, useAppStore } from "./stores/app";
+import { addChannels, addClips, addViewedClips, clearClips, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, useAppStore } from "./stores/app";
 import Settings from "./components/Settings/Settings";
 import ClipInfo from "./components/ClipInfo";
 import ClipBox from "./components/ClipBox/ClipBox";
-import { addClips, clearClips, useClipsStore } from "./stores/clips";
 
 
 const nextTheme = createTheme({
@@ -65,16 +64,14 @@ const DEBOUNCE_TIME = 500;
 // TODO collapse settings bar/ hide/show on hover
 // TODO en/ru
 function App() {
-    const clips = useClipsStore(state => state.clips);
+    const clips = useAppStore(state => state.clips);
     const titleFilterField = useAppStore(state => state.titleFilterField);
     const channels = useAppStore(state => state.channels);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
-    const isHideViewed = useAppStore(state => state.isHideViewed);
     const isSettingsModalShown = useAppStore(state => state.isSettingsModalShown);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
     const minViewCount = useAppStore(state => state.minViewCount);
-    const viewedClips = useAppStore(state => state.viewedClips);
     const startDate = useAppStore(state => state.startDate);
     const endDate = useAppStore(state => state.endDate);
     const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>();
@@ -94,12 +91,9 @@ function App() {
         if (debouncedTitleFilterField) filteredClips = filteredClips.filter(
             clip => clip.title.toLowerCase().includes(debouncedTitleFilterField.toLowerCase())
         );
-        if (isHideViewed) filteredClips = filteredClips.filter(
-            clip => !viewedClips.includes(clip.id)
-        );
 
         return filteredClips;
-    }, [debouncedTitleFilterField, filteredClipsByMinViews, isHideViewed, viewedClips]);
+    }, [debouncedTitleFilterField, filteredClipsByMinViews]);
 
     const clipMeta = filteredClips.length ? filteredClips[currentClipIndex] : undefined;
 
@@ -112,8 +106,8 @@ function App() {
         }
 
         addViewedClips([clipMeta.id]);
-        if (!isHideViewed) incrementCurrentClipIndex(filteredClips.length - 1);
-    }, [clipMeta, filteredClips.length, isHideViewed]);
+        incrementCurrentClipIndex(filteredClips.length - 1);
+    }, [clipMeta, filteredClips.length]);
 
     const scrollTop = useCallback(() => {
         setTimeout(() => {
@@ -198,20 +192,6 @@ function App() {
             }, (clipMeta.duration + infinitePlayBuffer) * 1000);
         }
     }, [clipMeta, infinitePlayBuffer, isInfinitePlay, nextClip]);
-
-    useEffect(function resetInfinitePlayTimer() {
-        if (!nextClipTimeoutRef.current || !clipMeta) return;
-
-        clearTimeout(nextClipTimeoutRef.current);
-        nextClipTimeoutRef.current = null;
-
-        nextClipTimeoutRef.current = setTimeout(() => {
-            nextClipTimeoutRef.current = null;
-            if (document.visibilityState === "visible") return nextClip();
-            else setIsInfinitePlay(false);
-        }, (clipMeta.duration + infinitePlayBuffer) * 1000);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isHideViewed]);
 
     const settings = (
         <Settings scrollTop={scrollTop} />

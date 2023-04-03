@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import TwitchClipEmbed from "./TwitchClipEmbed";
-import { Button, Text,  styled, keyframes } from "@nextui-org/react";
+import { Button, Text, styled, keyframes } from "@nextui-org/react";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
+import { MdViewCarousel } from "react-icons/md";
 import ClipCarousel from "./ClipCarousel";
-import { decrementCurrentClipIndex, setCurrentClipIndex, setIsInfinitePlay, useAppStore } from "../../stores/app";
+import { decrementCurrentClipIndex, setCurrentClipIndex, setIsInfinitePlay, switchIsShowCarousel, useAppStore } from "../../stores/app";
 import { TwitchClipMetadata } from "../../model/clips";
 import okayegImage from "../../images/okayeg.png";
 
@@ -32,9 +33,9 @@ const ButtonsContainer = styled("div", {
 });
 
 const ControlsButton = styled(Button, {
-    flex: "1 1 50%",
     borderRadius: 0,
     minWidth: "120px",
+    flex: "1 1 50%",
 });
 
 const sliderAnimation = keyframes({
@@ -58,7 +59,6 @@ export default function ClipBox({ nextClip, filteredClips, clipMeta }: {
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
     const isShowCarousel = useAppStore(state => state.isShowCarousel);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
-    const isHideViewed = useAppStore(state => state.isHideViewed);
 
     // disable rerender on isAutoplay change
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,13 +67,13 @@ export default function ClipBox({ nextClip, filteredClips, clipMeta }: {
     const clipProgressBar = useMemo(() => (
         clipMeta && isInfinitePlay ?
             <ClipProgressBar
-                key={clipMeta.id + isInfinitePlay.toString() + isHideViewed.toString()}
+                key={clipMeta.id + isInfinitePlay.toString()}
                 css={{
                     animation: `${sliderAnimation} ${(clipMeta.duration + infinitePlayBuffer).toFixed(0)}s linear`,
                 }}
             /> : null
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [clipMeta, isInfinitePlay, isHideViewed]);
+    ), [clipMeta, isInfinitePlay]);
 
     const handleCarouselItemClick = (newIndex: number) => {
         setCurrentClipIndex(newIndex);
@@ -97,13 +97,20 @@ export default function ClipBox({ nextClip, filteredClips, clipMeta }: {
                         }
                         <ButtonsContainer>
                             <ControlsButton
-                                size="md"
                                 disabled={currentClipIndex === 0}
                                 onPress={decrementCurrentClipIndex}
                                 icon={<ImArrowLeft2 />}
                             />
+                            <Button
+                                onPress={switchIsShowCarousel}
+                                icon={<MdViewCarousel />}
+                                css={{
+                                    borderRadius: 0,
+                                    minWidth: 0,
+                                    backgroundColor: "$gray500",
+                                }}
+                            />
                             <ControlsButton
-                                size="md"
                                 disabled={currentClipIndex >= filteredClips.length - 1}
                                 onPress={nextClip}
                                 icon={<ImArrowRight2 />}

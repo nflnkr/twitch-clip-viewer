@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { ChannelPreset } from "../model/channelPreset";
+import { TwitchClipMetadata } from "../model/clips";
 
 
 interface AppState {
@@ -13,12 +14,12 @@ interface AppState {
     currentClipIndex: number;
     isClipAutoplay: boolean;
     isInfinitePlay: boolean;
-    isHideViewed: boolean;
     isCalendarShown: boolean;
     isSettingsModalShown: boolean;
     isShowCarousel: boolean;
     infinitePlayBuffer: number;
     minViewCount: number;
+    clips: TwitchClipMetadata[];
     viewedClips: string[];
     startDate: number;
     endDate: number;
@@ -36,12 +37,12 @@ export const useAppStore = create<AppState>()(
                 currentClipIndex: 0,
                 isClipAutoplay: true,
                 isInfinitePlay: false,
-                isHideViewed: false,
                 isCalendarShown: false,
                 isSettingsModalShown: false,
                 isShowCarousel: false,
                 infinitePlayBuffer: 4,
                 minViewCount: 50,
+                clips: [],
                 viewedClips: [],
                 startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).getTime(),
                 endDate: new Date().getTime(),
@@ -73,7 +74,6 @@ export const switchIsClipAutoplay = () => useAppStore.setState(state => ({ isCli
 export const setIsClipAutoplay = (isClipAutoplay: boolean) => useAppStore.setState({ isClipAutoplay });
 export const switchIsInfinitePlay = () => useAppStore.setState(state => ({ isInfinitePlay: !state.isInfinitePlay }));
 export const setIsInfinitePlay = (isInfinitePlay: boolean) => useAppStore.setState({ isInfinitePlay });
-export const setIsHideViewed = (isHideViewed: boolean) => useAppStore.setState({ isHideViewed });
 export const switchIsCalendarShown = () => useAppStore.setState(state => ({ isCalendarShown: !state.isCalendarShown }));
 export const setIsCalendarShown = (isCalendarShown: boolean) => useAppStore.setState({ isCalendarShown });
 export const switchIsSettingsModalShown = () => useAppStore.setState(state => ({ isSettingsModalShown: !state.isSettingsModalShown }));
@@ -83,8 +83,6 @@ export const setIsShowCarousel = (isShowCarousel: boolean) => useAppStore.setSta
 export const setInfinitePlayBuffer = (infinitePlayBuffer: number) => useAppStore.setState({ infinitePlayBuffer });
 export const setStartDate = (startDate: number) => useAppStore.setState({ startDate });
 export const setEndDate = (endDate: number) => useAppStore.setState({ endDate });
-
-export const switchIsHideViewed = () => useAppStore.setState(state => ({ isHideViewed: !state.isHideViewed }));
 
 export const setMinViewCount = (minViewCount: number) => {
     useAppStore.setState({ minViewCount });
@@ -191,6 +189,23 @@ export const updateChannelPreset = () => {
 export const removeChannelPreset = (channelPresetId: string) => {
     useAppStore.setState({
         channelPresets: useAppStore.getState().channelPresets.filter(channelPreset => channelPreset.id !== channelPresetId)
+    });
+};
+
+export const setClips = (clips: TwitchClipMetadata[]) => useAppStore.setState({ clips });
+
+export const clearClips = () => useAppStore.setState({ clips: [] });
+
+export const addClips = (clips: TwitchClipMetadata[]) => useAppStore.setState(state => ({ clips: [...state.clips, ...clips] }));
+
+export const clearClipsFromViewed = () => {
+    const viewedClips = useAppStore.getState().viewedClips;
+    const clips = useAppStore.getState().clips;
+
+    const filteredClips = clips.filter(clip => !viewedClips.includes(clip.id));
+    useAppStore.setState({
+        clips: filteredClips,
+        currentClipIndex: 0,
     });
 };
 

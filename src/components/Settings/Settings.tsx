@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Button, Text, Switch, Input, styled, Divider, useTheme, Card } from "@nextui-org/react";
 import { DateRange, RangeKeyDict } from "react-date-range";
-import { clearViewedClips, removeChannels, setChannelsField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setIsShowCarousel, setMinViewCount, setTitleFilterField, setStartDate, switchIsCalendarShown, useAppStore, switchIsHideViewed, setIsHideViewed, addChannelPreset, updateChannelPreset, addChannels, clearChannels } from "../../stores/app";
+import { clearViewedClips, removeChannels, setChannelsField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setMinViewCount, setTitleFilterField, setStartDate, switchIsCalendarShown, useAppStore, addChannelPreset, updateChannelPreset, addChannels, clearChannels, clearClipsFromViewed } from "../../stores/app";
 import { IoMdClose } from "react-icons/io";
 import ChannelPresetItem from "./ChannelPresetItem";
 import { StyledBadge } from "../../App";
@@ -32,13 +32,6 @@ const FlexboxWrap = styled("div", {
     alignItems: "center",
 });
 
-const Grid = styled("div", {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gridAutoRows: "1fr",
-    gap: "6px",
-});
-
 export default function Settings({ scrollTop }: {
     scrollTop: () => void;
 }) {
@@ -49,10 +42,8 @@ export default function Settings({ scrollTop }: {
     const titleFilterField = useAppStore(state => state.titleFilterField);
     const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
-    const isHideViewed = useAppStore(state => state.isHideViewed);
     const isCalendarShown = useAppStore(state => state.isCalendarShown);
     const isSettingsModalShown = useAppStore(state => state.isSettingsModalShown);
-    const isShowCarousel = useAppStore(state => state.isShowCarousel);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
     const minViewCount = useAppStore(state => state.minViewCount);
     const viewedClips = useAppStore(state => state.viewedClips);
@@ -194,7 +185,7 @@ export default function Settings({ scrollTop }: {
             <Flexbox css={{
                 gap: "6px", // TODO replace all gaps with theme spacing
                 width: "100%",
-                "& > *": {
+                "> button": {
                     flex: "1 1 50%",
                     minWidth: "min-content",
                 }
@@ -255,30 +246,22 @@ export default function Settings({ scrollTop }: {
                     direction="vertical"
                 />
             }
-            <Grid>
+            <FlexboxWrap css={{ gap: "20px" }}>
                 <FlexboxWrap>
-                    <Switch size="sm" checked={isHideViewed} onChange={e => switchIsHideViewed()} />
-                    <Text>Hide viewed</Text>
-                </FlexboxWrap>
-                <FlexboxWrap>
-                    <Switch size="sm" checked={isShowCarousel} onChange={e => setIsShowCarousel(e.target.checked)} />
-                    <Text>Carousel</Text>
-                </FlexboxWrap>
-                <FlexboxWrap>
-                    <Switch size="sm" checked={isClipAutoplay} onChange={e => {
-                        if (!e.target.checked) setIsInfinitePlay(false);
-                        setIsClipAutoplay(e.target.checked);
-                    }} />
-                    <Text>Clip autoplay</Text>
-                </FlexboxWrap>
-                <FlexboxWrap>
-                    <Switch size="sm" checked={isInfinitePlay} onChange={e => {
+                    <Switch size="md" checked={isInfinitePlay} onChange={e => {
                         if (e.target.checked) setIsClipAutoplay(true);
                         setIsInfinitePlay(e.target.checked);
                     }} />
                     <Text>Auto next</Text>
                 </FlexboxWrap>
-            </Grid>
+                <FlexboxWrap>
+                    <Switch size="md" checked={isClipAutoplay} onChange={e => {
+                        if (!e.target.checked) setIsInfinitePlay(false);
+                        setIsClipAutoplay(e.target.checked);
+                    }} />
+                    <Text>Clip autoplay</Text>
+                </FlexboxWrap>
+            </FlexboxWrap>
             {isInfinitePlay &&
                 <Input
                     size="sm"
@@ -295,15 +278,26 @@ export default function Settings({ scrollTop }: {
                     }}
                 />
             }
-            <Button
-                size="xs"
-                onPress={() => {
-                    clearViewedClips();
-                    setIsHideViewed(false);
-                }}
-            >
-                Clear viewed clips {viewedClips.length > 0 && `(${viewedClips.length})`}
-            </Button>
+            <Flexbox css={{
+                gap: "8px",
+                "> button": {
+                    flex: "1 1 50%",
+                    minWidth: "min-content",
+                }
+            }}>
+                <Button
+                    size="xs"
+                    onPress={clearClipsFromViewed}
+                >
+                    Hide viewed clips
+                </Button>
+                <Button
+                    size="xs"
+                    onPress={clearViewedClips}
+                >
+                    Reset viewed {viewedClips.length > 0 && `(${viewedClips.length})`}
+                </Button>
+            </Flexbox>
             {isSettingsModalShown &&
                 <Button size="sm" onPress={handleSettingsModalClose}>Close</Button>
             }

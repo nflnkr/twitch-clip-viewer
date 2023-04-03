@@ -16,18 +16,13 @@ export default function ClipInfo({ clipMeta, filteredClips }: {
     filteredClips: TwitchClipMetadata[];
 }) {
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
-    const isHideViewed = useAppStore(state => state.isHideViewed);
     const isLandscape = useMediaQuery("(min-width: 1200px)");
 
     return (
         <ClipInfoContainer css={{
             maxWidth: isLandscape ? "24em" : undefined,
         }}>
-            {isHideViewed ?
-                <Text size="small">Remaining: {filteredClips.length - 1}</Text>
-                :
-                filteredClips.length > 0 && <Text size="small">{currentClipIndex + 1}/{filteredClips.length}</Text>
-            }
+            {filteredClips.length > 0 && <Text size="small">{currentClipIndex + 1}/{filteredClips.length}</Text>}
             <Text h3 css={{ overflowWrap: "anywhere" }}>{clipMeta.title}</Text>
             <Link
                 target="_blank"
