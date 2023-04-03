@@ -3,11 +3,11 @@ import { getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, createTheme, styled, useTheme, Badge } from "@nextui-org/react";
 import { useDebounce, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
-import { addChannels, addViewedClips, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsLoading, setIsSettingsModalShown, useAppStore } from "./stores/app";
+import { addChannels, addViewedClips, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsSettingsModalShown, useAppStore } from "./stores/app";
 import Settings from "./components/Settings/Settings";
 import ClipInfo from "./components/ClipInfo";
 import ClipBox from "./components/ClipBox/ClipBox";
-import { setClips, useClipsStore } from "./stores/clips";
+import { addClips, clearClips, useClipsStore } from "./stores/clips";
 
 
 const nextTheme = createTheme({
@@ -60,7 +60,6 @@ export const StyledBadge = styled(Badge, {
 
 const DEBOUNCE_TIME = 500;
 
-// TODO concurrent fetch
 // TODO capture and stop MB3/4 events before iframe
 // TODO handle errors
 // TODO collapse settings bar/ hide/show on hover
@@ -87,7 +86,7 @@ function App() {
     const theme = useTheme();
 
     const filteredClipsByMinViews = useMemo(() => {
-        return clips.filter(clip => clip.view_count >= debouncedMinViewCount);
+        return clips.filter(clip => clip.view_count >= debouncedMinViewCount).sort((a, b) => b.view_count - a.view_count);
     }, [clips, debouncedMinViewCount]);
 
     const filteredClips = useMemo(() => {
@@ -133,29 +132,28 @@ function App() {
     }, [handleSettingsModalClose, isLandscape]);
 
     useEffect(function fetchClips() {
-        setIsLoading(true);
-        setClips([]);
         setCurrentClipIndex(0);
 
         if (!debouncedChannels.length) return;
 
-        const includeLastDayDate = new Date(endDate);
-        includeLastDayDate.setHours(23, 59, 59, 999);
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+
         const abortcontroller = new AbortController();
         getClips({
             channels: debouncedChannels,
-            start: new Date(startDate).toISOString(),
-            end: includeLastDayDate.toISOString(),
+            start: start.toISOString(),
+            end: end.toISOString(),
             minViewCount: debouncedMinViewCount,
-            signal: abortcontroller.signal
-        }).then(clips => {
-            if (clips) setClips(clips ?? []);
-            if (clips) setIsLoading(false);
-        });
+            signal: abortcontroller.signal,
+            onNewClips: addClips,
+        }).catch(console.log);
 
         return () => {
             abortcontroller.abort();
-            setIsLoading(false);
+            clearClips();
         };
     }, [debouncedChannels, debouncedMinViewCount, endDate, startDate]);
 
@@ -212,12 +210,8 @@ function App() {
             if (document.visibilityState === "visible") return nextClip();
             else setIsInfinitePlay(false);
         }, (clipMeta.duration + infinitePlayBuffer) * 1000);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isHideViewed]);
-
-    useEffect(function resetCurrentClipIndex() {
-        setCurrentClipIndex(0);
-    }, [filteredClips]);
 
     const settings = (
         <Settings scrollTop={scrollTop} />

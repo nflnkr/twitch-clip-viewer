@@ -17,3 +17,7 @@ export const useClipsStore = create<ClipsState>()(
 );
 
 export const setClips = (clips: TwitchClipMetadata[]) => useClipsStore.setState({ clips });
+
+export const clearClips = () => useClipsStore.setState({ clips: [] });
+
+export const addClips = (clips: TwitchClipMetadata[]) => useClipsStore.setState(state => ({ clips: [...state.clips, ...clips] }));
