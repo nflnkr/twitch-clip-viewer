@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import TwitchClipEmbed from "./TwitchClipEmbed";
-import { Button, Text, Loading, styled, keyframes } from "@nextui-org/react";
+import { Button, Text,  styled, keyframes } from "@nextui-org/react";
 import { ImArrowLeft2, ImArrowRight2 } from "react-icons/im";
 import ClipCarousel from "./ClipCarousel";
 import { decrementCurrentClipIndex, setCurrentClipIndex, setIsInfinitePlay, useAppStore } from "../../stores/app";
@@ -55,7 +55,6 @@ export default function ClipBox({ nextClip, filteredClips, clipMeta }: {
     const channels = useAppStore(state => state.channels);
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
-    const isLoading = useAppStore(state => state.isLoading);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
     const isShowCarousel = useAppStore(state => state.isShowCarousel);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
@@ -81,43 +80,42 @@ export default function ClipBox({ nextClip, filteredClips, clipMeta }: {
         setIsInfinitePlay(false);
     };
 
+    // const loading = <CenterContentBox><Loading size="xl" /></CenterContentBox>
+
     return (
         <ClipContainer>
             {channels.length > 0 ?
-                isLoading ?
-                    <CenterContentBox><Loading size="xl" /></CenterContentBox>
+                filteredClips.length && clipMeta ?
+                    <>
+                        {clip}
+                        {isShowCarousel &&
+                            <ClipCarousel
+                                clips={filteredClips}
+                                currentClipIndex={currentClipIndex}
+                                handleCarouselItemClick={handleCarouselItemClick}
+                            />
+                        }
+                        <ButtonsContainer>
+                            <ControlsButton
+                                size="md"
+                                disabled={currentClipIndex === 0}
+                                onPress={decrementCurrentClipIndex}
+                                icon={<ImArrowLeft2 />}
+                            />
+                            <ControlsButton
+                                size="md"
+                                disabled={currentClipIndex >= filteredClips.length - 1}
+                                onPress={nextClip}
+                                icon={<ImArrowRight2 />}
+                            />
+                        </ButtonsContainer>
+                        {clipProgressBar}
+                    </>
                     :
-                    filteredClips.length && clipMeta ?
-                        <>
-                            {clip}
-                            {isShowCarousel &&
-                                <ClipCarousel
-                                    clips={filteredClips}
-                                    currentClipIndex={currentClipIndex}
-                                    handleCarouselItemClick={handleCarouselItemClick}
-                                />
-                            }
-                            <ButtonsContainer>
-                                <ControlsButton
-                                    size="md"
-                                    disabled={currentClipIndex === 0}
-                                    onPress={decrementCurrentClipIndex}
-                                    icon={<ImArrowLeft2 />}
-                                />
-                                <ControlsButton
-                                    size="md"
-                                    disabled={currentClipIndex >= filteredClips.length - 1}
-                                    onPress={nextClip}
-                                    icon={<ImArrowRight2 />}
-                                />
-                            </ButtonsContainer>
-                            {clipProgressBar}
-                        </>
-                        :
-                        <CenterContentBox>
-                            <Text h2>No clips found</Text>
-                            <img alt="okayeg" src={okayegImage} />
-                        </CenterContentBox>
+                    <CenterContentBox>
+                        <Text h2>No clips found</Text>
+                        <img alt="okayeg" src={okayegImage} />
+                    </CenterContentBox>
                 :
                 <CenterContentBox>
                     <Text h2>No channels</Text>

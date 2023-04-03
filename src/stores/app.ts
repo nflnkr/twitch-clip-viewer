@@ -22,7 +22,6 @@ interface AppState {
     viewedClips: string[];
     startDate: number;
     endDate: number;
-    isLoading: boolean;
 }
 
 export const useAppStore = create<AppState>()(
@@ -46,7 +45,6 @@ export const useAppStore = create<AppState>()(
                 viewedClips: [],
                 startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).getTime(),
                 endDate: new Date().getTime(),
-                isLoading: false,
             }),
             { name: "App" }
         ),
@@ -78,7 +76,6 @@ export const setIsInfinitePlay = (isInfinitePlay: boolean) => useAppStore.setSta
 export const setIsHideViewed = (isHideViewed: boolean) => useAppStore.setState({ isHideViewed });
 export const switchIsCalendarShown = () => useAppStore.setState(state => ({ isCalendarShown: !state.isCalendarShown }));
 export const setIsCalendarShown = (isCalendarShown: boolean) => useAppStore.setState({ isCalendarShown });
-export const setIsLoading = (isLoading: boolean) => useAppStore.setState({ isLoading });
 export const switchIsSettingsModalShown = () => useAppStore.setState(state => ({ isSettingsModalShown: !state.isSettingsModalShown }));
 export const setIsSettingsModalShown = (isSettingsModalShown: boolean) => useAppStore.setState({ isSettingsModalShown });
 export const switchIsShowCarousel = () => useAppStore.setState(state => ({ isShowCarousel: !state.isShowCarousel }));
