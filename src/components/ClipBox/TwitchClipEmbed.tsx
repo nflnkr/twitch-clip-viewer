@@ -1,13 +1,20 @@
-import { styled } from "@nextui-org/react";
+import { keyframes, styled } from "@nextui-org/react";
 import { TwitchClipMetadata } from "../../model/clips";
 
+
+const fadeIn = keyframes({
+    "0%": { filter: "brightness(0)" },
+    "100%": { filter: "brightness(1)" },
+});
 
 const MainContainer = styled("div", {
     width: "100%",
     flexGrow: 1,
     display: "flex",
     alignItems: "center",
-    aspectRatio: "16 / 9"
+    aspectRatio: "16 / 9",
+    animation: `${fadeIn} 1s`,
+    animationTimingFunction: "cubic-bezier(1,.01,.95,.02)",
 });
 
 const IframeContainer = styled("div", {
@@ -38,6 +45,7 @@ export default function TwitchClipEmbed({ clip, autoplay = false }: Props) {
                     allow=" autoplay; picture-in-picture"
                     allowFullScreen
                     title="Embedded twitch clip"
+                    referrerPolicy="no-referrer"
                 />
             </IframeContainer>
         </MainContainer>
