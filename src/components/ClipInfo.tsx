@@ -1,6 +1,6 @@
 import { Text, Link, styled, Loading } from "@nextui-org/react";
 import { TwitchClipMetadata } from "../model/clips";
-import { useAppStore } from "../stores/app";
+import { setAdjacentDaysDate, useAppStore } from "../stores/app";
 import { useMediaQuery } from "../utils/hooks";
 
 
@@ -46,7 +46,15 @@ export default function ClipInfo({ clipMeta, filteredClips }: {
                     </Link>
                     <Text>Views: {clipMeta.view_count}</Text>
                     <Text>Author: {clipMeta.creator_name}</Text>
-                    <Text>Date: {new Date(clipMeta.created_at).toLocaleDateString()}</Text>
+                    <Text
+                        title="Show clips within that day ±1"
+                        onClick={() => setAdjacentDaysDate(new Date(clipMeta.created_at).getTime())}
+                        css={{
+                            textDecoration: "underline",
+                            cursor: "pointer",
+                            alignSelf: "start",
+                        }}
+                    >Date: {new Date(clipMeta.created_at).toLocaleDateString()}</Text>
                 </>
                 :
                 isLoading && <Loading size="xs" />

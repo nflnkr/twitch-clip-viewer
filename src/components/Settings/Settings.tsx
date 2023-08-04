@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { Button, Text, Switch, Input, styled, Divider, useTheme, Card } from "@nextui-org/react";
-import { DateRange, RangeKeyDict } from "react-date-range";
-import { clearViewedClips, removeChannels, setChannelsField, setEndDate, setInfinitePlayBuffer, setIsCalendarShown, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setMinViewCount, setTitleFilterField, setStartDate, switchIsCalendarShown, useAppStore, addChannelPreset, updateChannelPreset, addChannels, clearChannels, clearClipsFromViewed } from "../../stores/app";
+import { clearViewedClips, removeChannels, setChannelsField, setEndDate, setInfinitePlayBuffer, setIsClipAutoplay, setIsInfinitePlay, setIsSettingsModalShown, setMinViewCount, setTitleFilterField, setStartDate, useAppStore, addChannelPreset, updateChannelPreset, addChannels, clearChannels, clearClipsFromViewed, closeCalendarModal, openCalendarModal } from "../../stores/app";
 import { IoMdClose } from "react-icons/io";
 import ChannelPresetItem from "./ChannelPresetItem";
 import { StyledBadge } from "../../App";
@@ -42,7 +41,6 @@ export default function Settings({ scrollTop }: {
     const titleFilterField = useAppStore(state => state.titleFilterField);
     const isClipAutoplay = useAppStore(state => state.isClipAutoplay);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
-    const isCalendarShown = useAppStore(state => state.isCalendarShown);
     const isSettingsModalShown = useAppStore(state => state.isSettingsModalShown);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
     const minViewCount = useAppStore(state => state.minViewCount);
@@ -79,17 +77,8 @@ export default function Settings({ scrollTop }: {
 
     function handleSettingsModalClose() {
         setIsSettingsModalShown(false);
-        setIsCalendarShown(false);
+        closeCalendarModal();
         scrollTop();
-    }
-
-    function handleRangeChange(item: RangeKeyDict) {
-        const newStartDate = item.selection.startDate?.getTime();
-        const newEndDate = item.selection.endDate?.getTime();
-        if (!newStartDate || !newEndDate) return;
-
-        setStartDate(newStartDate);
-        setEndDate(newEndDate);
     }
 
     return (
@@ -145,7 +134,7 @@ export default function Settings({ scrollTop }: {
                 type="number"
                 bordered
                 value={minViewCount}
-                onChange={e => setMinViewCount(Number(e.target.value))}
+                onChange={e => setMinViewCount(e.target.value)}
                 css={{
                     ".nextui-input-label--left": {
                         whiteSpace: "nowrap",
@@ -193,7 +182,6 @@ export default function Settings({ scrollTop }: {
                 <Button size="sm" onPress={addChannelPreset}>Create preset</Button>
                 <Button size="sm" onPress={updateChannelPreset} disabled={selectedChannelPresetIndex === null}>Update preset</Button>
             </Flexbox>
-
             {channelPresets.length > 0 &&
                 <FlexColumn css={{ gap: theme.theme?.space.xs }}>
                     {channelPresets.map((channelPreset, index) =>
@@ -210,7 +198,7 @@ export default function Settings({ scrollTop }: {
             <FlexColumn>
                 <Button
                     size="sm"
-                    onPress={() => switchIsCalendarShown()}
+                    onPress={openCalendarModal}
                     css={{
                         borderBottomLeftRadius: 0,
                         borderBottomRightRadius: 0,
@@ -238,14 +226,6 @@ export default function Settings({ scrollTop }: {
                     <Button size="xs" onPress={handleAlltimeClick}>All</Button>
                 </Flexbox>
             </FlexColumn>
-            {isCalendarShown &&
-                <DateRange
-                    onChange={handleRangeChange}
-                    maxDate={new Date()}
-                    ranges={[dateRange]}
-                    direction="vertical"
-                />
-            }
             <FlexboxWrap css={{ gap: "20px" }}>
                 <FlexboxWrap>
                     <Switch size="md" checked={isInfinitePlay} onChange={e => {

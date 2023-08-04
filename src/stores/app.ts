@@ -14,7 +14,9 @@ interface AppState {
     currentClipIndex: number;
     isClipAutoplay: boolean;
     isInfinitePlay: boolean;
-    isCalendarShown: boolean;
+    isCalendarModalShown: boolean;
+    calendarModalStartDate: number;
+    calendarModalEndDate: number;
     isSettingsModalShown: boolean;
     isShowCarousel: boolean;
     infinitePlayBuffer: number;
@@ -38,7 +40,9 @@ export const useAppStore = create<AppState>()(
                 currentClipIndex: 0,
                 isClipAutoplay: true,
                 isInfinitePlay: false,
-                isCalendarShown: false,
+                isCalendarModalShown: false,
+                calendarModalStartDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).getTime(),
+                calendarModalEndDate: new Date().getTime(),
                 isSettingsModalShown: false,
                 isShowCarousel: false,
                 infinitePlayBuffer: 4,
@@ -49,7 +53,10 @@ export const useAppStore = create<AppState>()(
                 endDate: new Date().getTime(),
                 isLoading: false,
             }),
-            { name: "App" }
+            {
+                name: "App",
+                enabled: process.env.NODE_ENV === "development",
+            }
         ),
         {
             version: 0,
@@ -76,20 +83,50 @@ export const switchIsClipAutoplay = () => useAppStore.setState(state => ({ isCli
 export const setIsClipAutoplay = (isClipAutoplay: boolean) => useAppStore.setState({ isClipAutoplay });
 export const switchIsInfinitePlay = () => useAppStore.setState(state => ({ isInfinitePlay: !state.isInfinitePlay }));
 export const setIsInfinitePlay = (isInfinitePlay: boolean) => useAppStore.setState({ isInfinitePlay });
-export const switchIsCalendarShown = () => useAppStore.setState(state => ({ isCalendarShown: !state.isCalendarShown }));
-export const setIsCalendarShown = (isCalendarShown: boolean) => useAppStore.setState({ isCalendarShown });
+export const openCalendarModal = () => useAppStore.setState({ isCalendarModalShown: true });
+export const closeCalendarModal = () => useAppStore.setState({ isCalendarModalShown: false });
 export const switchIsSettingsModalShown = () => useAppStore.setState(state => ({ isSettingsModalShown: !state.isSettingsModalShown }));
 export const setIsSettingsModalShown = (isSettingsModalShown: boolean) => useAppStore.setState({ isSettingsModalShown });
 export const switchIsShowCarousel = () => useAppStore.setState(state => ({ isShowCarousel: !state.isShowCarousel }));
 export const setIsShowCarousel = (isShowCarousel: boolean) => useAppStore.setState({ isShowCarousel });
 export const setInfinitePlayBuffer = (infinitePlayBuffer: number) => useAppStore.setState({ infinitePlayBuffer });
-export const setStartDate = (startDate: number) => useAppStore.setState({ startDate });
-export const setEndDate = (endDate: number) => useAppStore.setState({ endDate });
+export const setCalendarModalStartDate = (calendarModalStartDate: number) => useAppStore.setState({ calendarModalStartDate });
+export const setCalendarModalEndDate = (calendarModalEndDate: number) => useAppStore.setState({ calendarModalEndDate });
 export const setIsLoading = (isLoading: boolean) => useAppStore.setState({ isLoading });
+export const setMinViewCount = (minViewCount: string) => useAppStore.setState({ minViewCount: parseInt(minViewCount) });
 
-export const setMinViewCount = (minViewCount: number) => {
-    useAppStore.setState({ minViewCount });
-};
+export const setAdjacentDaysDate = (timestamp: number) => useAppStore.setState(state => {
+    const startDate = new Date(timestamp);
+    const endDate = new Date(timestamp);
+
+    startDate.setDate(startDate.getDate() - 1);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setDate(endDate.getDate() + 1);
+    endDate.setHours(23, 59, 59, 999);
+
+    return {
+        startDate: startDate.getTime(),
+        endDate: endDate.getTime(),
+        calendarModalStartDate: startDate.getTime(),
+        setCalendarModalEndDate: endDate.getTime(),
+    };
+});
+
+export const setStartDate = (startDate: number) => useAppStore.setState({
+    startDate,
+    calendarModalStartDate: startDate,
+});
+
+export const setEndDate = (endDate: number) => useAppStore.setState({
+    endDate,
+    calendarModalEndDate: endDate,
+});
+
+export const applyCalendarDates = () => useAppStore.setState(state => ({
+    startDate: state.calendarModalStartDate,
+    endDate: state.calendarModalEndDate,
+    isCalendarModalShown: false,
+}));
 
 export const setSelectedChannelPresetIndex = (selectedChannelPresetIndex: number | null) => {
     const state = useAppStore.getState();
@@ -131,9 +168,7 @@ export const removeChannels = (channelsToRemove: string[]) => {
     useAppStore.setState({ channels });
 };
 
-export const clearChannels = () => {
-    useAppStore.setState({ channels: [] });
-};
+export const clearChannels = () => useAppStore.setState({ channels: [] });
 
 export const addViewedClips = (clipsToAdd: string[]) => {
     const viewedClips = [...useAppStore.getState().viewedClips, ...clipsToAdd];
@@ -214,10 +249,13 @@ export const clearClipsFromViewed = () => {
 
 
 function migrateOldStorage<T>(oldKey: string, setState: (arg: T) => void) {
-    const string = localStorage.getItem(oldKey);
-    if (string) {
-        const value = JSON.parse(string) as T;
-        setState(value);
+    try {
+        const string = localStorage.getItem(oldKey);
+        if (string) {
+            const value = JSON.parse(string) as T;
+            setState(value);
+        }
+    } catch { } finally {
         localStorage.removeItem(oldKey);
     }
 }

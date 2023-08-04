@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { getClips } from "./utils/fetchers";
 import { NextUIProvider, Button, createTheme, styled, useTheme, Badge } from "@nextui-org/react";
-import { useDebounce, useMediaQuery } from "./utils/hooks";
+import { useDebounce, useEventListener, useMediaQuery } from "./utils/hooks";
 import { IoMdSettings } from "react-icons/io";
-import { addChannels, addClips, addViewedClips, clearClips, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsCalendarShown, setIsInfinitePlay, setIsLoading, setIsSettingsModalShown, useAppStore } from "./stores/app";
+import { addChannels, addClips, addViewedClips, clearClips, closeCalendarModal, decrementCurrentClipIndex, incrementCurrentClipIndex, setCurrentClipIndex, setIsInfinitePlay, setIsLoading, setIsSettingsModalShown, useAppStore } from "./stores/app";
 import Settings from "./components/Settings/Settings";
 import ClipInfo from "./components/ClipInfo";
 import ClipBox from "./components/ClipBox/ClipBox";
+import DateRangeModal from "./components/Settings/DateRangeModal";
 
 
 const nextTheme = createTheme({
@@ -59,10 +60,6 @@ export const StyledBadge = styled(Badge, {
 
 const DEBOUNCE_TIME = 500;
 
-// TODO capture and stop MB3/4 events before iframe
-// TODO handle errors
-// TODO collapse settings bar/ hide/show on hover
-// TODO en/ru
 function App() {
     const clips = useAppStore(state => state.clips);
     const titleFilterField = useAppStore(state => state.titleFilterField);
@@ -70,23 +67,25 @@ function App() {
     const currentClipIndex = useAppStore(state => state.currentClipIndex);
     const isInfinitePlay = useAppStore(state => state.isInfinitePlay);
     const isSettingsModalShown = useAppStore(state => state.isSettingsModalShown);
+    const isCalendarModalShown = useAppStore(state => state.isCalendarModalShown);
     const infinitePlayBuffer = useAppStore(state => state.infinitePlayBuffer);
     const minViewCount = useAppStore(state => state.minViewCount);
     const startDate = useAppStore(state => state.startDate);
     const endDate = useAppStore(state => state.endDate);
-    const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>();
+    const nextClipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(); // TODO move to store
     const appContainer = useRef<HTMLDivElement>(null);
     const debouncedMinViewCount = useDebounce(minViewCount, DEBOUNCE_TIME);
     const debouncedTitleFilterField = useDebounce(titleFilterField, DEBOUNCE_TIME);
     const debouncedChannels = useDebounce(channels, DEBOUNCE_TIME);
     const isLandscape = useMediaQuery("(min-width: 1200px)");
     const theme = useTheme();
+    const documentRef = useRef(document);
 
-    const filteredClipsByMinViews = useMemo(() => {
+    const filteredClipsByMinViews = useMemo(() => { // TODO move to store
         return clips.filter(clip => clip.view_count >= debouncedMinViewCount).sort((a, b) => b.view_count - a.view_count);
     }, [clips, debouncedMinViewCount]);
 
-    const filteredClips = useMemo(() => {
+    const filteredClips = useMemo(() => { // TODO move to store
         let filteredClips = filteredClipsByMinViews;
         if (debouncedTitleFilterField) filteredClips = filteredClips.filter(
             clip => clip.title.toLowerCase().includes(debouncedTitleFilterField.toLowerCase())
@@ -117,7 +116,7 @@ function App() {
 
     const handleSettingsModalClose = useCallback(function handleSettingsModalClose() {
         setIsSettingsModalShown(false);
-        setIsCalendarShown(false);
+        closeCalendarModal();
         scrollTop();
     }, [scrollTop]);
 
@@ -157,29 +156,20 @@ function App() {
         };
     }, [debouncedChannels, debouncedMinViewCount, endDate, startDate]);
 
-    useEffect(function attachEventHandlers() {
-        function keyHandler(e: KeyboardEvent) {
-            if (e.code === "Enter" || e.code === "NumpadEnter") {
-                addChannels();
-            }
-
-            if ((e.target as HTMLElement).tagName === "INPUT") return;
-
-            if (e.code === "KeyN" || e.code === "ArrowRight") return nextClip();
-            if (e.code === "KeyB" || e.code === "ArrowLeft") return decrementCurrentClipIndex();
+    useEventListener("keydown", e => {
+        if ((e.target as HTMLElement).tagName === "INPUT") {
+            if (e.code === "Enter" || e.code === "NumpadEnter") addChannels();
+            return;
         }
-        function mouseHandler(e: MouseEvent) {
-            e.preventDefault();
-            if (e.button === 3) return decrementCurrentClipIndex();
-            if (e.button === 4) return nextClip();
-        }
-        document.addEventListener("keydown", keyHandler);
-        document.addEventListener("mouseup", mouseHandler);
-        return () => {
-            document.removeEventListener("keydown", keyHandler);
-            document.removeEventListener("mouseup", mouseHandler);
-        };
-    }, [nextClip]);
+
+        if (e.code === "KeyN" || e.code === "ArrowRight") return nextClip();
+        if (e.code === "KeyB" || e.code === "ArrowLeft") return decrementCurrentClipIndex();
+    }, documentRef);
+
+    useEventListener("mouseup", e => {
+        if (e.button === 3) decrementCurrentClipIndex();
+        if (e.button === 4) nextClip();
+    }, documentRef);
 
     useEffect(function startInfinitePlayTimer() {
         if ((!isInfinitePlay && nextClipTimeoutRef.current) || !clipMeta) {
@@ -254,6 +244,7 @@ function App() {
                     </SettingsModalContainer>
                 </ModalContainer>
             }
+            {isCalendarModalShown && <DateRangeModal />}
         </NextUIProvider>
     );
 }
