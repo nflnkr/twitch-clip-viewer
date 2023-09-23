@@ -2,7 +2,7 @@ import type { TwitchClipMetadata } from "../model/clips";
 import type { TwitchUserMetadata } from "../model/user";
 
 
-const authToken = "fj9rg4utqh3tffos4v4a4p4wrylm98";
+const authToken = "jfhnbrdm8xu1cn5n9x37vpz0ibavd3";
 const clientId = "sl7qzvmvjfha998253d5d6muxxtglg";
 
 export function getClips({ channels, start, end, minViewCount, signal, onNewClips }: {
