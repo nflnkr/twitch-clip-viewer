@@ -1,11 +1,17 @@
 import type { TwitchClipMetadata } from "../model/clips";
 import type { TwitchUserMetadata } from "../model/user";
 
-
-const authToken = "gjprl1r7cz6r9tox6bzow9dzz9x3kq";
+const authToken = "wz7zhceiog8yfmnnix3dt7mpt5wf9j";
 const clientId = "sl7qzvmvjfha998253d5d6muxxtglg";
 
-export function getClips({ channels, start, end, minViewCount, signal, onNewClips }: {
+export function getClips({
+    channels,
+    start,
+    end,
+    minViewCount,
+    signal,
+    onNewClips,
+}: {
     channels: string[];
     start: string;
     end: string;
@@ -13,18 +19,32 @@ export function getClips({ channels, start, end, minViewCount, signal, onNewClip
     signal: AbortSignal;
     onNewClips: (clips: TwitchClipMetadata[]) => void;
 }) {
-    return Promise.all(channels.map(async channel => {
-        const broadcasterId = await getBroadcasterId(channel, signal);
-        if (!broadcasterId) return;
+    return Promise.all(
+        channels.map(async (channel) => {
+            const broadcasterId = await getBroadcasterId(channel, signal);
+            if (!broadcasterId) return;
 
-        const clipsGenerator = generateClipsForBroadcasterId({ broadcasterId, start, end, minViewCount, signal });
-        for await (const clips of clipsGenerator) {
-            onNewClips(clips);
-        }
-    }));
+            const clipsGenerator = generateClipsForBroadcasterId({
+                broadcasterId,
+                start,
+                end,
+                minViewCount,
+                signal,
+            });
+            for await (const clips of clipsGenerator) {
+                onNewClips(clips);
+            }
+        }),
+    );
 }
 
-async function* generateClipsForBroadcasterId({ broadcasterId, start, end, minViewCount, signal }: {
+async function* generateClipsForBroadcasterId({
+    broadcasterId,
+    start,
+    end,
+    minViewCount,
+    signal,
+}: {
     broadcasterId: number;
     start: string;
     end: string;
@@ -38,12 +58,12 @@ async function* generateClipsForBroadcasterId({ broadcasterId, start, end, minVi
         const url = cursor ? baseUrl + `&after=${cursor}` : baseUrl;
         const response = await fetch(url, {
             headers: {
-                "Authorization": "Bearer " + authToken,
+                Authorization: "Bearer " + authToken,
                 "Client-Id": clientId,
             },
             signal,
         });
-        const json = await response.json() as any;
+        const json = (await response.json()) as any;
         const clips: TwitchClipMetadata[] = [...json.data];
 
         cursor = json.pagination?.cursor;
@@ -60,12 +80,12 @@ async function getBroadcasterId(username: string, signal: AbortSignal): Promise<
 
     const response = await fetch(url, {
         headers: {
-            "Authorization": "Bearer " + authToken,
-            "Client-Id": clientId
+            Authorization: "Bearer " + authToken,
+            "Client-Id": clientId,
         },
         signal,
     });
-    const json = await response.json() as { data: TwitchUserMetadata[]; };
+    const json = (await response.json()) as { data: TwitchUserMetadata[] };
     if (!json.data) return null;
 
     const id = Number(json.data[0].id);
