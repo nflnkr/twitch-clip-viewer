@@ -41,11 +41,11 @@ function RootComponent() {
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
     return (
-        <html>
+        <html className="dark">
             <head>
                 <Meta />
             </head>
-            <body>
+            <body className="h-dvh">
                 {children}
                 <ScrollRestoration />
                 <Scripts />
