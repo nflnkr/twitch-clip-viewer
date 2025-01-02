@@ -1,69 +1,45 @@
 {
     "name": "twitch-clip-viewer",
-    "version": "1.1.0",
     "private": true,
-    "homepage": "https://nflnkr.github.io/twitch-clip-viewer",
-    "dependencies": {
-        "@nextui-org/react": "1.0.0-beta.13",
-        "@testing-library/jest-dom": "^5.16.5",
-        "@testing-library/react": "^13.4.0",
-        "@testing-library/user-event": "^13.5.0",
-        "@types/jest": "^27.5.2",
-        "@types/node": "^16.18.3",
-        "@types/react": "^18.0.25",
-        "@types/react-date-range": "^1.4.4",
-        "@types/react-dom": "^18.0.8",
-        "gh-pages": "^4.0.0",
-        "nanoid": "^4.0.0",
-        "react": "^18.2.0",
-        "react-date-range": "^1.4.0",
-        "react-dom": "^18.2.0",
-        "react-icons": "^4.7.1",
-        "react-scripts": "5.0.1",
-        "react-virtualized-auto-sizer": "^1.0.7",
-        "react-window": "^1.8.8",
-        "typescript": "^4.8.4",
-        "web-vitals": "^2.1.4",
-        "zustand": "^4.3.6"
-    },
+    "version": "0.0.0",
+    "type": "module",
     "scripts": {
-        "predeploy": "npm run build",
-        "deploy": "gh-pages -d build",
-        "start": "react-scripts start",
-        "build": "react-scripts build",
-        "test": "react-scripts test",
-        "eject": "react-scripts eject"
+        "dev": "vinxi dev",
+        "build": "vinxi build",
+        "start": "vinxi start"
     },
-    "eslintConfig": {
-        "extends": [
-            "react-app",
-            "react-app/jest"
-        ],
-        "rules": {
-            "quotes": [
-                "warn",
-                "double",
-                {
-                    "avoidEscape": true,
-                    "allowTemplateLiterals": true
-                }
-            ]
-        }
-    },
-    "browserslist": {
-        "production": [
-            ">0.2%",
-            "not dead",
-            "not op_mini all"
-        ],
-        "development": [
-            "last 1 chrome version",
-            "last 1 firefox version",
-            "last 1 safari version"
-        ]
+    "dependencies": {
+        "@tanstack/react-router": "^1.92.13",
+        "@tanstack/start": "^1.92.13",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "lucide-react": "^0.469.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "tailwind-merge": "^2.6.0",
+        "tailwindcss-animate": "^1.0.7",
+        "vinxi": "^0.5.1",
+        "zod": "^3.24.1"
     },
     "devDependencies": {
-        "@types/react-virtualized-auto-sizer": "^1.0.1",
-        "@types/react-window": "^1.8.5"
+        "@eslint/js": "^9.17.0",
+        "@types/react": "^19.0.2",
+        "@types/react-dom": "^19.0.2",
+        "@vitejs/plugin-react": "^4.3.4",
+        "autoprefixer": "^10.4.20",
+        "eslint": "^9.17.0",
+        "eslint-plugin-react-hooks": "^5.0.0",
+        "eslint-plugin-react-refresh": "^0.4.16",
+        "postcss": "^8.4.49",
+        "prettier": "3.3.3",
+        "tailwindcss": "^3.4.17",
+        "typescript": "~5.6.3",
+        "typescript-eslint": "^8.18.2",
+        "vite-tsconfig-paths": "^5.1.4"
+    },
+    "prettier": {
+        "printWidth": 100,
+        "singleAttributePerLine": true,
+        "tabWidth": 4
     }
 }

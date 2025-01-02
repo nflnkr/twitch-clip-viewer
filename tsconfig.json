@@ -1,27 +1,22 @@
 {
-  "compilerOptions": {
-    "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "downlevelIteration": true
-  },
-  "include": [
-    "src"
-  ]
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "moduleResolution": "Bundler",
+        "module": "ESNext",
+        "target": "ES2022",
+        "skipLibCheck": true,
+        "strictNullChecks": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "lib": ["DOM", "DOM.Iterable", "ES2022"],
+        "isolatedModules": true,
+        "resolveJsonModule": true,
+        "forceConsistentCasingInFileNames": true,
+        "baseUrl": ".",
+        "paths": {
+            "~/*": ["./app/*"]
+        },
+        "noEmit": true
+    },
+    "include": ["**/*.ts", "**/*.tsx"]
 }
