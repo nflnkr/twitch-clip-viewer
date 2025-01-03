@@ -6,8 +6,7 @@ const MainContainer = styled("div", {
     width: "100%",
     flexGrow: 1,
     display: "flex",
-    alignItems: "center",
-    aspectRatio: "16 / 9"
+    alignItems: "center"
 });
 
 const IframeContainer = styled("div", {
