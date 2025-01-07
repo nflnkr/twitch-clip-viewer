@@ -1,0 +1,17 @@
+.git
+**/.env
+**/dist
+**/node_modules
+**/.DS_Store
+Dockerfile
+*.log
+
+.cache
+.env
+.output
+.vinxi
+
+/build/
+/api/
+/server/build
+/public/build
