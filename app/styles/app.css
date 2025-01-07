@@ -27,7 +27,7 @@
     }
 
     .dark {
-        --background: 224 71% 4%;
+        --background: 240 10% 3.9%;
         --foreground: 213 31% 91%;
         --muted: 223 47% 11%;
         --muted-foreground: 215.4 16.3% 56.9%;
@@ -53,7 +53,8 @@
     * {
         @apply border-border;
     }
+
     body {
-        @apply font-sans antialiased bg-background text-foreground;
+        @apply bg-background font-sans text-foreground antialiased;
     }
 }
