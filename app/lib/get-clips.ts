@@ -48,6 +48,11 @@ export const getClips = createServerFn({
         return clips.flat(1).sort((a, b) => b.view_count - a.view_count);
     });
 
+export const clipsOptions = (params: Parameters<typeof getClips>[0]["data"]) => ({
+    queryKey: ["clips", params],
+    queryFn: () => getClips({ data: params }),
+});
+
 async function fetchAllBroadcasterClips({
     broadcasterName,
     fromTimestamp,

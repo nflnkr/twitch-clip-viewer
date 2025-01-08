@@ -94,7 +94,7 @@ export function NumberInput({
     };
 
     return (
-        <div className="flex flex-grow items-center">
+        <div className="flex grow items-center">
             <NumericFormat
                 value={value}
                 onValueChange={handleChange}

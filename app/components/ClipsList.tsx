@@ -6,14 +6,14 @@ import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 
 interface Props {
-    clips: TwitchClipMetadata[];
+    clips?: TwitchClipMetadata[] | null;
     currentClipId: string | null;
     currentClipIndex: number;
     onClipClick: (clipId: string) => void;
 }
 
 export default function ClipsList({ clips, currentClipId, currentClipIndex, onClipClick }: Props) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -33,14 +33,14 @@ export default function ClipsList({ clips, currentClipId, currentClipIndex, onCl
         [currentClipIndex, open],
     );
 
-    if (clips.length === 0) return <p className="px-4 text-xl">No clips</p>;
+    if (!clips) return null;
+    if (clips.length === 0) return <p className="px-2 text-xl">No clips</p>;
 
     return (
         <div className="flex grow flex-col gap-2 overflow-hidden">
             <Button
                 variant="outline"
                 size="sm"
-                className="mx-4"
                 onClick={() => setOpen((o) => !o)}
             >
                 <ChevronsUpDown className="h-4 w-4" />
@@ -50,7 +50,7 @@ export default function ClipsList({ clips, currentClipId, currentClipIndex, onCl
                 <ScrollArea ref={scrollContainerRef}>
                     <div
                         ref={itemsContainerRef}
-                        className="flex flex-col gap-1 px-4"
+                        className="flex flex-col gap-1"
                     >
                         {clips.map((clip) => (
                             <Button

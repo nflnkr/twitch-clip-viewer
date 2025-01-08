@@ -1,7 +1,7 @@
 import { Calendar, ExternalLink, Eye, User } from "lucide-react";
+import { cn, formatSeconds } from "~/lib/utils";
 import { TwitchClipMetadata } from "~/model/twitch";
 import { Button } from "./ui/button";
-import { cn, formatSeconds } from "~/lib/utils";
 
 interface Props {
     currentClipIndex: number;
@@ -18,7 +18,7 @@ export default function ClipInfo({ clipsLength, currentClip, currentClipIndex }:
             : null;
 
     return (
-        <div className="flex flex-col gap-2 px-4">
+        <div className="flex flex-col gap-2">
             <div className="flex justify-between gap-2">
                 <Button
                     variant="link"
