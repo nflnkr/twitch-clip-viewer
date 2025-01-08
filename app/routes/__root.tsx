@@ -1,7 +1,7 @@
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createRootRoute, Outlet, ScrollRestoration } from "@tanstack/react-router";
 import { Meta, Scripts } from "@tanstack/start";
-import { lazy, Suspense, type ReactNode } from "react";
+import { lazy, StrictMode, Suspense, type ReactNode } from "react";
 import appCss from "~/styles/app.css?url";
 
 const TanStackRouterDevtools =
@@ -51,9 +51,11 @@ export const Route = createRootRoute({
 
 function RootComponent() {
     return (
-        <RootDocument>
-            <Outlet />
-        </RootDocument>
+        <StrictMode>
+            <RootDocument>
+                <Outlet />
+            </RootDocument>
+        </StrictMode>
     );
 }
 
