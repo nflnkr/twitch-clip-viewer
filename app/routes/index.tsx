@@ -282,6 +282,7 @@ function Index() {
                                 <div className="flex items-center gap-2">
                                     <Switch
                                         id="clip-autoplay"
+                                        defaultChecked={clipAutoplayDefault}
                                         onCheckedChange={(checked) => {
                                             clipAutoplayRef.current = checked;
                                         }}
