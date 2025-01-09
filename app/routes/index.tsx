@@ -90,7 +90,10 @@ function Index() {
 
     function removeChannel(channel: string) {
         navigate({
-            search: { ...search, channels: channels.filter((c) => c !== channel).join(",") },
+            search: {
+                ...search,
+                channels: channels.filter((c) => c !== channel).join(","),
+            },
         });
     }
 
@@ -106,7 +109,47 @@ function Index() {
 
         event.currentTarget.value = "";
 
-        navigate({ search: { ...search, channels: uniqueChannels.join(",") } });
+        navigate({
+            search: {
+                ...search,
+                channels: uniqueChannels.join(","),
+            },
+        });
+    }
+
+    function prefetchChannel(channel: string) {
+        const newChannels = channels.filter((c) => c !== channel);
+
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: newChannels.toSorted().join(",") || "",
+                from: search.from,
+                to: search.to,
+                minViews: debouncedMinViews,
+            }),
+        );
+    }
+
+    function prefetchLastWeek() {
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: channels.toSorted().join(",") || "",
+                from: format(subDays(new Date(), 7), "yyyy-MM-dd"),
+                to: format(new Date(), "yyyy-MM-dd"),
+                minViews: debouncedMinViews,
+            }),
+        );
+    }
+
+    function prefetchLastMonth() {
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: channels.toSorted().join(",") || "",
+                from: format(subMonths(new Date(), 1), "yyyy-MM-dd"),
+                to: format(new Date(), "yyyy-MM-dd"),
+                minViews: debouncedMinViews,
+            }),
+        );
     }
 
     const dateRange = {
@@ -207,21 +250,7 @@ function Index() {
                                             key={index}
                                             size="xs"
                                             variant="outline"
-                                            onMouseEnter={() => {
-                                                const newChannels = channels.filter(
-                                                    (c) => c !== channel,
-                                                );
-
-                                                queryClient.prefetchQuery(
-                                                    clipsOptions({
-                                                        channels:
-                                                            newChannels.toSorted().join(",") || "",
-                                                        from: search.from,
-                                                        to: search.to,
-                                                        minViews: debouncedMinViews,
-                                                    }),
-                                                );
-                                            }}
+                                            onMouseEnter={() => prefetchChannel(channel)}
                                             onClick={() => removeChannel(channel)}
                                         >
                                             {channel}
@@ -247,29 +276,8 @@ function Index() {
                                 <DateRangePicker
                                     dateRange={dateRange}
                                     setDateRange={setDateRange}
-                                    prefetchLastWeek={() => {
-                                        queryClient.prefetchQuery(
-                                            clipsOptions({
-                                                channels: channels.toSorted().join(",") || "",
-                                                from: format(subDays(new Date(), 7), "yyyy-MM-dd"),
-                                                to: format(new Date(), "yyyy-MM-dd"),
-                                                minViews: debouncedMinViews,
-                                            }),
-                                        );
-                                    }}
-                                    prefetchLastMonth={() => {
-                                        queryClient.prefetchQuery(
-                                            clipsOptions({
-                                                channels: channels.toSorted().join(",") || "",
-                                                from: format(
-                                                    subMonths(new Date(), 1),
-                                                    "yyyy-MM-dd",
-                                                ),
-                                                to: format(new Date(), "yyyy-MM-dd"),
-                                                minViews: debouncedMinViews,
-                                            }),
-                                        );
-                                    }}
+                                    prefetchLastWeek={prefetchLastWeek}
+                                    prefetchLastMonth={prefetchLastMonth}
                                 />
                                 <div className="flex items-center gap-2">
                                     <Switch
