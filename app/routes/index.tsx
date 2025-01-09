@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { format, parse, subDays } from "date-fns";
+import { format, parse, subDays, subMonths } from "date-fns";
 import { ArrowLeft, ArrowRight, PanelLeftClose, PanelRightClose, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { CSSProperties, KeyboardEvent, useRef, useState } from "react";
@@ -54,6 +54,7 @@ const initialSidebarStyle = {
 } satisfies CSSProperties;
 
 function Index() {
+    const queryClient = useQueryClient();
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
     const debouncedMinViews = useDebouncedValue(search.minViews, 500);
@@ -206,6 +207,21 @@ function Index() {
                                             key={index}
                                             size="xs"
                                             variant="outline"
+                                            onMouseEnter={() => {
+                                                const newChannels = channels.filter(
+                                                    (c) => c !== channel,
+                                                );
+
+                                                queryClient.prefetchQuery(
+                                                    clipsOptions({
+                                                        channels:
+                                                            newChannels.toSorted().join(",") || "",
+                                                        from: search.from,
+                                                        to: search.to,
+                                                        minViews: debouncedMinViews,
+                                                    }),
+                                                );
+                                            }}
                                             onClick={() => removeChannel(channel)}
                                         >
                                             {channel}
@@ -231,6 +247,29 @@ function Index() {
                                 <DateRangePicker
                                     dateRange={dateRange}
                                     setDateRange={setDateRange}
+                                    prefetchLastWeek={() => {
+                                        queryClient.prefetchQuery(
+                                            clipsOptions({
+                                                channels: channels.toSorted().join(",") || "",
+                                                from: format(subDays(new Date(), 7), "yyyy-MM-dd"),
+                                                to: format(new Date(), "yyyy-MM-dd"),
+                                                minViews: debouncedMinViews,
+                                            }),
+                                        );
+                                    }}
+                                    prefetchLastMonth={() => {
+                                        queryClient.prefetchQuery(
+                                            clipsOptions({
+                                                channels: channels.toSorted().join(",") || "",
+                                                from: format(
+                                                    subMonths(new Date(), 1),
+                                                    "yyyy-MM-dd",
+                                                ),
+                                                to: format(new Date(), "yyyy-MM-dd"),
+                                                minViews: debouncedMinViews,
+                                            }),
+                                        );
+                                    }}
                                 />
                                 <div className="flex items-center gap-2">
                                     <Switch

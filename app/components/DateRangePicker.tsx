@@ -21,9 +21,16 @@ import { Popover, PopoverTrigger } from "./ui/popover";
 interface Props {
     dateRange: DateRange | undefined;
     setDateRange: (dateRange: DateRange | undefined) => void;
+    prefetchLastWeek: () => void;
+    prefetchLastMonth: () => void;
 }
 
-export default function DateRangePicker({ dateRange, setDateRange }: Props) {
+export default function DateRangePicker({
+    dateRange,
+    setDateRange,
+    prefetchLastWeek,
+    prefetchLastMonth,
+}: Props) {
     return (
         <div className="flex gap-1">
             <div className="grid grow gap-2">
@@ -85,6 +92,7 @@ export default function DateRangePicker({ dateRange, setDateRange }: Props) {
                                     to: new Date(),
                                 })
                             }
+                            onMouseEnter={prefetchLastWeek}
                         >
                             Last week
                         </DropdownMenuItem>
@@ -95,6 +103,7 @@ export default function DateRangePicker({ dateRange, setDateRange }: Props) {
                                     to: new Date(),
                                 })
                             }
+                            onMouseEnter={prefetchLastMonth}
                         >
                             Last month
                         </DropdownMenuItem>
