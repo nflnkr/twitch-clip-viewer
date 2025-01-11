@@ -117,7 +117,7 @@ function Index() {
         });
     }
 
-    function prefetchChannel(channel: string) {
+    function prefetchChannelsBeforeRemove(channel: string) {
         const newChannels = channels.filter((c) => c !== channel);
 
         queryClient.prefetchQuery(
@@ -250,7 +250,9 @@ function Index() {
                                             key={index}
                                             size="xs"
                                             variant="outline"
-                                            onMouseEnter={() => prefetchChannel(channel)}
+                                            onMouseEnter={() =>
+                                                prefetchChannelsBeforeRemove(channel)
+                                            }
                                             onClick={() => removeChannel(channel)}
                                         >
                                             {channel}
