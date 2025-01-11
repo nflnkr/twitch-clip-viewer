@@ -8,7 +8,7 @@ import { CSSProperties, KeyboardEvent, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { z } from "zod";
 import ClipInfo from "~/components/ClipInfo";
-import ClipsList from "~/components/ClipsList";
+import ClipList from "~/components/ClipList";
 import DateRangePicker from "~/components/DateRangePicker";
 import { NumberInput } from "~/components/NumberInput";
 import Spinner from "~/components/Spinner";
@@ -303,7 +303,7 @@ function Index() {
                                     />
                                 )
                             )}
-                            <ClipsList
+                            <ClipList
                                 clips={clips}
                                 currentClipId={currentClip?.id ?? null}
                                 currentClipIndex={currentClipIndex}

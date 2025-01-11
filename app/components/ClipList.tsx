@@ -12,7 +12,7 @@ interface Props {
     onClipClick: (clipId: string) => void;
 }
 
-export default function ClipsList({ clips, currentClipId, currentClipIndex, onClipClick }: Props) {
+export default function ClipList({ clips, currentClipId, currentClipIndex, onClipClick }: Props) {
     const [open, setOpen] = useState(true);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemsContainerRef = useRef<HTMLDivElement>(null);
