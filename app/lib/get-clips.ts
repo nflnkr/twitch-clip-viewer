@@ -16,10 +16,11 @@ export const getClips = createServerFn({
             from: z.string().date(),
             to: z.string().date(),
             minViews: z.number(),
+            onlyFirstPage: z.boolean(),
         }),
     )
     .handler(async (params) => {
-        const { channels, from, to, minViews } = params.data;
+        const { channels, from, to, minViews, onlyFirstPage } = params.data;
 
         const fromTimestamp = parse(from, "yyyy-MM-dd", new Date());
         const toTimestamp = parse(to, "yyyy-MM-dd", new Date());
@@ -41,6 +42,7 @@ export const getClips = createServerFn({
                     fromTimestamp: fromStartOfDay.getTime(),
                     toTimestamp: endOfToDay.getTime(),
                     minViews,
+                    onlyFirstPage,
                 }),
             ),
         );
@@ -58,14 +60,16 @@ async function fetchAllBroadcasterClips({
     fromTimestamp,
     toTimestamp,
     minViews,
+    onlyFirstPage,
 }: {
     broadcasterName: string;
     fromTimestamp: number;
     toTimestamp: number;
     minViews: number;
+    onlyFirstPage: boolean;
 }) {
     let cursor: string | null = "";
-    const clips: TwitchClipMetadata[] = [];
+    const clipInfoById: Record<string, TwitchClipMetadata> = {};
 
     do {
         try {
@@ -84,9 +88,10 @@ async function fetchAllBroadcasterClips({
                     break;
                 }
 
-                clips.push(clip);
+                clipInfoById[clip.id] = clip;
             }
             if (minViewsMet) break;
+            if (onlyFirstPage) break;
 
             cursor = response.cursor;
         } catch (err) {
@@ -96,7 +101,7 @@ async function fetchAllBroadcasterClips({
         }
     } while (cursor);
 
-    return clips;
+    return Object.values(clipInfoById);
 }
 
 async function fetchBroadcasterClips({

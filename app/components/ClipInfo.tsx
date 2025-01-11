@@ -1,4 +1,4 @@
-import { Calendar, ExternalLink, Eye, User } from "lucide-react";
+import { Calendar, ExternalLink, Eye, Loader2, User } from "lucide-react";
 import { cn, formatSeconds } from "~/lib/utils";
 import { TwitchClipMetadata } from "~/model/twitch";
 import { Button } from "./ui/button";
@@ -7,9 +7,10 @@ interface Props {
     currentClipIndex: number;
     clipsLength: number;
     currentClip: TwitchClipMetadata;
+    isLoading: boolean;
 }
 
-export default function ClipInfo({ clipsLength, currentClip, currentClipIndex }: Props) {
+export default function ClipInfo({ clipsLength, currentClip, currentClipIndex, isLoading }: Props) {
     const vodOffset = currentClip.vod_offset ? currentClip.vod_offset : null;
     const vodOffsetString = vodOffset ? formatSeconds(vodOffset) : null;
     const vodLink =
@@ -34,7 +35,10 @@ export default function ClipInfo({ clipsLength, currentClip, currentClipIndex }:
                         {currentClip.broadcaster_name}
                     </a>
                 </Button>
-                <p className="text-sm">{`${currentClipIndex + 1}/${clipsLength}`}</p>
+                <div className="flex items-center gap-2">
+                    {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <p className="text-sm">{`${currentClipIndex + 1}/${clipsLength}`}</p>
+                </div>
             </div>
             <p
                 title={currentClip.title}

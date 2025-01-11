@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { format, parse, subDays, subMonths } from "date-fns";
@@ -18,6 +18,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
 import { clipsOptions } from "~/lib/get-clips";
+import { useClips } from "~/lib/use-clips";
 import { useDebouncedValue } from "~/lib/use-debounced-value";
 
 const clipAutoplayDefault = process.env.NODE_ENV === "production" ? true : false;
@@ -64,18 +65,12 @@ function Index() {
 
     const channels = search.channels.split(",").filter(Boolean);
 
-    const {
-        data: clips,
-        isLoading,
-        error,
-    } = useQuery(
-        clipsOptions({
-            channels: channels.toSorted().join(",") || "",
-            from: search.from,
-            to: search.to,
-            minViews: debouncedMinViews,
-        }),
-    );
+    const { clips, isLoadingFirstPage, isLoadingAllClips, error } = useClips({
+        channels,
+        from: search.from,
+        to: search.to,
+        minViews: debouncedMinViews,
+    });
 
     function setDateRange(dateRange: DateRange | undefined) {
         setSelectedClipId(null);
@@ -126,6 +121,16 @@ function Index() {
                 from: search.from,
                 to: search.to,
                 minViews: debouncedMinViews,
+                onlyFirstPage: false,
+            }),
+        );
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: newChannels.toSorted().join(",") || "",
+                from: search.from,
+                to: search.to,
+                minViews: debouncedMinViews,
+                onlyFirstPage: true,
             }),
         );
     }
@@ -137,6 +142,16 @@ function Index() {
                 from: format(subDays(new Date(), 7), "yyyy-MM-dd"),
                 to: format(new Date(), "yyyy-MM-dd"),
                 minViews: debouncedMinViews,
+                onlyFirstPage: false,
+            }),
+        );
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: channels.toSorted().join(",") || "",
+                from: format(subDays(new Date(), 7), "yyyy-MM-dd"),
+                to: format(new Date(), "yyyy-MM-dd"),
+                minViews: debouncedMinViews,
+                onlyFirstPage: true,
             }),
         );
     }
@@ -148,6 +163,16 @@ function Index() {
                 from: format(subMonths(new Date(), 1), "yyyy-MM-dd"),
                 to: format(new Date(), "yyyy-MM-dd"),
                 minViews: debouncedMinViews,
+                onlyFirstPage: false,
+            }),
+        );
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: channels.toSorted().join(",") || "",
+                from: format(subMonths(new Date(), 1), "yyyy-MM-dd"),
+                to: format(new Date(), "yyyy-MM-dd"),
+                minViews: debouncedMinViews,
+                onlyFirstPage: true,
             }),
         );
     }
@@ -294,7 +319,7 @@ function Index() {
                             </div>
                             {error ? (
                                 <p className="text-red-500">Error: {error.message}</p>
-                            ) : isLoading ? (
+                            ) : isLoadingFirstPage ? (
                                 <Spinner />
                             ) : (
                                 currentClip && (
@@ -302,6 +327,7 @@ function Index() {
                                         currentClip={currentClip}
                                         clipsLength={clips?.length ?? 0}
                                         currentClipIndex={currentClipIndex}
+                                        isLoading={isLoadingAllClips}
                                     />
                                 )
                             )}
