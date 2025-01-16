@@ -25,6 +25,7 @@
         "@tanstack/react-query-devtools": "5.62.3",
         "@tanstack/react-router": "1.93.0",
         "@tanstack/react-router-with-query": "1.93.0",
+        "@tanstack/react-virtual": "^3.11.2",
         "@tanstack/router-devtools": "1.93.0",
         "@tanstack/start": "1.93.0",
         "@tanstack/zod-adapter": "^1.93.0",
