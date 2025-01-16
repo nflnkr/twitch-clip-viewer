@@ -54,7 +54,7 @@ const initialSidebarStyle = {
     padding: "1rem",
 } satisfies CSSProperties;
 
-export function Index() {
+function Index() {
     const queryClient = useQueryClient();
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
