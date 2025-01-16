@@ -249,7 +249,7 @@ export function Index() {
                             exit={{
                                 opacity: 0,
                             }}
-                            className="flex h-full min-w-[350px] flex-col gap-4"
+                            className="flex h-full min-w-[22rem] flex-col gap-4"
                         >
                             <div className="flex flex-col gap-2">
                                 <div className="flex gap-2">
