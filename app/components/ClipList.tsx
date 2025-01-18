@@ -69,7 +69,9 @@ export default function ClipList({ clips, currentClipId, currentClipIndex, onCli
                                 className="min-h-0 grow object-cover"
                             />
                             <div className="flex flex-col gap-2 p-2">
-                                <p className="self-start truncate tracking-tighter">{clip.title}</p>
+                                <p className="max-w-full self-start truncate tracking-tighter">
+                                    {clip.title}
+                                </p>
                                 <div className="flex justify-between gap-2">
                                     <p className="truncate">{clip.broadcaster_name}</p>
                                     <p>{clip.view_count}</p>
