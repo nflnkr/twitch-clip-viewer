@@ -1,7 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { format, parse, subDays, subMonths } from "date-fns";
+import { format, parse, subDays } from "date-fns";
 import { ArrowLeft, ArrowRight, PanelLeftClose, PanelRightClose, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { CSSProperties, KeyboardEvent, useRef, useState } from "react";
@@ -17,9 +16,9 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
-import { clipsOptions } from "~/lib/get-clips";
 import { useClips } from "~/lib/use-clips";
 import { useDebouncedValue } from "~/lib/use-debounced-value";
+import { useClipsPrefetches } from "~/lib/use-clips-prefetches";
 
 const clipAutoplayDefault = process.env.NODE_ENV === "production" ? true : false;
 
@@ -55,7 +54,6 @@ const initialSidebarStyle = {
 } satisfies CSSProperties;
 
 function Index() {
-    const queryClient = useQueryClient();
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
     const debouncedMinViews = useDebouncedValue(search.minViews, 500);
@@ -112,70 +110,8 @@ function Index() {
         });
     }
 
-    function prefetchChannelsBeforeRemove(channel: string) {
-        const newChannels = channels.filter((c) => c !== channel);
-
-        queryClient.prefetchQuery(
-            clipsOptions({
-                channels: newChannels.toSorted().join(",") || "",
-                from: search.from,
-                to: search.to,
-                minViews: debouncedMinViews,
-                onlyFirstPage: false,
-            }),
-        );
-        queryClient.prefetchQuery(
-            clipsOptions({
-                channels: newChannels.toSorted().join(",") || "",
-                from: search.from,
-                to: search.to,
-                minViews: debouncedMinViews,
-                onlyFirstPage: true,
-            }),
-        );
-    }
-
-    function prefetchLastWeek() {
-        queryClient.prefetchQuery(
-            clipsOptions({
-                channels: channels.toSorted().join(",") || "",
-                from: format(subDays(new Date(), 7), "yyyy-MM-dd"),
-                to: format(new Date(), "yyyy-MM-dd"),
-                minViews: debouncedMinViews,
-                onlyFirstPage: false,
-            }),
-        );
-        queryClient.prefetchQuery(
-            clipsOptions({
-                channels: channels.toSorted().join(",") || "",
-                from: format(subDays(new Date(), 7), "yyyy-MM-dd"),
-                to: format(new Date(), "yyyy-MM-dd"),
-                minViews: debouncedMinViews,
-                onlyFirstPage: true,
-            }),
-        );
-    }
-
-    function prefetchLastMonth() {
-        queryClient.prefetchQuery(
-            clipsOptions({
-                channels: channels.toSorted().join(",") || "",
-                from: format(subMonths(new Date(), 1), "yyyy-MM-dd"),
-                to: format(new Date(), "yyyy-MM-dd"),
-                minViews: debouncedMinViews,
-                onlyFirstPage: false,
-            }),
-        );
-        queryClient.prefetchQuery(
-            clipsOptions({
-                channels: channels.toSorted().join(",") || "",
-                from: format(subMonths(new Date(), 1), "yyyy-MM-dd"),
-                to: format(new Date(), "yyyy-MM-dd"),
-                minViews: debouncedMinViews,
-                onlyFirstPage: true,
-            }),
-        );
-    }
+    const { prefetchChannelsBeforeRemove, prefetchLastMonth, prefetchLastWeek } =
+        useClipsPrefetches(search);
 
     const dateRange = {
         from: parse(search.from, "yyyy-MM-dd", new Date()),
