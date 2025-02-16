@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { endOfYear, format, subDays, subMonths, subYears } from "date-fns";
 import { CalendarIcon, Clock9 } from "lucide-react";
 import { DateRange } from "react-day-picker";
@@ -15,22 +16,61 @@ import {
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { PopoverContent } from "~/components/ui/popover";
+import { clipsOptions } from "~/lib/get-clips";
 import { cn, getYearsArray } from "~/lib/utils";
 import { Popover, PopoverTrigger } from "./ui/popover";
 
 interface Props {
+    channels: string[];
     dateRange: DateRange | undefined;
     setDateRange: (dateRange: DateRange | undefined) => void;
-    prefetchLastWeek: () => void;
-    prefetchLastMonth: () => void;
 }
 
-export default function DateRangePicker({
-    dateRange,
-    setDateRange,
-    prefetchLastWeek,
-    prefetchLastMonth,
-}: Props) {
+export default function DateRangePicker({ channels, dateRange, setDateRange }: Props) {
+    const queryClient = useQueryClient();
+
+    function prefetchLastWeek() {
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: channels.toSorted().join(",") || "",
+                from: format(subDays(new Date(), 7), "yyyy-MM-dd"),
+                to: format(new Date(), "yyyy-MM-dd"),
+            }),
+        );
+    }
+
+    function prefetchLastMonth() {
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: channels.toSorted().join(",") || "",
+                from: format(subMonths(new Date(), 1), "yyyy-MM-dd"),
+                to: format(new Date(), "yyyy-MM-dd"),
+            }),
+        );
+    }
+
+    function prefetchLastYear() {
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: channels.toSorted().join(",") || "",
+                from: format(subMonths(new Date(), 12), "yyyy-MM-dd"),
+                to: format(new Date(), "yyyy-MM-dd"),
+            }),
+        );
+    }
+
+    function prefetchYear(year: number) {
+        return () => {
+            queryClient.prefetchQuery(
+                clipsOptions({
+                    channels: channels.toSorted().join(",") || "",
+                    from: format(new Date(year, 0, 1), "yyyy-MM-dd"),
+                    to: format(endOfYear(new Date(year, 0, 1)), "yyyy-MM-dd"),
+                }),
+            );
+        };
+    }
+
     return (
         <div className="flex gap-1">
             <div className="grid grow gap-2">
@@ -114,6 +154,7 @@ export default function DateRangePicker({
                                     to: new Date(),
                                 })
                             }
+                            onMouseEnter={prefetchLastYear}
                         >
                             Last year
                         </DropdownMenuItem>
@@ -130,6 +171,7 @@ export default function DateRangePicker({
                                                     to: endOfYear(new Date(year, 0, 1)),
                                                 })
                                             }
+                                            onMouseEnter={prefetchYear(year)}
                                         >
                                             {year}
                                         </DropdownMenuItem>

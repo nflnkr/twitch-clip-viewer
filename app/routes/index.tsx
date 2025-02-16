@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { format, parse, subDays } from "date-fns";
@@ -16,13 +17,13 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
+import { clipsOptions } from "~/lib/get-clips";
 import { useClips } from "~/lib/use-clips";
 import { useDebouncedValue } from "~/lib/use-debounced-value";
-import { useClipsPrefetches } from "~/lib/use-clips-prefetches";
 
 const clipAutoplayDefault = process.env.NODE_ENV === "production" ? true : false;
 
-const defaultMinViews = 10;
+const defaultMinViews = 5;
 const getDefaultFrom = () => format(subDays(new Date(), 7), "yyyy-MM-dd");
 const getDefaultTo = () => format(new Date(), "yyyy-MM-dd");
 
@@ -56,6 +57,7 @@ const initialSidebarStyle = {
 function Index() {
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
+    const queryClient = useQueryClient();
     const debouncedMinViews = useDebouncedValue(search.minViews, 500);
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
     const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
@@ -110,8 +112,17 @@ function Index() {
         });
     }
 
-    const { prefetchChannelsBeforeRemove, prefetchLastMonth, prefetchLastWeek } =
-        useClipsPrefetches(search);
+    function prefetchChannelsBeforeRemove(channel: string) {
+        const newChannels = channels.filter((c) => c !== channel);
+
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: newChannels.toSorted().join(","),
+                from: search.from,
+                to: search.to,
+            }),
+        );
+    }
 
     const dateRange = {
         from: parse(search.from, "yyyy-MM-dd", new Date()),
@@ -130,7 +141,7 @@ function Index() {
             <div className="flex h-full grow flex-col">
                 <div className="flex grow items-center justify-center">
                     <TwitchClipEmbed
-                        key={currentClip?.id || "no-clip"}
+                        key={currentClip?.id}
                         clip={currentClip}
                         noChannels={channels.length === 0}
                         autoplay={clipAutoplayRef.current}
@@ -237,10 +248,9 @@ function Index() {
                                     />
                                 </div>
                                 <DateRangePicker
+                                    channels={channels}
                                     dateRange={dateRange}
                                     setDateRange={setDateRange}
-                                    prefetchLastWeek={prefetchLastWeek}
-                                    prefetchLastMonth={prefetchLastMonth}
                                 />
                                 <div className="flex items-center gap-2">
                                     <Switch

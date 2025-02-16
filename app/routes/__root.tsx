@@ -1,5 +1,5 @@
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { createRootRoute, Outlet, ScrollRestoration } from "@tanstack/react-router";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { Meta, Scripts } from "@tanstack/start";
 import { lazy, StrictMode, Suspense, type ReactNode } from "react";
 import appCss from "~/styles/app.css?url";
@@ -67,7 +67,6 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
             </head>
             <body className="h-dvh">
                 {children}
-                <ScrollRestoration />
                 <ReactQueryDevtools buttonPosition="bottom-left" />
                 <Suspense>
                     <TanStackRouterDevtools position="bottom-right" />
