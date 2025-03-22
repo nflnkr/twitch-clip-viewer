@@ -1,11 +1,12 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { useLiveQuery } from "dexie-react-hooks";
+import { Check } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { db } from "~/lib/db";
 import { cn } from "~/lib/utils";
 import { TwitchClipMetadata } from "~/model/twitch";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
-
-const CLIP_ELEMENT_HEIGHT = 270;
 
 interface Props {
     clips?: TwitchClipMetadata[] | null;
@@ -17,12 +18,15 @@ interface Props {
 export default function ClipList({ clips, currentClipId, currentClipIndex, onClipClick }: Props) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemsContainerRef = useRef<HTMLDivElement>(null);
+    const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
+
+    const viewedClipIds = viewedClips?.map((c) => c.clipId) ?? [];
 
     const rowVirtualizer = useVirtualizer({
         count: clips?.length ?? 0,
         getScrollElement: () =>
             scrollContainerRef.current?.querySelector("[data-radix-scroll-area-viewport]") ?? null,
-        estimateSize: () => CLIP_ELEMENT_HEIGHT,
+        estimateSize: () => 270,
         gap: 5,
     });
 
@@ -69,9 +73,12 @@ export default function ClipList({ clips, currentClipId, currentClipIndex, onCli
                                 className="min-h-0 grow object-cover"
                             />
                             <div className="flex flex-col gap-2 p-2">
-                                <p className="max-w-full self-start truncate tracking-tighter">
-                                    {clip.title}
-                                </p>
+                                <div className="flex items-center gap-1">
+                                    {viewedClipIds.includes(clip.id) && <Check />}
+                                    <p className="max-w-full self-start truncate tracking-tighter">
+                                        {clip.title}
+                                    </p>
+                                </div>
                                 <div className="flex justify-between gap-2">
                                     <p className="truncate">{clip.broadcaster_name}</p>
                                     <p>{clip.view_count}</p>

@@ -9,11 +9,13 @@ export function useClips({
     from,
     to,
     minViews,
+    chronologicalOrder,
 }: {
     channels: string[];
     from: string;
     to: string;
     minViews: number;
+    chronologicalOrder: boolean;
 }) {
     const {
         data: clipsFirstPage,
@@ -42,13 +44,20 @@ export function useClips({
             clipById[clip.id] = clip;
         });
 
-        const clipsArray = Array.from(Object.values(clipById)).sort(
-            (a, b) => b.view_count - a.view_count,
-        );
+        const clipsArray = Array.from(Object.values(clipById))
+            .sort((clipA, clipB) => {
+                if (chronologicalOrder) {
+                    return (
+                        new Date(clipB.created_at).getTime() - new Date(clipA.created_at).getTime()
+                    );
+                }
+                return clipB.view_count - clipA.view_count;
+            })
+            .filter((clip) => clip.view_count >= minViews);
         if (clipsArray.length === 0) return null;
 
         return clipsArray;
-    }, [clipsFirstPage, streamedClips]);
+    }, [chronologicalOrder, clipsFirstPage, minViews, streamedClips]);
 
     return {
         clips: uniqueSortedClips,
