@@ -67,7 +67,8 @@ function Index() {
     const [markAsViewed, setMarkAsViewed] = useState<boolean>(true);
     const [hideViewed, setHideViewed] = useState<boolean>(false);
     const [chronologicalOrder, setChronologicalOrder] = useState<boolean>(false);
-    const [nameFilterField, setNameFilterField] = useState<string>("");
+    const [titleFilterField, setTitleFilterField] = useState<string>("");
+    const debouncedTitleFilterField = useDebouncedValue(titleFilterField, 500);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
     const channels = search.channels.split(",").filter(Boolean);
@@ -152,7 +153,8 @@ function Index() {
         let showClip = true;
 
         const title = clip.title.toLowerCase();
-        if (nameFilterField && !title.includes(nameFilterField.toLowerCase())) showClip = false;
+        if (debouncedTitleFilterField && !title.includes(debouncedTitleFilterField.toLowerCase()))
+            showClip = false;
         if (hideViewed && !viewedClipsIds.includes(clip.id)) showClip = false;
 
         return showClip;
@@ -332,14 +334,14 @@ function Index() {
                                 <div className="flex items-stretch gap-1">
                                     <Input
                                         placeholder="Filter clips by title"
-                                        value={nameFilterField}
-                                        onChange={(e) => setNameFilterField(e.target.value)}
+                                        value={titleFilterField}
+                                        onChange={(e) => setTitleFilterField(e.target.value)}
                                     />
                                     <Button
                                         size="xs"
                                         variant="outline"
-                                        onClick={() => setNameFilterField("")}
-                                        disabled={!nameFilterField}
+                                        onClick={() => setTitleFilterField("")}
+                                        disabled={!titleFilterField}
                                         className="h-full"
                                     >
                                         <X />
@@ -351,7 +353,7 @@ function Index() {
                                         disabled={!viewedClips?.length}
                                         className="h-full"
                                     >
-                                        {`Clear viewed${viewedClips?.length ? `(${viewedClips.length})` : ""}`}
+                                        {`Clear viewed${viewedClips?.length ? ` (${viewedClips.length})` : ""}`}
                                     </Button>
                                 </div>
                             </div>
