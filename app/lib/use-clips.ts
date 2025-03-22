@@ -48,7 +48,7 @@ export function useClips({
             .sort((clipA, clipB) => {
                 if (chronologicalOrder) {
                     return (
-                        new Date(clipB.created_at).getTime() - new Date(clipA.created_at).getTime()
+                        new Date(clipA.created_at).getTime() - new Date(clipB.created_at).getTime()
                     );
                 }
                 return clipB.view_count - clipA.view_count;
