@@ -4,7 +4,7 @@ import { zodValidator } from "@tanstack/zod-adapter";
 import { format, parse, subDays } from "date-fns";
 import { ArrowLeft, ArrowRight, PanelLeftClose, PanelRightClose, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { CSSProperties, KeyboardEvent, useRef, useState } from "react";
+import { CSSProperties, KeyboardEvent, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { z } from "zod";
 import ClipInfo from "~/components/ClipInfo";
@@ -61,7 +61,7 @@ function Index() {
     const debouncedMinViews = useDebouncedValue(search.minViews, 500);
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
     const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
-    const clipAutoplayRef = useRef(clipAutoplayDefault);
+    const [clipAutoplay, setClipAutoplay] = useState<boolean>(clipAutoplayDefault);
 
     const channels = search.channels.split(",").filter(Boolean);
 
@@ -148,7 +148,7 @@ function Index() {
                         key={currentClip?.id}
                         clip={currentClip}
                         noChannels={channels.length === 0}
-                        autoplay={clipAutoplayRef.current}
+                        autoplay={clipAutoplay}
                     />
                 </div>
                 <AnimatePresence>
@@ -259,10 +259,8 @@ function Index() {
                                 <div className="flex items-center gap-2">
                                     <Switch
                                         id="clip-autoplay"
-                                        defaultChecked={clipAutoplayDefault}
-                                        onCheckedChange={(checked) => {
-                                            clipAutoplayRef.current = checked;
-                                        }}
+                                        checked={clipAutoplay}
+                                        onCheckedChange={setClipAutoplay}
                                     />
                                     <Label htmlFor="clip-autoplay">Clip autoplay</Label>
                                 </div>
