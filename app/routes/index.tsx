@@ -78,7 +78,11 @@ function Index() {
             search: {
                 ...search,
                 from: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
-                to: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
+                to: dateRange?.to
+                    ? format(dateRange.to, "yyyy-MM-dd")
+                    : dateRange?.from
+                      ? format(dateRange.from, "yyyy-MM-dd")
+                      : undefined,
             },
         });
     }

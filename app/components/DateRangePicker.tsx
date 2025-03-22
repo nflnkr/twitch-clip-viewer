@@ -106,7 +106,6 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
                         <Calendar
                             initialFocus
                             mode="range"
-                            defaultMonth={dateRange?.from}
                             selected={dateRange}
                             onSelect={setDateRange}
                             numberOfMonths={2}
