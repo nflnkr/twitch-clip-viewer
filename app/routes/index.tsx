@@ -155,7 +155,7 @@ function Index() {
         const title = clip.title.toLowerCase();
         if (debouncedTitleFilterField && !title.includes(debouncedTitleFilterField.toLowerCase()))
             showClip = false;
-        if (hideViewed && !viewedClipsIds.includes(clip.id)) showClip = false;
+        if (hideViewed && viewedClipsIds.includes(clip.id)) showClip = false;
 
         return showClip;
     });
