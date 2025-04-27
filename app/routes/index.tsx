@@ -254,7 +254,7 @@ function Index() {
                                     </Button>
                                     <div className="grow">
                                         <Input
-                                            placeholder="New channel"
+                                            placeholder="Add channel"
                                             enterKeyHint="done"
                                             onKeyUp={handleNewChannelEnterPress}
                                         />
