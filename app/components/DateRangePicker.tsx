@@ -109,6 +109,7 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
                             selected={dateRange}
                             onSelect={setDateRange}
                             numberOfMonths={2}
+                            defaultMonth={dateRange?.to}
                         />
                     </PopoverContent>
                 </Popover>
