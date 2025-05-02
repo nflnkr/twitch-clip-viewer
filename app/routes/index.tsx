@@ -3,9 +3,18 @@ import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { format, parse, subDays } from "date-fns";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowLeft, ArrowRight, PanelLeftClose, PanelRightClose, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import { CSSProperties, KeyboardEvent, useState } from "react";
+import {
+    ArrowLeft,
+    ArrowRight,
+    CirclePause,
+    CirclePlay,
+    PanelLeftClose,
+    PanelRightClose,
+    Settings,
+    X,
+} from "lucide-react";
+import { animate, AnimatePresence, motion, useMotionValue } from "motion/react";
+import { CSSProperties, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { z } from "zod";
 import ClipInfo from "~/components/ClipInfo";
@@ -15,6 +24,13 @@ import { NumberInput } from "~/components/NumberInput";
 import Spinner from "~/components/Spinner";
 import TwitchClipEmbed from "~/components/TwitchClipEmbed";
 import { Button } from "~/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
@@ -23,9 +39,7 @@ import { clipsOptions } from "~/lib/get-clips";
 import { useClips } from "~/lib/use-clips";
 import { useDebouncedValue } from "~/lib/use-debounced-value";
 
-const clipAutoplayDefault = process.env.NODE_ENV === "production" ? true : false;
-
-const defaultMinViews = 5;
+const defaultMinViews = 10;
 const getDefaultFrom = () => format(subDays(new Date(), 7), "yyyy-MM-dd");
 const getDefaultTo = () => format(new Date(), "yyyy-MM-dd");
 
@@ -61,13 +75,16 @@ function Index() {
     const navigate = Route.useNavigate();
     const queryClient = useQueryClient();
     const debouncedMinViews = useDebouncedValue(search.minViews, 500);
+    const [autonextBuffer, setAutonextBuffer] = useState<number>(4);
+    const [autonextEnabled, setAutonextEnabled] = useState<boolean>(false);
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
     const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
-    const [clipAutoplay, setClipAutoplay] = useState<boolean>(clipAutoplayDefault);
+    const [clipAutoplay, setClipAutoplay] = useState<boolean>(true);
     const [markAsViewed, setMarkAsViewed] = useState<boolean>(true);
     const [hideViewed, setHideViewed] = useState<boolean>(false);
     const [chronologicalOrder, setChronologicalOrder] = useState<boolean>(false);
     const [titleFilterField, setTitleFilterField] = useState<string>("");
+    const autonextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const debouncedTitleFilterField = useDebouncedValue(titleFilterField, 500);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
@@ -81,6 +98,103 @@ function Index() {
         minViews: debouncedMinViews,
         chronologicalOrder,
     });
+
+    const dateRange = {
+        from: parse(search.from, "yyyy-MM-dd", new Date()),
+        to: parse(search.to, "yyyy-MM-dd", new Date()),
+    };
+
+    const filteredClips = clips?.filter((clip) => {
+        let showClip = true;
+
+        const title = clip.title.toLowerCase();
+        if (debouncedTitleFilterField && !title.includes(debouncedTitleFilterField.toLowerCase()))
+            showClip = false;
+        if (hideViewed && viewedClipsIds.includes(clip.id)) showClip = false;
+
+        return showClip;
+    });
+
+    const currentClip = filteredClips?.find((c) => c.id === selectedClipId) ?? filteredClips?.at(0);
+
+    const currentClipIndex = (currentClip && filteredClips?.indexOf(currentClip)) ?? 0;
+    const previousClip = filteredClips?.[currentClipIndex - 1];
+    const nextClip = filteredClips?.[currentClipIndex + 1];
+
+    const sidebarStyle = sidebarOpen ? initialSidebarStyle : { width: "2.25rem", padding: "0" };
+
+    const clipProgressOverlayWidth = useMotionValue("0%");
+
+    const clipProgressOverlay = currentClip && autonextEnabled && (
+        <motion.div
+            key={currentClip.id}
+            style={{ width: clipProgressOverlayWidth }}
+            className="h-full bg-zinc-400 opacity-10"
+        />
+    );
+
+    const stopAutonext = useCallback(() => {
+        setAutonextEnabled(false);
+        clearTimeout(autonextTimeoutRef.current ?? 0);
+        autonextTimeoutRef.current = null;
+        clipProgressOverlayWidth.jump("0%");
+    }, [clipProgressOverlayWidth]);
+
+    const selectClip = useCallback(
+        async (clipId: string | null, autonext = false) => {
+            const leavingClipId = currentClip?.id;
+
+            if (markAsViewed && leavingClipId) {
+                const exists = await db.viewedClips.where("clipId").equals(leavingClipId).count();
+
+                if (!exists) {
+                    await db.viewedClips.add({
+                        clipId: leavingClipId,
+                        timestamp: Date.now(),
+                    });
+                }
+            }
+
+            setSelectedClipId(clipId);
+            clipProgressOverlayWidth.jump("0%");
+            if (!autonext) stopAutonext();
+        },
+        [clipProgressOverlayWidth, currentClip?.id, markAsViewed, stopAutonext],
+    );
+
+    useEffect(
+        function setAutonextTimer() {
+            if (!currentClip || (!autonextEnabled && autonextTimeoutRef.current)) {
+                return stopAutonext();
+            }
+
+            if (autonextEnabled && !autonextTimeoutRef.current) {
+                animate(clipProgressOverlayWidth, "100%", {
+                    duration: currentClip.duration + autonextBuffer,
+                    ease: "linear",
+                });
+
+                autonextTimeoutRef.current = setTimeout(
+                    () => {
+                        autonextTimeoutRef.current = null;
+                        if (document.hidden) return setAutonextEnabled(false);
+
+                        if (nextClip) selectClip(nextClip.id, true);
+                    },
+                    (autonextBuffer + currentClip.duration) * 1000,
+                );
+            }
+        },
+        [
+            autonextBuffer,
+            autonextEnabled,
+            clipProgressOverlayWidth,
+            currentClip,
+            nextClip,
+            selectClip,
+            stopAutonext,
+        ],
+    );
 
     function setDateRange(dateRange: DateRange | undefined) {
         selectClip(null);
@@ -144,41 +258,11 @@ function Index() {
         db.viewedClips.clear();
     }
 
-    const dateRange = {
-        from: parse(search.from, "yyyy-MM-dd", new Date()),
-        to: parse(search.to, "yyyy-MM-dd", new Date()),
-    };
-
-    const filteredClips = clips?.filter((clip) => {
-        let showClip = true;
-
-        const title = clip.title.toLowerCase();
-        if (debouncedTitleFilterField && !title.includes(debouncedTitleFilterField.toLowerCase()))
-            showClip = false;
-        if (hideViewed && viewedClipsIds.includes(clip.id)) showClip = false;
-
-        return showClip;
-    });
-
-    const currentClip = filteredClips?.find((c) => c.id === selectedClipId) ?? filteredClips?.at(0);
-    const currentClipIndex = (currentClip && filteredClips?.indexOf(currentClip)) ?? 0;
-    const previousClip = filteredClips?.[currentClipIndex - 1];
-    const nextClip = filteredClips?.[currentClipIndex + 1];
-
-    async function selectClip(clipId: string | null) {
-        const leavingClipId = currentClip?.id;
-
-        if (markAsViewed && leavingClipId) {
-            await db.viewedClips.add({
-                clipId: leavingClipId,
-                timestamp: Date.now(),
-            });
-        }
-
-        setSelectedClipId(clipId);
+    function handleMinViewsChange(value: number | undefined) {
+        selectClip(null);
+        setChronologicalOrder(false);
+        navigate({ search: { ...search, minViews: value } });
     }
-
-    const sidebarAnimate = sidebarOpen ? initialSidebarStyle : { width: "2.25rem", padding: "0" };
 
     return (
         <div className="flex h-full divide-x">
@@ -197,7 +281,7 @@ function Index() {
                             initial={{ height: 0 }}
                             animate={{ height: "2rem" }}
                             exit={{ height: 0 }}
-                            className="flex overflow-y-clip"
+                            className="relative flex overflow-y-clip"
                         >
                             <Button
                                 variant="outline"
@@ -210,6 +294,14 @@ function Index() {
                             </Button>
                             <Button
                                 variant="outline"
+                                className="h-full rounded-none border-x-0"
+                                onClick={() => setAutonextEnabled((prev) => !prev)}
+                            >
+                                Autoplay
+                                {autonextEnabled ? <CirclePause /> : <CirclePlay />}
+                            </Button>
+                            <Button
+                                variant="outline"
                                 className="h-full grow rounded-none border-r-0"
                                 disabled={!nextClip}
                                 onClick={() => selectClip(nextClip?.id ?? null)}
@@ -217,13 +309,16 @@ function Index() {
                                 Next
                                 <ArrowRight />
                             </Button>
+                            <div className="pointer-events-none absolute inset-0">
+                                {clipProgressOverlay}
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
             <motion.div
                 initial={initialSidebarStyle}
-                animate={sidebarAnimate}
+                animate={sidebarStyle}
                 className="h-full overflow-y-auto overflow-x-clip"
             >
                 <AnimatePresence mode="wait">
@@ -284,10 +379,7 @@ function Index() {
                                         id="min-views"
                                         name="minViews"
                                         value={search.minViews}
-                                        onValueChange={(v) => {
-                                            selectClip(null);
-                                            navigate({ search: { ...search, minViews: v } });
-                                        }}
+                                        onValueChange={handleMinViewsChange}
                                         stepper={10}
                                         min={0}
                                     />
@@ -297,31 +389,7 @@ function Index() {
                                     dateRange={dateRange}
                                     setDateRange={setDateRange}
                                 />
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="mr-auto flex items-center gap-2">
-                                        <Switch
-                                            id="clip-autoplay"
-                                            checked={clipAutoplay}
-                                            onCheckedChange={setClipAutoplay}
-                                        />
-                                        <Label htmlFor="clip-autoplay">Clip autoplay</Label>
-                                    </div>
-                                    <div className="mr-auto flex items-center gap-2">
-                                        <Switch
-                                            id="mark-as-viewed"
-                                            checked={markAsViewed}
-                                            onCheckedChange={setMarkAsViewed}
-                                        />
-                                        <Label htmlFor="mark-as-viewed">Mark as viewed</Label>
-                                    </div>
-                                    <div className="mr-auto flex items-center gap-2">
-                                        <Switch
-                                            id="chronological-order"
-                                            checked={chronologicalOrder}
-                                            onCheckedChange={setChronologicalOrder}
-                                        />
-                                        <Label htmlFor="chronological-order">Chronologically</Label>
-                                    </div>
+                                <div className="flex items-center justify-between">
                                     <div className="mr-auto flex items-center gap-2">
                                         <Switch
                                             id="hide-viewed"
@@ -330,31 +398,109 @@ function Index() {
                                         />
                                         <Label htmlFor="hide-viewed">Hide viewed</Label>
                                     </div>
-                                </div>
-                                <div className="flex items-stretch gap-1">
-                                    <Input
-                                        placeholder="Filter clips by title"
-                                        value={titleFilterField}
-                                        onChange={(e) => setTitleFilterField(e.target.value)}
-                                    />
-                                    <Button
-                                        size="xs"
-                                        variant="outline"
-                                        onClick={() => setTitleFilterField("")}
-                                        disabled={!titleFilterField}
-                                        className="h-full"
-                                    >
-                                        <X />
-                                    </Button>
-                                    <Button
-                                        size="xs"
-                                        variant="outline"
-                                        onClick={clearViewedClips}
-                                        disabled={!viewedClips?.length}
-                                        className="h-full"
-                                    >
-                                        {`Clear viewed${viewedClips?.length ? ` (${viewedClips.length})` : ""}`}
-                                    </Button>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline">
+                                                <Settings />
+                                                More settings
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent
+                                            className="gap-6 sm:max-w-[425px]"
+                                            aria-describedby={undefined}
+                                        >
+                                            <DialogHeader>
+                                                <DialogTitle>Settings</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="flex flex-col gap-4">
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="mr-auto flex items-center gap-2">
+                                                        <Switch
+                                                            id="clip-autoplay"
+                                                            checked={clipAutoplay}
+                                                            onCheckedChange={setClipAutoplay}
+                                                        />
+                                                        <Label htmlFor="clip-autoplay">
+                                                            Clip autoplay
+                                                        </Label>
+                                                    </div>
+                                                    <div className="mr-auto flex items-center gap-2">
+                                                        <Switch
+                                                            id="mark-as-viewed"
+                                                            checked={markAsViewed}
+                                                            onCheckedChange={setMarkAsViewed}
+                                                        />
+                                                        <Label htmlFor="mark-as-viewed">
+                                                            Mark as viewed
+                                                        </Label>
+                                                    </div>
+                                                    <div className="mr-auto flex items-center gap-2">
+                                                        <Switch
+                                                            id="chronological-order"
+                                                            checked={chronologicalOrder}
+                                                            onCheckedChange={(value) => {
+                                                                setChronologicalOrder(value);
+                                                                selectClip(null);
+                                                            }}
+                                                        />
+                                                        <Label htmlFor="chronological-order">
+                                                            Chronological order
+                                                        </Label>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                    <Label htmlFor="title-filter">
+                                                        Filter clips by title
+                                                    </Label>
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                            id="title-filter"
+                                                            value={titleFilterField}
+                                                            onChange={(e) =>
+                                                                setTitleFilterField(e.target.value)
+                                                            }
+                                                        />
+                                                        <Button
+                                                            size="xs"
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                setTitleFilterField("");
+                                                                stopAutonext();
+                                                            }}
+                                                            disabled={!titleFilterField}
+                                                            className="aspect-square h-full"
+                                                        >
+                                                            <X />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                    <Label htmlFor="autonext-buffer">
+                                                        Autonext: estimate time for clip to load (s)
+                                                    </Label>
+                                                    <NumberInput
+                                                        id="autonext-buffer"
+                                                        name="autonext-buffer"
+                                                        value={autonextBuffer}
+                                                        onValueChange={(v) => {
+                                                            if (v !== undefined) {
+                                                                setAutonextBuffer(v);
+                                                            }
+                                                        }}
+                                                        min={0}
+                                                    />
+                                                </div>
+                                                <Button
+                                                    variant="destructive"
+                                                    onClick={clearViewedClips}
+                                                    disabled={!viewedClips?.length}
+                                                    className="h-full"
+                                                >
+                                                    {`Clear viewed clips (${viewedClips?.length || 0})`}
+                                                </Button>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </div>
                             {error ? (
@@ -387,7 +533,7 @@ function Index() {
                             animate={{
                                 opacity: 1,
                             }}
-                            className="flex h-full flex-col"
+                            className="relative flex h-full flex-col"
                         >
                             <Button
                                 variant="ghost"
@@ -407,6 +553,13 @@ function Index() {
                                 <ArrowLeft />
                             </Button>
                             <Button
+                                variant="outline"
+                                className="rounded-none hover:bg-gray-950"
+                                onClick={() => setAutonextEnabled((prev) => !prev)}
+                            >
+                                {autonextEnabled ? <CirclePause /> : <CirclePlay />}
+                            </Button>
+                            <Button
                                 variant="ghost"
                                 size="icon"
                                 className="grow rounded-none hover:bg-gray-950"
@@ -415,6 +568,9 @@ function Index() {
                             >
                                 <ArrowRight />
                             </Button>
+                            <div className="pointer-events-none absolute inset-0">
+                                {clipProgressOverlay}
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

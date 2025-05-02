@@ -79,7 +79,6 @@ async function* generateBroadcasterClips({
 
     do {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
             const response = await fetchBroadcasterClips({
                 broadcasterName,
                 fromTimestamp,

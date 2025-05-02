@@ -20,14 +20,13 @@ export async function fetchBroadcasterClips({
     const broadcasterId = await twitchUserId.getIdByUsername(broadcasterName);
     if (!broadcasterId) return null;
 
-    const searchParams = new URLSearchParams({
-        first: "100",
-        broadcaster_id: broadcasterId.toString(),
-        started_at: new Date(fromTimestamp).toISOString(),
-        ended_at: new Date(toTimestamp).toISOString(),
-    });
-    if (cursor) searchParams.append("after", cursor);
-    const url = `https://api.twitch.tv/helix/clips?${searchParams}`;
+    const url = new URL("https://api.twitch.tv/helix/clips");
+
+    url.searchParams.set("first", "100");
+    url.searchParams.set("broadcaster_id", broadcasterId.toString());
+    url.searchParams.set("started_at", new Date(fromTimestamp).toISOString());
+    url.searchParams.set("ended_at", new Date(toTimestamp).toISOString());
+    if (cursor) url.searchParams.set("after", cursor);
 
     try {
         const authData = await twitchAuthToken.getAuthData();
@@ -35,7 +34,7 @@ export async function fetchBroadcasterClips({
         const response = await axios<{
             data: TwitchClipMetadata[];
             pagination?: { cursor: string | null };
-        }>(url, {
+        }>(url.toString(), {
             headers: {
                 Authorization: "Bearer " + authData.authToken,
                 "Client-Id": authData.clientId,
