@@ -1,4 +1,4 @@
-import { TwitchClipMetadata } from "~/model/twitch";
+import type { TwitchClipMetadata } from "~/model/twitch";
 
 const hostname = globalThis.location?.hostname;
 

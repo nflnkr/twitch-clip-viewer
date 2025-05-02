@@ -14,8 +14,15 @@ import {
     X,
 } from "lucide-react";
 import { animate, AnimatePresence, motion, useMotionValue } from "motion/react";
-import { CSSProperties, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
-import { DateRange } from "react-day-picker";
+import {
+    type CSSProperties,
+    type KeyboardEvent,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
+import type { DateRange } from "react-day-picker";
 import { z } from "zod";
 import ClipInfo from "~/components/ClipInfo";
 import ClipList from "~/components/ClipList";

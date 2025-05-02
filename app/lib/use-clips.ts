@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { TwitchClipMetadata, twitchClipMetadataArraySchema } from "~/model/twitch";
+import { type TwitchClipMetadata, twitchClipMetadataArraySchema } from "~/model/twitch";
 import { clipsOptions } from "./get-clips";
 import { useQuery } from "@tanstack/react-query";
 import { getStreamedClips } from "./get-streamed-clips";

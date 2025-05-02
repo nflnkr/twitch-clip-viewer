@@ -1,6 +1,6 @@
 import { Calendar, ExternalLink, Eye, Loader2, User } from "lucide-react";
 import { cn, formatSeconds } from "~/lib/utils";
-import { TwitchClipMetadata } from "~/model/twitch";
+import type { TwitchClipMetadata } from "~/model/twitch";
 import { Button } from "./ui/button";
 
 interface Props {

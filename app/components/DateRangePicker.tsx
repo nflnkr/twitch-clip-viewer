@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { endOfYear, format, subDays, subMonths, subYears } from "date-fns";
 import { CalendarIcon, Clock9 } from "lucide-react";
-import { DateRange } from "react-day-picker";
+import { type DateRange } from "react-day-picker";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import {
