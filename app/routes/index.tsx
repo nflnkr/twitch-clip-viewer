@@ -401,7 +401,10 @@ function Index() {
                                         <Switch
                                             id="hide-viewed"
                                             checked={hideViewed}
-                                            onCheckedChange={setHideViewed}
+                                            onCheckedChange={(value) => {
+                                                setHideViewed(value);
+                                                setAutonextEnabled(false);
+                                            }}
                                         />
                                         <Label htmlFor="hide-viewed">Hide viewed</Label>
                                     </div>
