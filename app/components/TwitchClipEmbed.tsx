@@ -17,7 +17,6 @@ export default function TwitchClipEmbed({ clip, autoplay, noChannels }: Props) {
             src={`${clip.embed_url}&parent=${hostname}&autoplay=${autoplay}`}
             allow="autoplay; picture-in-picture"
             allowFullScreen
-            title="Embedded twitch clip"
             className="h-full w-full"
         />
     );
