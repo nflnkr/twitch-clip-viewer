@@ -127,6 +127,7 @@ function Index() {
     const currentClipIndex = (currentClip && filteredClips?.indexOf(currentClip)) ?? 0;
     const previousClip = filteredClips?.[currentClipIndex - 1];
     const nextClip = filteredClips?.[currentClipIndex + 1];
+    const totalClipsDuration = filteredClips?.reduce((acc, c) => acc + c.duration, 0) ?? 0;
 
     const sidebarStyle = sidebarOpen ? initialSidebarStyle : { width: "2.25rem", padding: "0" };
 
@@ -522,6 +523,7 @@ function Index() {
                                     <ClipInfo
                                         currentClip={currentClip}
                                         clipsLength={filteredClips?.length ?? 0}
+                                        totalClipsDuration={totalClipsDuration}
                                         currentClipIndex={currentClipIndex}
                                         isLoading={isLoadingAllClips}
                                     />

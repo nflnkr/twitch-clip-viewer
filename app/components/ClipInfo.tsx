@@ -6,11 +6,18 @@ import { Button } from "./ui/button";
 interface Props {
     currentClipIndex: number;
     clipsLength: number;
+    totalClipsDuration: number;
     currentClip: TwitchClipMetadata;
     isLoading: boolean;
 }
 
-export default function ClipInfo({ clipsLength, currentClip, currentClipIndex, isLoading }: Props) {
+export default function ClipInfo({
+    clipsLength,
+    currentClip,
+    totalClipsDuration,
+    currentClipIndex,
+    isLoading,
+}: Props) {
     const vodOffset = currentClip.vod_offset ? currentClip.vod_offset : null;
     const vodOffsetString = vodOffset ? formatSeconds(vodOffset) : null;
     const vodLink =
@@ -37,7 +44,7 @@ export default function ClipInfo({ clipsLength, currentClip, currentClipIndex, i
                 </Button>
                 <div className="flex items-center gap-2">
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    <p className="text-sm">{`${currentClipIndex + 1}/${clipsLength}`}</p>
+                    <p className="text-sm">{`${currentClipIndex + 1}/${clipsLength} (${formatSeconds(totalClipsDuration)})`}</p>
                 </div>
             </div>
             <p
