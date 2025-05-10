@@ -1,12 +1,10 @@
 import pino from "pino";
-
-if (!process.env.LOGTAIL_SOURCE_TOKEN)
-    throw new Error("LOGTAIL_SOURCE_TOKEN env variable must be set");
+import { env } from "~/env";
 
 const logtailTarget = {
     target: "@logtail/pino",
     options: {
-        sourceToken: process.env.LOGTAIL_SOURCE_TOKEN,
+        sourceToken: env.LOGTAIL_SOURCE_TOKEN,
     },
 };
 

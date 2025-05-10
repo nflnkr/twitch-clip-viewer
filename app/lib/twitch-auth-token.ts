@@ -1,10 +1,6 @@
 import axios from "axios";
 import { logger } from "./logger";
-
-if (!process.env.TWITCH_API_CLIENT_ID)
-    throw new Error("TWITCH_API_CLIENT_ID env variable must be set");
-if (!process.env.TWITCH_API_CLIENT_SECRET)
-    throw new Error("TWITCH_API_CLIENT_SECRET env variable must be set");
+import { env } from "~/env";
 
 export class TwitchAuthToken {
     private readonly clientId: string;
@@ -57,6 +53,6 @@ export class TwitchAuthToken {
 }
 
 export const twitchAuthToken = new TwitchAuthToken(
-    process.env.TWITCH_API_CLIENT_ID,
-    process.env.TWITCH_API_CLIENT_SECRET,
+    env.TWITCH_API_CLIENT_ID,
+    env.TWITCH_API_CLIENT_SECRET,
 );
