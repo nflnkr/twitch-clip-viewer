@@ -150,6 +150,8 @@ function Index() {
 
     const selectClip = useCallback(
         async (clipId: string | null, autonext = false) => {
+            if (currentClip?.id === clipId) return;
+
             const leavingClipId = currentClip?.id;
 
             if (markAsViewed && leavingClipId) {
