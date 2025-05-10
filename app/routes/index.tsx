@@ -188,6 +188,7 @@ function Index() {
                         if (document.hidden) return setAutonextEnabled(false);
 
                         if (nextClip) selectClip(nextClip.id, true);
+                        else stopAutonext();
                     },
                     (autonextBuffer + currentClip.duration) * 1000,
                 );
