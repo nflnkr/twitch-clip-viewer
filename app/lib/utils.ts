@@ -10,7 +10,12 @@ export function formatSeconds(seconds: number) {
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
 
-    return `${hours}h${minutes}m${secs}s`;
+    let result = "";
+    if (hours > 0) result += `${hours}h`;
+    if (minutes > 0) result += `${minutes}m`;
+    result += `${secs}s`;
+
+    return result;
 }
 
 export function getYearsArray() {
