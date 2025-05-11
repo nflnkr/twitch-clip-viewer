@@ -59,6 +59,16 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
         );
     }
 
+    function prefetchAll() {
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: channels.toSorted().join(",") || "",
+                from: format(new Date(2011, 0, 1), "yyyy-MM-dd"),
+                to: format(new Date(), "yyyy-MM-dd"),
+            }),
+        );
+    }
+
     function prefetchYear(year: number) {
         return () => {
             queryClient.prefetchQuery(
@@ -186,6 +196,7 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
                                     to: new Date(),
                                 })
                             }
+                            onMouseEnter={prefetchAll}
                         >
                             All
                         </DropdownMenuItem>
