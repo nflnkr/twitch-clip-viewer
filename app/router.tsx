@@ -21,6 +21,7 @@ export function createRouter() {
             context: { queryClient },
             defaultErrorComponent: DefaultCatchBoundary,
             defaultNotFoundComponent: () => <NotFound />,
+            defaultStaleTime: Infinity,
         }),
         queryClient,
     );

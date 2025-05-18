@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { endOfYear, format, subDays, subMonths, subYears } from "date-fns";
+import { addDays, endOfYear, format, subDays, subMonths, subYears } from "date-fns";
 import { CalendarIcon, Clock9 } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 import { Button } from "~/components/ui/button";
@@ -9,24 +9,29 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuPortal,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { PopoverContent } from "~/components/ui/popover";
 import { clipsOptions } from "~/lib/get-clips";
+import { datefnsLocaleByAppLocale, useLocaleContext, useTranslations } from "~/lib/locales";
 import { cn, getYearsArray } from "~/lib/utils";
 import { Popover, PopoverTrigger } from "./ui/popover";
 
 interface Props {
     channels: string[];
+    currentClipDate: string | undefined;
     dateRange: DateRange | undefined;
     setDateRange: (dateRange: DateRange | undefined) => void;
 }
 
-export default function DateRangePicker({ channels, dateRange, setDateRange }: Props) {
+export default function DateRangePicker({
+    channels,
+    currentClipDate,
+    dateRange,
+    setDateRange,
+}: Props) {
+    const t = useTranslations();
+    const { locale } = useLocaleContext();
     const queryClient = useQueryClient();
 
     function prefetchLastWeek() {
@@ -63,8 +68,20 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
         queryClient.prefetchQuery(
             clipsOptions({
                 channels: channels.toSorted().join(",") || "",
-                from: format(new Date(2011, 0, 1), "yyyy-MM-dd"),
+                from: format(new Date(2016, 0, 1), "yyyy-MM-dd"),
                 to: format(new Date(), "yyyy-MM-dd"),
+            }),
+        );
+    }
+
+    function prefetchCurrentClipDate() {
+        if (!currentClipDate) return;
+
+        queryClient.prefetchQuery(
+            clipsOptions({
+                channels: channels.toSorted().join(",") || "",
+                from: format(new Date(currentClipDate), "yyyy-MM-dd"),
+                to: format(addDays(new Date(currentClipDate), 1), "yyyy-MM-dd"),
             }),
         );
     }
@@ -95,18 +112,11 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
                             )}
                         >
                             <CalendarIcon />
-                            {dateRange?.from ? (
-                                dateRange.to ? (
-                                    <>
-                                        {format(dateRange.from, "LLL dd, y")} -{" "}
-                                        {format(dateRange.to, "LLL dd, y")}
-                                    </>
-                                ) : (
-                                    format(dateRange.from, "LLL dd, y")
-                                )
-                            ) : (
-                                <span>Pick a date</span>
-                            )}
+                            {dateRange?.from
+                                ? dateRange.to
+                                    ? `${format(dateRange.from, "dd.MM.y")} - ${format(dateRange.to, "dd.MM.y")}`
+                                    : format(dateRange.from, "dd.MM.y")
+                                : null}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent
@@ -115,6 +125,7 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
                     >
                         <Calendar
                             initialFocus
+                            locale={datefnsLocaleByAppLocale[locale]}
                             mode="range"
                             selected={dateRange}
                             onSelect={setDateRange}
@@ -144,7 +155,7 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
                             }
                             onMouseEnter={prefetchLastWeek}
                         >
-                            Last week
+                            {t("time.lastWeek")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() =>
@@ -155,7 +166,7 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
                             }
                             onMouseEnter={prefetchLastMonth}
                         >
-                            Last month
+                            {t("time.lastMonth")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() =>
@@ -166,29 +177,8 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
                             }
                             onMouseEnter={prefetchLastYear}
                         >
-                            Last year
+                            {t("time.lastYear")}
                         </DropdownMenuItem>
-                        <DropdownMenuSub>
-                            <DropdownMenuSubTrigger>Year</DropdownMenuSubTrigger>
-                            <DropdownMenuPortal>
-                                <DropdownMenuSubContent>
-                                    {getYearsArray().map((year) => (
-                                        <DropdownMenuItem
-                                            key={year}
-                                            onClick={() =>
-                                                setDateRange({
-                                                    from: new Date(year, 0, 1),
-                                                    to: endOfYear(new Date(year, 0, 1)),
-                                                })
-                                            }
-                                            onMouseEnter={prefetchYear(year)}
-                                        >
-                                            {year}
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuSubContent>
-                            </DropdownMenuPortal>
-                        </DropdownMenuSub>
                         <DropdownMenuItem
                             onClick={() =>
                                 setDateRange({
@@ -198,8 +188,36 @@ export default function DateRangePicker({ channels, dateRange, setDateRange }: P
                             }
                             onMouseEnter={prefetchAll}
                         >
-                            All
+                            {t("time.all")}
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                            disabled={!currentClipDate}
+                            onClick={() => {
+                                if (!currentClipDate) return;
+
+                                setDateRange({
+                                    from: new Date(currentClipDate),
+                                    to: addDays(new Date(currentClipDate), 1),
+                                });
+                            }}
+                            onMouseEnter={prefetchCurrentClipDate}
+                        >
+                            {t("time.currentClipDate")}
+                        </DropdownMenuItem>
+                        {getYearsArray().map((year) => (
+                            <DropdownMenuItem
+                                key={year}
+                                onClick={() =>
+                                    setDateRange({
+                                        from: new Date(year, 0, 1),
+                                        to: endOfYear(new Date(year, 0, 1)),
+                                    })
+                                }
+                                onMouseEnter={prefetchYear(year)}
+                            >
+                                {year}
+                            </DropdownMenuItem>
+                        ))}
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>

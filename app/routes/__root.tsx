@@ -1,7 +1,9 @@
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { Meta, Scripts } from "@tanstack/start";
-import { lazy, StrictMode, Suspense, type ReactNode } from "react";
+import { lazy, StrictMode, Suspense, useState, type ReactNode } from "react";
+import { getRequestLocale } from "~/lib/get-request-locale";
+import { LocaleContext, type AppLocale } from "~/lib/locales";
 import appCss from "~/styles/app.css?url";
 
 const TanStackRouterDevtools =
@@ -46,15 +48,21 @@ export const Route = createRootRoute({
         ],
         scripts: [...hmrFixScript],
     }),
+    beforeLoad: async () => ({ requestLocale: await getRequestLocale() }),
     component: RootComponent,
 });
 
 function RootComponent() {
+    const requestLocale = Route.useRouteContext().requestLocale;
+    const [locale, setLocale] = useState<AppLocale>(requestLocale);
+
     return (
         <StrictMode>
-            <RootDocument>
-                <Outlet />
-            </RootDocument>
+            <LocaleContext.Provider value={{ locale, setLocale }}>
+                <RootDocument>
+                    <Outlet />
+                </RootDocument>
+            </LocaleContext.Provider>
         </StrictMode>
     );
 }

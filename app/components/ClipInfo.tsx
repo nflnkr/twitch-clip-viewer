@@ -1,4 +1,5 @@
 import { Calendar, ExternalLink, Eye, Loader2, User } from "lucide-react";
+import { useTranslations } from "~/lib/locales";
 import { cn, formatSeconds } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
 import { Button } from "./ui/button";
@@ -18,6 +19,8 @@ export default function ClipInfo({
     currentClipIndex,
     isLoading,
 }: Props) {
+    const t = useTranslations();
+
     const vodOffset = currentClip.vod_offset ? currentClip.vod_offset : null;
     const vodOffsetString = vodOffset ? formatSeconds(vodOffset) : null;
     const vodLink =
@@ -80,7 +83,7 @@ export default function ClipInfo({
                         color="secondary"
                         href={currentClip.url}
                     >
-                        Open clip
+                        {t("openClip")}
                         <ExternalLink />
                     </a>
                 </Button>
@@ -97,7 +100,7 @@ export default function ClipInfo({
                             color="secondary"
                             href={vodLink}
                         >
-                            Open VOD
+                            {t("openVod")}
                             <ExternalLink />
                         </a>
                     </Button>

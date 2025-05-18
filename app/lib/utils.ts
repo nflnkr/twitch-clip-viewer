@@ -22,7 +22,7 @@ export function getYearsArray() {
     const currentYear = new Date().getFullYear();
 
     const yearsArray = [];
-    for (let year = currentYear; year >= 2011; year--) {
+    for (let year = currentYear; year >= 2016; year--) {
         yearsArray.push(year);
     }
 

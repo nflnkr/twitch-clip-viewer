@@ -27,6 +27,7 @@ import { z } from "zod";
 import ClipInfo from "~/components/ClipInfo";
 import ClipList from "~/components/ClipList";
 import DateRangePicker from "~/components/DateRangePicker";
+import LanguageMenu from "~/components/LanguageMenu";
 import { NumberInput } from "~/components/NumberInput";
 import Spinner from "~/components/Spinner";
 import TwitchClipEmbed from "~/components/TwitchClipEmbed";
@@ -43,6 +44,7 @@ import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
 import { db } from "~/lib/db";
 import { clipsOptions } from "~/lib/get-clips";
+import { useTranslations } from "~/lib/locales";
 import { useClips } from "~/lib/use-clips";
 import { useDebouncedValue } from "~/lib/use-debounced-value";
 
@@ -80,6 +82,7 @@ const initialSidebarStyle = {
 function Index() {
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
+    const t = useTranslations();
     const queryClient = useQueryClient();
     const debouncedMinViews = useDebouncedValue(search.minViews, 500);
     const [autonextBuffer, setAutonextBuffer] = useState<number>(4);
@@ -301,14 +304,13 @@ function Index() {
                                 onClick={() => selectClip(previousClip?.id ?? null)}
                             >
                                 <ArrowLeft />
-                                Prev
                             </Button>
                             <Button
                                 variant="outline"
                                 className="h-full rounded-none border-x-0"
                                 onClick={() => setAutonextEnabled((prev) => !prev)}
                             >
-                                Autoplay
+                                {t("player.autoplay")}
                                 {autonextEnabled ? <CirclePause /> : <CirclePlay />}
                             </Button>
                             <Button
@@ -317,7 +319,6 @@ function Index() {
                                 disabled={!nextClip}
                                 onClick={() => selectClip(nextClip?.id ?? null)}
                             >
-                                Next
                                 <ArrowRight />
                             </Button>
                             <div className="pointer-events-none absolute inset-0">
@@ -360,11 +361,12 @@ function Index() {
                                     </Button>
                                     <div className="grow">
                                         <Input
-                                            placeholder="Add channel"
+                                            placeholder={t("addChannel")}
                                             enterKeyHint="done"
                                             onKeyUp={handleNewChannelEnterPress}
                                         />
                                     </div>
+                                    <LanguageMenu />
                                 </div>
                                 <div className="flex flex-wrap gap-1">
                                     {channels.map((channel, index) => (
@@ -385,7 +387,7 @@ function Index() {
                             </div>
                             <div className="flex flex-col gap-2">
                                 <div className="flex flex-col gap-1">
-                                    <Label htmlFor="min-views">Min views</Label>
+                                    <Label htmlFor="min-views"> {t("minViews")}</Label>
                                     <NumberInput
                                         id="min-views"
                                         name="minViews"
@@ -397,6 +399,7 @@ function Index() {
                                 </div>
                                 <DateRangePicker
                                     channels={channels}
+                                    currentClipDate={currentClip?.created_at}
                                     dateRange={dateRange}
                                     setDateRange={setDateRange}
                                 />
@@ -410,13 +413,17 @@ function Index() {
                                                 setAutonextEnabled(false);
                                             }}
                                         />
-                                        <Label htmlFor="hide-viewed">Hide viewed</Label>
+                                        <Label htmlFor="hide-viewed">
+                                            {t("viewed.hideViewed")}
+                                        </Label>
                                     </div>
                                     <Dialog>
                                         <DialogTrigger asChild>
-                                            <Button variant="outline">
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                            >
                                                 <Settings />
-                                                More settings
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent
@@ -424,7 +431,7 @@ function Index() {
                                             aria-describedby={undefined}
                                         >
                                             <DialogHeader>
-                                                <DialogTitle>Settings</DialogTitle>
+                                                <DialogTitle>{t("settings")}</DialogTitle>
                                             </DialogHeader>
                                             <div className="flex flex-col gap-4">
                                                 <div className="flex flex-col gap-2">
@@ -435,7 +442,7 @@ function Index() {
                                                             onCheckedChange={setClipAutoplay}
                                                         />
                                                         <Label htmlFor="clip-autoplay">
-                                                            Clip autoplay
+                                                            {t("clipAutoplay")}
                                                         </Label>
                                                     </div>
                                                     <div className="mr-auto flex items-center gap-2">
@@ -445,7 +452,7 @@ function Index() {
                                                             onCheckedChange={setMarkAsViewed}
                                                         />
                                                         <Label htmlFor="mark-as-viewed">
-                                                            Mark as viewed
+                                                            {t("viewed.markAsViewed")}
                                                         </Label>
                                                     </div>
                                                     <div className="mr-auto flex items-center gap-2">
@@ -458,13 +465,13 @@ function Index() {
                                                             }}
                                                         />
                                                         <Label htmlFor="chronological-order">
-                                                            Chronological order
+                                                            {t("chronologicalOrder")}
                                                         </Label>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col gap-1">
                                                     <Label htmlFor="title-filter">
-                                                        Filter clips by title
+                                                        {t("titleFilter")}
                                                     </Label>
                                                     <div className="flex gap-2">
                                                         <Input
@@ -490,7 +497,7 @@ function Index() {
                                                 </div>
                                                 <div className="flex flex-col gap-1">
                                                     <Label htmlFor="autonext-buffer">
-                                                        Autonext: estimate time for clip to load (s)
+                                                        {t("autonextBuffer")}
                                                     </Label>
                                                     <NumberInput
                                                         id="autonext-buffer"
@@ -510,7 +517,7 @@ function Index() {
                                                     disabled={!viewedClips?.length}
                                                     className="h-full"
                                                 >
-                                                    {`Clear viewed clips (${viewedClips?.length || 0})`}
+                                                    {`${t("viewed.clearViewedClips")} (${viewedClips?.length || 0})`}
                                                 </Button>
                                             </div>
                                         </DialogContent>
