@@ -91,7 +91,7 @@ function Index() {
     const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
     const [clipAutoplay, setClipAutoplay] = useState<boolean>(true);
     const [markAsViewed, setMarkAsViewed] = useState<boolean>(true);
-    const [hideViewed, setHideViewed] = useState<boolean>(false);
+    const [skipViewed, setSkipViewed] = useState<boolean>(false);
     const [chronologicalOrder, setChronologicalOrder] = useState<boolean>(false);
     const [titleFilterField, setTitleFilterField] = useState<string>("");
     const autonextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,7 +99,7 @@ function Index() {
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
     const channels = search.channels.split(",").filter(Boolean);
-    const viewedClipsIds = viewedClips?.map((c) => c.clipId) || [];
+    const viewedClipsIds = viewedClips?.map((c) => c.clipId) ?? [];
 
     const { clips, isLoadingFirstPage, isLoadingAllClips, error } = useClips({
         channels,
@@ -120,7 +120,6 @@ function Index() {
         const title = clip.title.toLowerCase();
         if (debouncedTitleFilterField && !title.includes(debouncedTitleFilterField.toLowerCase()))
             showClip = false;
-        if (hideViewed && viewedClipsIds.includes(clip.id)) showClip = false;
 
         return showClip;
     });
@@ -130,6 +129,10 @@ function Index() {
     const currentClipIndex = (currentClip && filteredClips?.indexOf(currentClip)) ?? 0;
     const previousClip = filteredClips?.[currentClipIndex - 1];
     const nextClip = filteredClips?.[currentClipIndex + 1];
+    const nextNonViewedClip = filteredClips?.find((clip, index) => {
+        if (index <= currentClipIndex) return false;
+        return !viewedClipsIds?.includes(clip.id);
+    });
     const totalClipsDuration = filteredClips?.reduce((acc, c) => acc + c.duration, 0) ?? 0;
 
     const sidebarStyle = sidebarOpen ? initialSidebarStyle : { width: "2.25rem", padding: "0" };
@@ -175,6 +178,13 @@ function Index() {
         [clipProgressOverlayWidth, currentClip?.id, markAsViewed, stopAutonext],
     );
 
+    const selectNextClip = useCallback(
+        (autonext = false) => {
+            selectClip((skipViewed ? nextNonViewedClip?.id : nextClip?.id) ?? null, autonext);
+        },
+        [nextClip?.id, nextNonViewedClip?.id, selectClip, skipViewed],
+    );
+
     useEffect(
         function setAutonextTimer() {
             if (!currentClip || (!autonextEnabled && autonextTimeoutRef.current)) {
@@ -192,7 +202,7 @@ function Index() {
                         autonextTimeoutRef.current = null;
                         if (document.hidden) return setAutonextEnabled(false);
 
-                        if (nextClip) selectClip(nextClip.id, true);
+                        if (nextClip) selectNextClip(true);
                         else stopAutonext();
                     },
                     (autonextBuffer + currentClip.duration) * 1000,
@@ -205,7 +215,7 @@ function Index() {
             clipProgressOverlayWidth,
             currentClip,
             nextClip,
-            selectClip,
+            selectNextClip,
             stopAutonext,
         ],
     );
@@ -317,7 +327,7 @@ function Index() {
                                 variant="outline"
                                 className="h-full grow rounded-none border-r-0"
                                 disabled={!nextClip}
-                                onClick={() => selectClip(nextClip?.id ?? null)}
+                                onClick={() => selectNextClip()}
                             >
                                 <ArrowRight />
                             </Button>
@@ -406,15 +416,12 @@ function Index() {
                                 <div className="flex items-center justify-between">
                                     <div className="mr-auto flex items-center gap-2">
                                         <Switch
-                                            id="hide-viewed"
-                                            checked={hideViewed}
-                                            onCheckedChange={(value) => {
-                                                setHideViewed(value);
-                                                setAutonextEnabled(false);
-                                            }}
+                                            id="skip-viewed"
+                                            checked={skipViewed}
+                                            onCheckedChange={setSkipViewed}
                                         />
-                                        <Label htmlFor="hide-viewed">
-                                            {t("viewed.hideViewed")}
+                                        <Label htmlFor="skip-viewed">
+                                            {t("viewed.skipViewed")}
                                         </Label>
                                     </div>
                                     <Dialog>
@@ -543,6 +550,7 @@ function Index() {
                                 clips={filteredClips}
                                 currentClipId={currentClip?.id ?? null}
                                 currentClipIndex={currentClipIndex}
+                                skipViewed={skipViewed}
                                 onClipClick={selectClip}
                             />
                         </motion.div>
@@ -586,7 +594,7 @@ function Index() {
                                 size="icon"
                                 className="grow rounded-none hover:bg-gray-950"
                                 disabled={!nextClip}
-                                onClick={() => selectClip(nextClip?.id ?? null)}
+                                onClick={() => selectNextClip()}
                             >
                                 <ArrowRight />
                             </Button>

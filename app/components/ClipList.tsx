@@ -12,10 +12,17 @@ interface Props {
     clips?: TwitchClipMetadata[] | null;
     currentClipId: string | null;
     currentClipIndex: number;
+    skipViewed: boolean;
     onClipClick: (clipId: string) => void;
 }
 
-export default function ClipList({ clips, currentClipId, currentClipIndex, onClipClick }: Props) {
+export default function ClipList({
+    clips,
+    currentClipId,
+    currentClipIndex,
+    skipViewed,
+    onClipClick,
+}: Props) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemsContainerRef = useRef<HTMLDivElement>(null);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
@@ -53,7 +60,10 @@ export default function ClipList({ clips, currentClipId, currentClipIndex, onCli
                             key={clip.id}
                             variant="outline"
                             className={cn(
-                                "flex h-auto w-full flex-col items-stretch gap-0 overflow-hidden border-2 border-accent p-0",
+                                "flex h-auto w-full flex-col items-stretch gap-0 overflow-hidden border-2 border-accent p-0 transition-opacity",
+                                skipViewed &&
+                                    viewedClipIds.includes(clip.id) &&
+                                    "border-accent/50 opacity-30",
                                 currentClipId === clip.id && "border-purple-800",
                             )}
                             onClick={() => onClipClick(clip.id)}
