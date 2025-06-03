@@ -245,6 +245,14 @@ function Index() {
         });
     }
 
+    function openChannelClips(channel: string) {
+        const currentUrl = new URL(window.location.href);
+
+        currentUrl.searchParams.set("channels", channel);
+
+        window.open(currentUrl.href, "_blank");
+    }
+
     function handleNewChannelEnterPress(event: KeyboardEvent<HTMLInputElement>) {
         if (event.key !== "Enter") return;
 
@@ -387,7 +395,10 @@ function Index() {
                                             onMouseEnter={() =>
                                                 prefetchChannelsBeforeRemove(channel)
                                             }
-                                            onClick={() => removeChannel(channel)}
+                                            onClick={(event) => {
+                                                if (event.shiftKey) openChannelClips(channel);
+                                                else removeChannel(channel);
+                                            }}
                                         >
                                             {channel}
                                             <X />
