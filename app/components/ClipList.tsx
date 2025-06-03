@@ -45,7 +45,10 @@ export default function ClipList({
     if (clips.length === 0) return <p className="px-2 text-xl">No clips</p>;
 
     return (
-        <ScrollArea ref={scrollContainerRef}>
+        <ScrollArea
+            ref={scrollContainerRef}
+            className="-mr-3 pr-3"
+        >
             <div
                 ref={itemsContainerRef}
                 className="relative"
