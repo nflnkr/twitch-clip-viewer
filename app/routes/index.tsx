@@ -160,7 +160,7 @@ function Index() {
 
             const leavingClipId = currentClip?.id;
 
-            if (markAsViewed && leavingClipId) {
+            if (markAsViewed && leavingClipId && clipId !== null) {
                 const exists = await db.viewedClips.where("clipId").equals(leavingClipId).count();
 
                 if (!exists) {
