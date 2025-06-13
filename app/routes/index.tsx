@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { format, parse, subDays } from "date-fns";
@@ -27,23 +27,25 @@ import { z } from "zod";
 import ClipInfo from "~/components/ClipInfo";
 import ClipList from "~/components/ClipList";
 import DateRangePicker from "~/components/DateRangePicker";
+import GameSelect from "~/components/GameSelect";
 import LanguageMenu from "~/components/LanguageMenu";
 import { NumberInput } from "~/components/NumberInput";
 import Spinner from "~/components/Spinner";
 import TwitchClipEmbed from "~/components/TwitchClipEmbed";
-import { Button } from "~/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "~/components/ui/dialog";
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "~/components/ui/accordion";
+import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { Switch } from "~/components/ui/switch";
 import { db } from "~/lib/db";
 import { clipsOptions } from "~/lib/get-clips";
+import { getGamesOptions } from "~/lib/get-games";
 import { useTranslations } from "~/lib/locales";
 import { useClips } from "~/lib/use-clips";
 import { useDebouncedValue } from "~/lib/use-debounced-value";
@@ -94,6 +96,7 @@ function Index() {
     const [skipViewed, setSkipViewed] = useState<boolean>(false);
     const [chronologicalOrder, setChronologicalOrder] = useState<boolean>(false);
     const [titleFilterField, setTitleFilterField] = useState<string>("");
+    const [selectedGame, setSelectedGame] = useState<string>("");
     const autonextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const debouncedTitleFilterField = useDebouncedValue(titleFilterField, 500);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
@@ -109,6 +112,10 @@ function Index() {
         chronologicalOrder,
     });
 
+    const { data: gamesInfo = [], isLoading: isLoadingGames } = useQuery(
+        getGamesOptions({ gameIds: clips?.map((clip) => clip.game_id) ?? [] }),
+    );
+
     const dateRange = {
         from: parse(search.from, "yyyy-MM-dd", new Date()),
         to: parse(search.to, "yyyy-MM-dd", new Date()),
@@ -118,8 +125,15 @@ function Index() {
         let showClip = true;
 
         const title = clip.title.toLowerCase();
-        if (debouncedTitleFilterField && !title.includes(debouncedTitleFilterField.toLowerCase()))
+        if (debouncedTitleFilterField && !title.includes(debouncedTitleFilterField.toLowerCase())) {
             showClip = false;
+        }
+
+        const selectedGameInfo =
+            selectedGame && gamesInfo.find((game) => game.name === selectedGame);
+        if (selectedGameInfo && clip.game_id !== selectedGameInfo.id) {
+            showClip = false;
+        }
 
         return showClip;
     });
@@ -222,6 +236,7 @@ function Index() {
 
     function setDateRange(dateRange: DateRange | undefined) {
         selectClip(null);
+        setSelectedGame("");
         navigate({
             search: {
                 ...search,
@@ -237,6 +252,7 @@ function Index() {
 
     function removeChannel(channel: string) {
         selectClip(null);
+        setSelectedGame("");
         navigate({
             search: {
                 ...search,
@@ -266,6 +282,7 @@ function Index() {
         event.currentTarget.value = "";
 
         selectClip(null);
+        setSelectedGame("");
         navigate({
             search: {
                 ...search,
@@ -292,6 +309,7 @@ function Index() {
 
     function handleMinViewsChange(value: number | undefined) {
         selectClip(null);
+        setSelectedGame("");
         setChronologicalOrder(false);
         navigate({ search: { ...search, minViews: value } });
     }
@@ -435,22 +453,19 @@ function Index() {
                                             {t("viewed.skipViewed")}
                                         </Label>
                                     </div>
-                                    <Dialog>
-                                        <DialogTrigger asChild>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
                                             <Button
                                                 variant="outline"
                                                 size="icon"
                                             >
                                                 <Settings />
                                             </Button>
-                                        </DialogTrigger>
-                                        <DialogContent
-                                            className="gap-6 sm:max-w-[425px]"
-                                            aria-describedby={undefined}
+                                        </PopoverTrigger>
+                                        <PopoverContent
+                                            className="w-[20rem] gap-6"
+                                            side="left"
                                         >
-                                            <DialogHeader>
-                                                <DialogTitle>{t("settings")}</DialogTitle>
-                                            </DialogHeader>
                                             <div className="flex flex-col gap-4">
                                                 <div className="flex flex-col gap-2">
                                                     <div className="mr-auto flex items-center gap-2">
@@ -480,37 +495,12 @@ function Index() {
                                                             onCheckedChange={(value) => {
                                                                 setChronologicalOrder(value);
                                                                 selectClip(null);
+                                                                setSelectedGame("");
                                                             }}
                                                         />
                                                         <Label htmlFor="chronological-order">
                                                             {t("chronologicalOrder")}
                                                         </Label>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col gap-1">
-                                                    <Label htmlFor="title-filter">
-                                                        {t("titleFilter")}
-                                                    </Label>
-                                                    <div className="flex gap-2">
-                                                        <Input
-                                                            id="title-filter"
-                                                            value={titleFilterField}
-                                                            onChange={(e) =>
-                                                                setTitleFilterField(e.target.value)
-                                                            }
-                                                        />
-                                                        <Button
-                                                            size="xs"
-                                                            variant="ghost"
-                                                            onClick={() => {
-                                                                setTitleFilterField("");
-                                                                stopAutonext();
-                                                            }}
-                                                            disabled={!titleFilterField}
-                                                            className="aspect-square h-full"
-                                                        >
-                                                            <X />
-                                                        </Button>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col gap-1">
@@ -538,9 +528,73 @@ function Index() {
                                                     {`${t("viewed.clearViewedClips")} (${viewedClips?.length || 0})`}
                                                 </Button>
                                             </div>
-                                        </DialogContent>
-                                    </Dialog>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
+                                <Accordion
+                                    type="single"
+                                    collapsible
+                                    className="w-full"
+                                >
+                                    <AccordionItem value="filters">
+                                        <AccordionTrigger>{t("filters")}</AccordionTrigger>
+                                        <AccordionContent className="flex flex-col gap-2 text-balance">
+                                            <div className="flex flex-col gap-1">
+                                                <Label htmlFor="title-filter">
+                                                    {t("filterByTitle")}
+                                                </Label>
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        id="title-filter"
+                                                        value={titleFilterField}
+                                                        onChange={(e) =>
+                                                            setTitleFilterField(e.target.value)
+                                                        }
+                                                    />
+                                                    <Button
+                                                        size="xs"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setTitleFilterField("");
+                                                            stopAutonext();
+                                                        }}
+                                                        disabled={!titleFilterField}
+                                                        className="aspect-square h-full"
+                                                    >
+                                                        <X />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <Label htmlFor="title-filter">
+                                                    {t("filterByCategory")}
+                                                </Label>
+                                                <div className="flex gap-2">
+                                                    <GameSelect
+                                                        disabled={
+                                                            isLoadingAllClips || isLoadingGames
+                                                        }
+                                                        games={gamesInfo}
+                                                        selectedGame={selectedGame}
+                                                        setSelectedGame={setSelectedGame}
+                                                    />
+                                                    <Button
+                                                        size="xs"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setSelectedGame("");
+                                                            stopAutonext();
+                                                        }}
+                                                        disabled={!selectedGame}
+                                                        className="aspect-square h-full"
+                                                    >
+                                                        <X />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
                             </div>
                             {error ? (
                                 <p className="text-red-500">Error: {error.message}</p>
