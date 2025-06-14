@@ -569,7 +569,7 @@ function Index() {
                                                 <Label htmlFor="title-filter">
                                                     {t("filterByCategory")}
                                                 </Label>
-                                                <div className="flex gap-2">
+                                                <div className="flex items-center gap-2">
                                                     <GameSelect
                                                         disabled={
                                                             isLoadingAllClips || isLoadingGames

@@ -37,9 +37,11 @@ export default function GameSelect({ disabled, games, selectedGame, setSelectedG
                     role="combobox"
                     aria-expanded={open}
                     disabled={disabled}
-                    className="grow justify-between"
+                    className="grow justify-between truncate"
                 >
-                    {selectedGame ? selectedGame : t("selectCategory")}
+                    <span className="truncate">
+                        {selectedGame ? selectedGame + "asd" : t("selectCategory")}
+                    </span>
                     <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
