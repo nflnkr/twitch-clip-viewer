@@ -40,7 +40,7 @@ export default function GameSelect({ disabled, games, selectedGame, setSelectedG
                     className="grow justify-between truncate"
                 >
                     <span className="truncate">
-                        {selectedGame ? selectedGame + "asd" : t("selectCategory")}
+                        {selectedGame ? selectedGame : t("selectCategory")}
                     </span>
                     <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>

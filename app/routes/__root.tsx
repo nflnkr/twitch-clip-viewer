@@ -48,12 +48,12 @@ export const Route = createRootRoute({
         ],
         scripts: [...hmrFixScript],
     }),
-    beforeLoad: async () => ({ requestLocale: await getRequestLocale() }),
+    loader: async () => ({ requestLocale: await getRequestLocale() }),
     component: RootComponent,
 });
 
 function RootComponent() {
-    const requestLocale = Route.useRouteContext().requestLocale;
+    const requestLocale = Route.useLoaderData().requestLocale;
     const [locale, setLocale] = useState<AppLocale>(requestLocale);
 
     return (
