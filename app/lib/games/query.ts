@@ -12,7 +12,17 @@ const gamesQueryKey = "games";
 
 export function createGamesLoader(queryClient: QueryClient, delay: number) {
     return new DataLoader<{ gameId: string }, TwitchGame, string>(
-        (keys) => getGamesServerFn({ data: { gameIds: keys.map((key) => key.gameId) } }),
+        async (keys) => {
+            const results = await getGamesServerFn({
+                data: { gameIds: keys.map((key) => key.gameId) },
+            });
+
+            return keys.map(
+                (key) =>
+                    results.find((game) => game.id === key.gameId) ||
+                    new Error(`Game with id "${key.gameId}" not found`),
+            );
+        },
         {
             batchScheduleFn: (callback) => setTimeout(callback, delay),
             cacheMap: {
@@ -30,7 +40,7 @@ export function useGames(gameIds: string[]) {
     const gamesLoader = use(GamesLoaderContext);
 
     return useQueries({
-        queries: gameIds.map((gameId) => ({
+        queries: gameIds.filter(Boolean).map((gameId) => ({
             queryKey: [gamesQueryKey, { gameId }],
             queryFn: () => gamesLoader.load({ gameId }),
         })),
