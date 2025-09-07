@@ -7,7 +7,7 @@ import {
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { useLocaleContext } from "~/lib/locale/locales";
-import { cn } from "~/lib/utils/utils";
+import { cn } from "~/lib/utils/misc";
 import { Globe } from "lucide-react";
 import EnFlag from "./EnFlag";
 import RuFlag from "./RuFlag";

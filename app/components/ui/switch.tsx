@@ -1,5 +1,5 @@
 import * as SwitchPrimitives from "@radix-ui/react-switch";
-import { cn } from "~/lib/utils/utils";
+import { cn } from "~/lib/utils/misc";
 import * as React from "react";
 
 const Switch = React.forwardRef<

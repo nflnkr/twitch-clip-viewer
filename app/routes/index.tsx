@@ -1,3 +1,4 @@
+import { reatomComponent } from "@reatom/react";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
@@ -5,9 +6,11 @@ import { zodValidator } from "@tanstack/zod-adapter";
 import ClipInfo from "~/components/ClipInfo";
 import ClipList from "~/components/ClipList";
 import DateRangePicker from "~/components/DateRangePicker";
+import ExtraSettingsPopover from "~/components/ExtraSettings";
 import GameSelect from "~/components/GameSelect";
 import LanguageMenu from "~/components/LanguageMenu";
 import { NumberInput } from "~/components/NumberInput";
+import SideBarCollapsed from "~/components/SideBarCollapsed";
 import Spinner from "~/components/Spinner";
 import TwitchClipEmbed from "~/components/TwitchClipEmbed";
 import {
@@ -19,33 +22,27 @@ import {
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { Switch } from "~/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { clipsOptions, useClips } from "~/lib/clips/query";
 import { db } from "~/lib/db";
 import { useGames } from "~/lib/games/query";
 import { useTranslations } from "~/lib/locale/locales";
+import {
+    autonextBuffer as autonextBufferAtom,
+    autonextEnabled as autonextEnabledAtom,
+    chronologicalOrder,
+    clipAutoplay,
+    markAsViewed as markAsViewedAtom,
+    sidebarOpen,
+    skipViewed as skipViewedAtom,
+} from "~/lib/settings/atoms";
 import { format, parse, subDays } from "date-fns";
 import { useLiveQuery } from "dexie-react-hooks";
-import {
-    ArrowLeft,
-    ArrowRight,
-    CirclePause,
-    CirclePlay,
-    PanelLeftClose,
-    PanelRightClose,
-    Settings,
-    X,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, CirclePause, CirclePlay, PanelRightClose, X } from "lucide-react";
 import { animate, AnimatePresence, motion, useMotionValue } from "motion/react";
-import {
-    useCallback,
-    useEffect,
-    useRef,
-    useState,
-    type CSSProperties,
-    type KeyboardEvent,
-} from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { z } from "zod";
 
@@ -72,7 +69,7 @@ export const Route = createFileRoute("/")({
             }),
         ],
     },
-    component: Index,
+    component: () => <Index />,
     ssr: false,
 });
 
@@ -81,25 +78,24 @@ const initialSidebarStyle = {
     padding: "1rem",
 } satisfies CSSProperties;
 
-function Index() {
+const Index = reatomComponent(function Index() {
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
     const t = useTranslations();
     const queryClient = useQueryClient();
+    const [tab, setTab] = useState<"settings" | "clips">("settings");
     const [debouncedMinViews] = useDebouncedValue(search.minViews, { wait: 500 });
-    const [autonextBuffer, setAutonextBuffer] = useState<number>(4);
-    const [autonextEnabled, setAutonextEnabled] = useState<boolean>(false);
-    const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
     const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
-    const [clipAutoplay, setClipAutoplay] = useState<boolean>(import.meta.env.PROD);
-    const [markAsViewed, setMarkAsViewed] = useState<boolean>(true);
-    const [skipViewed, setSkipViewed] = useState<boolean>(false);
-    const [chronologicalOrder, setChronologicalOrder] = useState<boolean>(false);
     const [titleFilterField, setTitleFilterField] = useState<string>("");
     const [selectedGame, setSelectedGame] = useState<string>("");
     const autonextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [debouncedTitleFilterField] = useDebouncedValue(titleFilterField, { wait: 500 });
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
+
+    const autonextBuffer = autonextBufferAtom();
+    const autonextEnabled = autonextEnabledAtom();
+    const markAsViewed = markAsViewedAtom();
+    const skipViewed = skipViewedAtom();
 
     const channels = search.channels.split(",").filter(Boolean);
     const viewedClipsIds = viewedClips?.map((c) => c.clipId) ?? [];
@@ -109,7 +105,7 @@ function Index() {
         from: search.from,
         to: search.to,
         minViews: debouncedMinViews,
-        chronologicalOrder,
+        chronologicalOrder: chronologicalOrder(),
     });
 
     const uniqueSortedGameIds = [...new Set(clips?.map((c) => c.game_id) ?? [])].sort();
@@ -149,7 +145,7 @@ function Index() {
     });
     const totalClipsDuration = filteredClips?.reduce((acc, c) => acc + c.duration, 0) ?? 0;
 
-    const sidebarStyle = sidebarOpen ? initialSidebarStyle : { width: "2.25rem", padding: "0" };
+    const sidebarStyle = sidebarOpen() ? initialSidebarStyle : { width: "2.25rem", padding: "0" };
 
     const clipProgressOverlayWidth = useMotionValue("0%");
 
@@ -162,7 +158,7 @@ function Index() {
     );
 
     const stopAutonext = useCallback(() => {
-        setAutonextEnabled(false);
+        autonextEnabledAtom.set(false);
         clearTimeout(autonextTimeoutRef.current ?? 0);
         autonextTimeoutRef.current = null;
         clipProgressOverlayWidth.jump("0%");
@@ -201,7 +197,7 @@ function Index() {
 
     useEffect(
         function setAutonextTimer() {
-            if (!currentClip || (!autonextEnabled && autonextTimeoutRef.current)) {
+            if (!currentClip || (!autonextEnabledAtom && autonextTimeoutRef.current)) {
                 return stopAutonext();
             }
 
@@ -214,7 +210,7 @@ function Index() {
                 autonextTimeoutRef.current = setTimeout(
                     () => {
                         autonextTimeoutRef.current = null;
-                        if (document.hidden) return setAutonextEnabled(false);
+                        if (document.hidden) return autonextEnabledAtom.set(false);
 
                         if (nextClip) selectNextClip(true);
                         else stopAutonext();
@@ -303,14 +299,10 @@ function Index() {
         );
     }
 
-    function clearViewedClips() {
-        db.viewedClips.clear();
-    }
-
     function handleMinViewsChange(value: number | undefined) {
         selectClip(null);
         setSelectedGame("");
-        setChronologicalOrder(false);
+        chronologicalOrder.set(false);
         navigate({ search: { ...search, minViews: value } });
     }
 
@@ -322,11 +314,11 @@ function Index() {
                         key={currentClip?.id}
                         clip={currentClip}
                         noChannels={channels.length === 0}
-                        autoplay={clipAutoplay}
+                        autoplay={clipAutoplay()}
                     />
                 </div>
                 <AnimatePresence>
-                    {sidebarOpen && (
+                    {sidebarOpen() && (
                         <motion.div
                             initial={{ height: 0 }}
                             animate={{ height: "2rem" }}
@@ -344,7 +336,7 @@ function Index() {
                             <Button
                                 variant="outline"
                                 className="h-full rounded-none border-x-0"
-                                onClick={() => setAutonextEnabled((prev) => !prev)}
+                                onClick={() => autonextEnabledAtom.set((prev) => !prev)}
                             >
                                 {t("player.autoplay")}
                                 {autonextEnabled ? <CirclePause /> : <CirclePlay />}
@@ -370,304 +362,223 @@ function Index() {
                 className="h-full overflow-y-auto overflow-x-clip"
             >
                 <AnimatePresence mode="wait">
-                    {sidebarOpen ? (
-                        <motion.div
+                    {sidebarOpen() ? (
+                        <Tabs
                             key="sidebar-expanded"
-                            initial={{
-                                opacity: 0,
-                            }}
-                            animate={{
-                                opacity: 1,
-                                transition: { delay: 0.1 },
-                            }}
-                            exit={{
-                                opacity: 0,
-                            }}
-                            className="flex h-full min-w-[22rem] flex-col gap-4"
+                            value={tab}
+                            onValueChange={(value) => setTab(value as "settings" | "clips")}
+                            asChild
                         >
-                            <div className="flex flex-col gap-2">
+                            <motion.div
+                                initial={{
+                                    opacity: 0,
+                                }}
+                                animate={{
+                                    opacity: 1,
+                                    transition: { delay: 0.1 },
+                                }}
+                                exit={{
+                                    opacity: 0,
+                                }}
+                                className="flex h-full min-w-[22rem] flex-col"
+                            >
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        className="aspect-square p-0 transition-transform duration-200 [&_svg]:size-6"
-                                        onClick={() => setSidebarOpen((o) => !o)}
+                                        onClick={() => sidebarOpen.set((o) => !o)}
                                     >
                                         <PanelRightClose />
                                     </Button>
-                                    <div className="grow">
-                                        <Input
-                                            placeholder={t("addChannel")}
-                                            enterKeyHint="done"
-                                            onKeyUp={handleNewChannelEnterPress}
-                                        />
-                                    </div>
+                                    <TabsList className="grow">
+                                        <TabsTrigger
+                                            value="settings"
+                                            className="flex-1"
+                                        >
+                                            Settings
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="clips"
+                                            className="flex-1"
+                                        >
+                                            Clips
+                                        </TabsTrigger>
+                                    </TabsList>
                                     <LanguageMenu />
                                 </div>
-                                <div className="flex flex-wrap gap-1">
-                                    {channels.map((channel, index) => (
-                                        <Button
-                                            key={index}
-                                            size="xs"
-                                            variant="outline"
-                                            onMouseEnter={() =>
-                                                prefetchChannelsBeforeRemove(channel)
-                                            }
-                                            onClick={(event) => {
-                                                if (event.shiftKey) openChannelClips(channel);
-                                                else removeChannel(channel);
-                                            }}
-                                        >
-                                            {channel}
-                                            <X />
-                                        </Button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <div className="flex flex-col gap-1">
-                                    <Label htmlFor="min-views"> {t("minViews")}</Label>
-                                    <NumberInput
-                                        id="min-views"
-                                        name="minViews"
-                                        value={search.minViews}
-                                        onValueChange={handleMinViewsChange}
-                                        stepper={10}
-                                        min={0}
-                                    />
-                                </div>
-                                <DateRangePicker
-                                    channels={channels}
-                                    currentClipDate={currentClip?.created_at}
-                                    dateRange={dateRange}
-                                    setDateRange={setDateRange}
-                                />
-                                <div className="flex items-center justify-between">
-                                    <div className="mr-auto flex items-center gap-2">
-                                        <Switch
-                                            id="skip-viewed"
-                                            checked={skipViewed}
-                                            onCheckedChange={setSkipViewed}
-                                        />
-                                        <Label htmlFor="skip-viewed">
-                                            {t("viewed.skipViewed")}
-                                        </Label>
-                                    </div>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                            >
-                                                <Settings />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent
-                                            className="w-[20rem] gap-6"
-                                            side="left"
-                                        >
-                                            <div className="flex flex-col gap-4">
-                                                <div className="flex flex-col gap-2">
-                                                    <div className="mr-auto flex items-center gap-2">
-                                                        <Switch
-                                                            id="clip-autoplay"
-                                                            checked={clipAutoplay}
-                                                            onCheckedChange={setClipAutoplay}
-                                                        />
-                                                        <Label htmlFor="clip-autoplay">
-                                                            {t("clipAutoplay")}
-                                                        </Label>
-                                                    </div>
-                                                    <div className="mr-auto flex items-center gap-2">
-                                                        <Switch
-                                                            id="mark-as-viewed"
-                                                            checked={markAsViewed}
-                                                            onCheckedChange={setMarkAsViewed}
-                                                        />
-                                                        <Label htmlFor="mark-as-viewed">
-                                                            {t("viewed.markAsViewed")}
-                                                        </Label>
-                                                    </div>
-                                                    <div className="mr-auto flex items-center gap-2">
-                                                        <Switch
-                                                            id="chronological-order"
-                                                            checked={chronologicalOrder}
-                                                            onCheckedChange={(value) => {
-                                                                setChronologicalOrder(value);
-                                                                selectClip(null);
-                                                                setSelectedGame("");
-                                                            }}
-                                                        />
-                                                        <Label htmlFor="chronological-order">
-                                                            {t("chronologicalOrder")}
-                                                        </Label>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col gap-1">
-                                                    <Label htmlFor="autonext-buffer">
-                                                        {t("autonextBuffer")}
-                                                    </Label>
-                                                    <NumberInput
-                                                        id="autonext-buffer"
-                                                        name="autonext-buffer"
-                                                        value={autonextBuffer}
-                                                        onValueChange={(v) => {
-                                                            if (v !== undefined) {
-                                                                setAutonextBuffer(v);
-                                                            }
-                                                        }}
-                                                        min={0}
-                                                    />
-                                                </div>
-                                                <Button
-                                                    variant="destructive"
-                                                    onClick={clearViewedClips}
-                                                    disabled={!viewedClips?.length}
-                                                    className="h-full"
-                                                >
-                                                    {`${t("viewed.clearViewedClips")} (${viewedClips?.length || 0})`}
-                                                </Button>
-                                            </div>
-                                        </PopoverContent>
-                                    </Popover>
-                                </div>
-                                <Accordion
-                                    type="single"
-                                    collapsible
-                                    className="w-full"
+                                <TabsContent
+                                    value="settings"
+                                    className="flex flex-col gap-4"
                                 >
-                                    <AccordionItem value="filters">
-                                        <AccordionTrigger>{t("filters")}</AccordionTrigger>
-                                        <AccordionContent className="flex flex-col gap-2 text-balance">
-                                            <div className="flex flex-col gap-1">
-                                                <Label htmlFor="title-filter">
-                                                    {t("filterByTitle")}
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex gap-2">
+                                            <Input
+                                                placeholder={t("addChannel")}
+                                                enterKeyHint="done"
+                                                onKeyUp={handleNewChannelEnterPress}
+                                            />
+                                        </div>
+                                        <div className="flex flex-wrap gap-1">
+                                            {channels.map((channel, index) => (
+                                                <Button
+                                                    key={index}
+                                                    size="xs"
+                                                    variant="outline"
+                                                    onMouseEnter={() =>
+                                                        prefetchChannelsBeforeRemove(channel)
+                                                    }
+                                                    onClick={(event) => {
+                                                        if (event.shiftKey)
+                                                            openChannelClips(channel);
+                                                        else removeChannel(channel);
+                                                    }}
+                                                >
+                                                    {channel}
+                                                    <X />
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex flex-col gap-1">
+                                            <Label htmlFor="min-views"> {t("minViews")}</Label>
+                                            <NumberInput
+                                                id="min-views"
+                                                name="minViews"
+                                                value={search.minViews}
+                                                onValueChange={handleMinViewsChange}
+                                                stepper={10}
+                                                min={0}
+                                            />
+                                        </div>
+                                        <DateRangePicker
+                                            channels={channels}
+                                            currentClipDate={currentClip?.created_at}
+                                            dateRange={dateRange}
+                                            setDateRange={setDateRange}
+                                        />
+                                        <div className="flex items-center justify-between">
+                                            <div className="mr-auto flex items-center gap-2">
+                                                <Switch
+                                                    id="skip-viewed"
+                                                    checked={skipViewedAtom()}
+                                                    onCheckedChange={skipViewedAtom.set}
+                                                />
+                                                <Label htmlFor="skip-viewed">
+                                                    {t("viewed.skipViewed")}
                                                 </Label>
-                                                <div className="flex gap-2">
-                                                    <Input
-                                                        id="title-filter"
-                                                        value={titleFilterField}
-                                                        onChange={(e) =>
-                                                            setTitleFilterField(e.target.value)
-                                                        }
-                                                    />
-                                                    <Button
-                                                        size="xs"
-                                                        variant="ghost"
-                                                        onClick={() => {
-                                                            setTitleFilterField("");
-                                                            stopAutonext();
-                                                        }}
-                                                        disabled={!titleFilterField}
-                                                        className="aspect-square h-full"
-                                                    >
-                                                        <X />
-                                                    </Button>
-                                                </div>
                                             </div>
-                                            <div className="flex flex-col gap-1">
-                                                <Label htmlFor="title-filter">
-                                                    {t("filterByCategory")}
-                                                </Label>
-                                                <div className="flex items-center gap-2">
-                                                    <GameSelect
-                                                        disabled={isPendingGames}
-                                                        games={gamesInfo}
-                                                        selectedGame={selectedGame}
-                                                        setSelectedGame={setSelectedGame}
-                                                    />
-                                                    <Button
-                                                        size="xs"
-                                                        variant="ghost"
-                                                        onClick={() => {
-                                                            setSelectedGame("");
-                                                            stopAutonext();
-                                                        }}
-                                                        disabled={!selectedGame}
-                                                        className="aspect-square h-full"
-                                                    >
-                                                        <X />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                </Accordion>
-                            </div>
-                            {error ? (
-                                <p className="text-red-500">Error: {error.message}</p>
-                            ) : isLoadingFirstPage ? (
-                                <Spinner />
-                            ) : (
-                                currentClip && (
-                                    <ClipInfo
-                                        currentClip={currentClip}
-                                        clipsLength={filteredClips?.length ?? 0}
-                                        totalClipsDuration={totalClipsDuration}
+                                            <ExtraSettingsPopover
+                                                selectClip={selectClip}
+                                                setSelectedGame={setSelectedGame}
+                                            />
+                                        </div>
+                                        <Accordion
+                                            type="single"
+                                            collapsible
+                                            className="w-full"
+                                        >
+                                            <AccordionItem value="filters">
+                                                <AccordionTrigger>{t("filters")}</AccordionTrigger>
+                                                <AccordionContent className="flex flex-col gap-2 text-balance">
+                                                    <div className="flex flex-col gap-1">
+                                                        <Label htmlFor="title-filter">
+                                                            {t("filterByTitle")}
+                                                        </Label>
+                                                        <div className="flex gap-2">
+                                                            <Input
+                                                                id="title-filter"
+                                                                value={titleFilterField}
+                                                                onChange={(e) =>
+                                                                    setTitleFilterField(
+                                                                        e.target.value,
+                                                                    )
+                                                                }
+                                                            />
+                                                            <Button
+                                                                size="xs"
+                                                                variant="ghost"
+                                                                onClick={() => {
+                                                                    setTitleFilterField("");
+                                                                    stopAutonext();
+                                                                }}
+                                                                disabled={!titleFilterField}
+                                                                className="aspect-square h-full"
+                                                            >
+                                                                <X />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <Label htmlFor="title-filter">
+                                                            {t("filterByCategory")}
+                                                        </Label>
+                                                        <div className="flex items-center gap-2">
+                                                            <GameSelect
+                                                                disabled={isPendingGames}
+                                                                games={gamesInfo}
+                                                                selectedGame={selectedGame}
+                                                                setSelectedGame={setSelectedGame}
+                                                            />
+                                                            <Button
+                                                                size="xs"
+                                                                variant="ghost"
+                                                                onClick={() => {
+                                                                    setSelectedGame("");
+                                                                    stopAutonext();
+                                                                }}
+                                                                disabled={!selectedGame}
+                                                                className="aspect-square h-full"
+                                                            >
+                                                                <X />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        </Accordion>
+                                    </div>
+                                </TabsContent>
+                                <TabsContent
+                                    value="clips"
+                                    className="flex min-h-0 flex-col gap-4"
+                                >
+                                    {error ? (
+                                        <p className="text-red-500">Error: {error.message}</p>
+                                    ) : isLoadingFirstPage ? (
+                                        <Spinner />
+                                    ) : (
+                                        currentClip && (
+                                            <ClipInfo
+                                                currentClip={currentClip}
+                                                clipsLength={filteredClips?.length ?? 0}
+                                                totalClipsDuration={totalClipsDuration}
+                                                currentClipIndex={currentClipIndex}
+                                                isLoading={isLoadingAllClips}
+                                            />
+                                        )
+                                    )}
+                                    <ClipList
+                                        clips={filteredClips}
+                                        currentClipId={currentClip?.id ?? null}
                                         currentClipIndex={currentClipIndex}
-                                        isLoading={isLoadingAllClips}
+                                        skipViewed={skipViewedAtom()}
+                                        onClipClick={selectClip}
                                     />
-                                )
-                            )}
-                            <ClipList
-                                clips={filteredClips}
-                                currentClipId={currentClip?.id ?? null}
-                                currentClipIndex={currentClipIndex}
-                                skipViewed={skipViewed}
-                                onClipClick={selectClip}
-                            />
-                        </motion.div>
+                                </TabsContent>
+                            </motion.div>
+                        </Tabs>
                     ) : (
-                        <motion.div
-                            key="sidebar-collapsed"
-                            initial={{
-                                opacity: 0,
-                            }}
-                            animate={{
-                                opacity: 1,
-                            }}
-                            className="relative flex h-full flex-col"
-                        >
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="aspect-square rounded-none p-0 transition-transform duration-200 [&_svg]:size-6"
-                                onClick={() => setSidebarOpen((o) => !o)}
-                            >
-                                <PanelLeftClose />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-none hover:bg-gray-950"
-                                disabled={!previousClip}
-                                onClick={() => selectClip(previousClip?.id ?? null)}
-                            >
-                                <ArrowLeft />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="rounded-none hover:bg-gray-950"
-                                onClick={() => setAutonextEnabled((prev) => !prev)}
-                            >
-                                {autonextEnabled ? <CirclePause /> : <CirclePlay />}
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="grow rounded-none hover:bg-gray-950"
-                                disabled={!nextClip}
-                                onClick={() => selectNextClip()}
-                            >
-                                <ArrowRight />
-                            </Button>
-                            <div className="pointer-events-none absolute inset-0">
-                                {clipProgressOverlay}
-                            </div>
-                        </motion.div>
+                        <SideBarCollapsed
+                            previousClip={previousClip}
+                            nextClip={nextClip}
+                            selectClip={selectClip}
+                            selectNextClip={selectNextClip}
+                            clipProgressOverlay={clipProgressOverlay}
+                        />
                     )}
                 </AnimatePresence>
             </motion.div>
         </div>
     );
-}
+});
