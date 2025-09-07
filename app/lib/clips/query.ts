@@ -1,8 +1,15 @@
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import { twitchClipMetadataArraySchema, type TwitchClipMetadata } from "~/model/twitch";
 import { useEffect, useMemo, useState } from "react";
-import { type TwitchClipMetadata, twitchClipMetadataArraySchema } from "~/model/twitch";
-import { clipsOptions } from "./get-clips";
-import { useQuery } from "@tanstack/react-query";
-import { getStreamedClips } from "./get-streamed-clips";
+import { getClips } from "./api/get-clips";
+import { getStreamedClips } from "./api/get-streamed-clips";
+
+export function clipsOptions(params: Parameters<typeof getClips>[0]["data"]) {
+    return queryOptions({
+        queryKey: ["clips", params],
+        queryFn: () => getClips({ data: params }),
+    });
+}
 
 export function useClips({
     channels,

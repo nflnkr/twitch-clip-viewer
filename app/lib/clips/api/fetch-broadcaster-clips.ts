@@ -1,8 +1,8 @@
-import axios from "axios";
 import type { TwitchClipMetadata } from "~/model/twitch";
-import { logger } from "./logger";
-import { twitchAuthToken } from "./twitch-auth-token";
-import { twitchUserId } from "./twitch-user-Id";
+import axios from "axios";
+import { logger } from "../../logger";
+import { twitchAuthToken } from "../../twitch-auth-token";
+import { twitchUserId } from "../../twitch-user-Id";
 
 export async function fetchBroadcasterClips({
     broadcasterName,

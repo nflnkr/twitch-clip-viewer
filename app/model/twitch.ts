@@ -37,3 +37,10 @@ export interface TwitchUserMetadata {
     view_count: number;
     created_at: string;
 }
+
+export interface TwitchGame {
+    id: string;
+    name: string;
+    box_art_url: string;
+    igdb_id: string;
+}

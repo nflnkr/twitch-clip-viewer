@@ -1,29 +1,7 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDebouncedValue } from "@tanstack/react-pacer";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { format, parse, subDays } from "date-fns";
-import { useLiveQuery } from "dexie-react-hooks";
-import {
-    ArrowLeft,
-    ArrowRight,
-    CirclePause,
-    CirclePlay,
-    PanelLeftClose,
-    PanelRightClose,
-    Settings,
-    X,
-} from "lucide-react";
-import { animate, AnimatePresence, motion, useMotionValue } from "motion/react";
-import {
-    type CSSProperties,
-    type KeyboardEvent,
-    useCallback,
-    useEffect,
-    useRef,
-    useState,
-} from "react";
-import type { DateRange } from "react-day-picker";
-import { z } from "zod";
 import ClipInfo from "~/components/ClipInfo";
 import ClipList from "~/components/ClipList";
 import DateRangePicker from "~/components/DateRangePicker";
@@ -43,12 +21,33 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { Switch } from "~/components/ui/switch";
+import { clipsOptions, useClips } from "~/lib/clips/query";
 import { db } from "~/lib/db";
-import { clipsOptions } from "~/lib/get-clips";
-import { getGamesOptions } from "~/lib/get-games";
-import { useTranslations } from "~/lib/locales";
-import { useClips } from "~/lib/use-clips";
-import { useDebouncedValue } from "~/lib/use-debounced-value";
+import { useGames } from "~/lib/games/query";
+import { useTranslations } from "~/lib/locale/locales";
+import { format, parse, subDays } from "date-fns";
+import { useLiveQuery } from "dexie-react-hooks";
+import {
+    ArrowLeft,
+    ArrowRight,
+    CirclePause,
+    CirclePlay,
+    PanelLeftClose,
+    PanelRightClose,
+    Settings,
+    X,
+} from "lucide-react";
+import { animate, AnimatePresence, motion, useMotionValue } from "motion/react";
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    type CSSProperties,
+    type KeyboardEvent,
+} from "react";
+import type { DateRange } from "react-day-picker";
+import { z } from "zod";
 
 const defaultMinViews = 10;
 const getDefaultFrom = () => format(subDays(new Date(), 7), "yyyy-MM-dd");
@@ -74,6 +73,7 @@ export const Route = createFileRoute("/")({
         ],
     },
     component: Index,
+    ssr: false,
 });
 
 const initialSidebarStyle = {
@@ -86,19 +86,19 @@ function Index() {
     const navigate = Route.useNavigate();
     const t = useTranslations();
     const queryClient = useQueryClient();
-    const debouncedMinViews = useDebouncedValue(search.minViews, 500);
+    const [debouncedMinViews] = useDebouncedValue(search.minViews, { wait: 500 });
     const [autonextBuffer, setAutonextBuffer] = useState<number>(4);
     const [autonextEnabled, setAutonextEnabled] = useState<boolean>(false);
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
     const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
-    const [clipAutoplay, setClipAutoplay] = useState<boolean>(true);
+    const [clipAutoplay, setClipAutoplay] = useState<boolean>(import.meta.env.PROD);
     const [markAsViewed, setMarkAsViewed] = useState<boolean>(true);
     const [skipViewed, setSkipViewed] = useState<boolean>(false);
     const [chronologicalOrder, setChronologicalOrder] = useState<boolean>(false);
     const [titleFilterField, setTitleFilterField] = useState<string>("");
     const [selectedGame, setSelectedGame] = useState<string>("");
     const autonextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const debouncedTitleFilterField = useDebouncedValue(titleFilterField, 500);
+    const [debouncedTitleFilterField] = useDebouncedValue(titleFilterField, { wait: 500 });
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
     const channels = search.channels.split(",").filter(Boolean);
@@ -112,9 +112,9 @@ function Index() {
         chronologicalOrder,
     });
 
-    const { data: gamesInfo = [], isLoading: isLoadingGames } = useQuery(
-        getGamesOptions({ gameIds: clips?.map((clip) => clip.game_id) ?? [] }),
-    );
+    const uniqueSortedGameIds = [...new Set(clips?.map((c) => c.game_id) ?? [])].sort();
+
+    const { data: gamesInfo = [], isPending: isPendingGames } = useGames(uniqueSortedGameIds);
 
     const dateRange = {
         from: parse(search.from, "yyyy-MM-dd", new Date()),
@@ -571,9 +571,7 @@ function Index() {
                                                 </Label>
                                                 <div className="flex items-center gap-2">
                                                     <GameSelect
-                                                        disabled={
-                                                            isLoadingAllClips || isLoadingGames
-                                                        }
+                                                        disabled={isPendingGames}
                                                         games={gamesInfo}
                                                         selectedGame={selectedGame}
                                                         setSelectedGame={setSelectedGame}

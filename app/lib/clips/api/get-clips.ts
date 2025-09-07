@@ -1,4 +1,3 @@
-import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/start";
 import { endOfDay, parse, startOfDay } from "date-fns";
 import { z } from "zod";
@@ -42,10 +41,3 @@ export const getClips = createServerFn({
 
         return clips.flat(1);
     });
-
-export function clipsOptions(params: Parameters<typeof getClips>[0]["data"]) {
-    return queryOptions({
-        queryKey: ["clips", params],
-        queryFn: () => getClips({ data: params }),
-    });
-}

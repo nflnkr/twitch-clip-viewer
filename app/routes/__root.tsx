@@ -1,10 +1,12 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { Meta, Scripts } from "@tanstack/start";
-import { lazy, StrictMode, Suspense, useState, type ReactNode } from "react";
-import { getRequestLocale } from "~/lib/get-request-locale";
-import { LocaleContext, type AppLocale } from "~/lib/locales";
+import { createGamesLoader, GamesLoaderContext } from "~/lib/games/query";
+import { getRequestLocale } from "~/lib/locale/api";
+import { LocaleContext, type AppLocale } from "~/lib/locale/locales";
 import appCss from "~/styles/app.css?url";
+import { lazy, StrictMode, Suspense, useMemo, useState, type ReactNode } from "react";
 
 const TanStackRouterDevtools =
     process.env.NODE_ENV === "production"
@@ -55,14 +57,18 @@ export const Route = createRootRoute({
 function RootComponent() {
     const requestLocale = Route.useLoaderData().requestLocale;
     const [locale, setLocale] = useState<AppLocale>(requestLocale);
+    const queryClient = useQueryClient();
+    const gamesLoader = useMemo(() => createGamesLoader(queryClient, 500), [queryClient]);
 
     return (
         <StrictMode>
-            <LocaleContext.Provider value={{ locale, setLocale }}>
-                <RootDocument>
-                    <Outlet />
-                </RootDocument>
-            </LocaleContext.Provider>
+            <GamesLoaderContext value={gamesLoader}>
+                <LocaleContext value={{ locale, setLocale }}>
+                    <RootDocument>
+                        <Outlet />
+                    </RootDocument>
+                </LocaleContext>
+            </GamesLoaderContext>
         </StrictMode>
     );
 }
