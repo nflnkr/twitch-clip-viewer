@@ -395,13 +395,13 @@ const Index = reatomComponent(function Index() {
                                             value="settings"
                                             className="flex-1"
                                         >
-                                            Settings
+                                            {t("settings")}
                                         </TabsTrigger>
                                         <TabsTrigger
                                             value="clips"
                                             className="flex-1"
                                         >
-                                            Clips
+                                            {t("clips")}
                                         </TabsTrigger>
                                     </TabsList>
                                     <LanguageMenu />

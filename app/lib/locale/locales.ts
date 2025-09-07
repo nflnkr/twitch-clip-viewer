@@ -35,6 +35,7 @@ export function useTranslations() {
 
 const en = {
     settings: "Settings",
+    clips: "Clips",
     addChannel: "Add channel",
     openClip: "Open clip",
     openVod: "Open VOD",
@@ -65,6 +66,7 @@ const translations: Record<
 > = {
     ru: {
         settings: "Настройки",
+        clips: "Клипы",
         addChannel: "Добавить канал",
         openClip: "Открыть клип",
         openVod: "Открыть VOD",
