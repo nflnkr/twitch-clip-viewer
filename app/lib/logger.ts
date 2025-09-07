@@ -1,5 +1,5 @@
-import pino from "pino";
 import { env } from "~/env";
+import pino from "pino";
 
 const logtailTarget = {
     target: "@logtail/pino",

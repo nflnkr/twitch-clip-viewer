@@ -1,4 +1,3 @@
-import { Globe } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
     DropdownMenu,
@@ -7,10 +6,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { useLocaleContext } from "~/lib/locales";
-import { cn } from "~/lib/utils";
-import RuFlag from "./RuFlag";
+import { useLocaleContext } from "~/lib/locale/locales";
+import { cn } from "~/lib/utils/utils";
+import { Globe } from "lucide-react";
 import EnFlag from "./EnFlag";
+import RuFlag from "./RuFlag";
 
 export default function LanguageMenu() {
     const { locale, setLocale } = useLocaleContext();

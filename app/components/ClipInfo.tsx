@@ -1,7 +1,7 @@
-import { Calendar, ExternalLink, Eye, Loader2, User } from "lucide-react";
-import { useTranslations } from "~/lib/locales";
-import { cn, formatSeconds } from "~/lib/utils";
+import { useTranslations } from "~/lib/locale/locales";
+import { cn, formatSeconds } from "~/lib/utils/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
+import { Calendar, ExternalLink, Eye, Loader2, User } from "lucide-react";
 import { Button } from "./ui/button";
 
 interface Props {

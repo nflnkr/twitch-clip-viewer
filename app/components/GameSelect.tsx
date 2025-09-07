@@ -1,6 +1,6 @@
+import { useTranslations } from "~/lib/locale/locales";
 import { ChevronsUpDownIcon } from "lucide-react";
 import { useState, type Dispatch, type SetStateAction } from "react";
-import { useTranslations } from "~/lib/locales";
 import { Button } from "./ui/button";
 import {
     Command,
