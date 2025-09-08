@@ -197,7 +197,7 @@ const Index = reatomComponent(function Index() {
 
     useEffect(
         function setAutonextTimer() {
-            if (!currentClip || (!autonextEnabledAtom && autonextTimeoutRef.current)) {
+            if (!currentClip || (!autonextEnabled && autonextTimeoutRef.current)) {
                 return stopAutonext();
             }
 
