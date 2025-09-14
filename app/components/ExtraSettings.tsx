@@ -1,4 +1,7 @@
 import { reatomComponent } from "@reatom/react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { Settings } from "lucide-react";
+
 import { NumberInput } from "~/components/NumberInput";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
@@ -12,8 +15,6 @@ import {
     clipAutoplay,
     markAsViewed,
 } from "~/lib/settings/atoms";
-import { useLiveQuery } from "dexie-react-hooks";
-import { Settings } from "lucide-react";
 
 interface Props {
     resetSelectedClip: () => void;

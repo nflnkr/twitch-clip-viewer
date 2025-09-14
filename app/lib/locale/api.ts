@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/start";
 import { getHeader } from "@tanstack/start/server";
+
 import { defaultLocale, locales, type AppLocale } from "./locales";
 
 export const getRequestLocale = createServerFn({ method: "GET" }).handler(() => {

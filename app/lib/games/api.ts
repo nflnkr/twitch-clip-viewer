@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/start";
-import type { TwitchGame } from "~/model/twitch";
 import axios from "axios";
 import { z } from "zod";
+
+import type { TwitchGame } from "~/model/twitch";
 import { logger } from "../logger";
 import { twitchAuthToken } from "../twitch-auth-token";
 

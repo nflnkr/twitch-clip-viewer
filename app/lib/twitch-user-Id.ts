@@ -1,5 +1,6 @@
-import type { TwitchUserMetadata } from "~/model/twitch";
 import axios from "axios";
+
+import type { TwitchUserMetadata } from "~/model/twitch";
 import { logger } from "./logger";
 import { twitchAuthToken } from "./twitch-auth-token";
 

@@ -1,5 +1,6 @@
-import { env } from "~/env";
 import axios from "axios";
+
+import { env } from "~/env";
 import { logger } from "./logger";
 
 export class TwitchAuthToken {

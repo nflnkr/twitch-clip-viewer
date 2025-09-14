@@ -1,10 +1,11 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { db } from "~/lib/db";
-import { cn } from "~/lib/utils/misc";
-import type { TwitchClipMetadata } from "~/model/twitch";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Check } from "lucide-react";
 import { useEffect, useRef } from "react";
+
+import { db } from "~/lib/db";
+import { cn } from "~/lib/utils/misc";
+import type { TwitchClipMetadata } from "~/model/twitch";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 

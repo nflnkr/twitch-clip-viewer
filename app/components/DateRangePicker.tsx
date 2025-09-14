@@ -1,4 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { addDays, endOfYear, format, subDays, subMonths, subYears } from "date-fns";
+import { CalendarIcon, Clock9 } from "lucide-react";
+import { type DateRange } from "react-day-picker";
+
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import {
@@ -12,9 +16,6 @@ import { PopoverContent } from "~/components/ui/popover";
 import { clipsOptions } from "~/lib/clips/query";
 import { datefnsLocaleByAppLocale, useLocaleContext, useTranslations } from "~/lib/locale/locales";
 import { cn, getYearsArray } from "~/lib/utils/misc";
-import { addDays, endOfYear, format, subDays, subMonths, subYears } from "date-fns";
-import { CalendarIcon, Clock9 } from "lucide-react";
-import { type DateRange } from "react-day-picker";
 import { Popover, PopoverTrigger } from "./ui/popover";
 
 interface Props {

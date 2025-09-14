@@ -1,13 +1,14 @@
 import { reatomComponent } from "@reatom/react";
 import type { ReactNode } from "@tanstack/react-router";
+import { ArrowLeft, ArrowRight, CirclePause, CirclePlay, PanelLeftClose } from "lucide-react";
+import { motion } from "motion/react";
+
 import { Button } from "~/components/ui/button";
 import {
     autonextEnabled,
     autonextEnabled as autonextEnabledAtom,
     sidebarOpen,
 } from "~/lib/settings/atoms";
-import { ArrowLeft, ArrowRight, CirclePause, CirclePlay, PanelLeftClose } from "lucide-react";
-import { motion } from "motion/react";
 
 interface Props {
     hasPrevClip: boolean;

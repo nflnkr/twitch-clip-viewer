@@ -1,3 +1,5 @@
+import { Globe } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import {
     DropdownMenu,
@@ -8,7 +10,6 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { useLocaleContext } from "~/lib/locale/locales";
 import { cn } from "~/lib/utils/misc";
-import { Globe } from "lucide-react";
 import EnFlag from "./EnFlag";
 import RuFlag from "./RuFlag";
 

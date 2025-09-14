@@ -2,11 +2,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { Meta, Scripts } from "@tanstack/start";
+import { lazy, StrictMode, Suspense, useMemo, useState, type ReactNode } from "react";
+
 import { createGamesLoader, GamesLoaderContext } from "~/lib/games/query";
 import { getRequestLocale } from "~/lib/locale/api";
 import { LocaleContext, type AppLocale } from "~/lib/locale/locales";
 import appCss from "~/styles/app.css?url";
-import { lazy, StrictMode, Suspense, useMemo, useState, type ReactNode } from "react";
 
 const TanStackRouterDevtools =
     process.env.NODE_ENV === "production"

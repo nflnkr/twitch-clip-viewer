@@ -1,8 +1,9 @@
 import { hashKey, QueryClient } from "@tanstack/query-core";
 import { useQueries } from "@tanstack/react-query";
-import type { TwitchGame } from "~/model/twitch";
 import DataLoader from "dataloader";
 import { createContext, use } from "react";
+
+import type { TwitchGame } from "~/model/twitch";
 import { combineQueries } from "../utils/combine-queries";
 import { getGamesServerFn } from "./api";
 

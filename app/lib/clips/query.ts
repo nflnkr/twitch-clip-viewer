@@ -1,6 +1,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { twitchClipMetadataArraySchema, type TwitchClipMetadata } from "~/model/twitch";
 import { useEffect, useMemo, useState } from "react";
+
+import { twitchClipMetadataArraySchema, type TwitchClipMetadata } from "~/model/twitch";
 import { getClips } from "./api/get-clips";
 import { getStreamedClips } from "./api/get-streamed-clips";
 

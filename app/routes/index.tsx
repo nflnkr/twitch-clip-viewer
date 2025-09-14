@@ -3,6 +3,21 @@ import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
+import { format, parse, subDays } from "date-fns";
+import { useLiveQuery } from "dexie-react-hooks";
+import { ArrowLeft, ArrowRight, CirclePause, CirclePlay, PanelRightClose, X } from "lucide-react";
+import {
+    animate,
+    AnimatePresence,
+    motion,
+    useMotionValue,
+    useMotionValueEvent,
+} from "motion/react";
+import type { KeyboardEvent } from "react";
+import { useRef, useState } from "react";
+import type { DateRange } from "react-day-picker";
+import { z } from "zod";
+
 import ClipInfo from "~/components/ClipInfo";
 import ClipList from "~/components/ClipList";
 import DateRangePicker from "~/components/DateRangePicker";
@@ -33,20 +48,6 @@ import {
     skipViewed,
 } from "~/lib/settings/atoms";
 import type { TwitchClipMetadata } from "~/model/twitch";
-import { format, parse, subDays } from "date-fns";
-import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowLeft, ArrowRight, CirclePause, CirclePlay, PanelRightClose, X } from "lucide-react";
-import {
-    animate,
-    AnimatePresence,
-    motion,
-    useMotionValue,
-    useMotionValueEvent,
-} from "motion/react";
-import type { KeyboardEvent } from "react";
-import { useRef, useState } from "react";
-import type { DateRange } from "react-day-picker";
-import { z } from "zod";
 
 const defaultMinViews = 10;
 const getDefaultFrom = () => format(subDays(new Date(), 7), "yyyy-MM-dd");
