@@ -199,7 +199,7 @@ const Index = reatomComponent(function Index() {
 
     function handleSelectNextClip() {
         selectClip(nextClip);
-        if (nextClip) startAutonextTimer(nextClip.duration + autonextBuffer());
+        if (autonextEnabled() && nextClip) startAutonextTimer(nextClip.duration + autonextBuffer());
     }
 
     function handleSelectPrevClip() {
