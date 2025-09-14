@@ -6,22 +6,21 @@ import {
     autonextEnabled as autonextEnabledAtom,
     sidebarOpen,
 } from "~/lib/settings/atoms";
-import type { TwitchClipMetadata } from "~/model/twitch";
 import { ArrowLeft, ArrowRight, CirclePause, CirclePlay, PanelLeftClose } from "lucide-react";
 import { motion } from "motion/react";
 
 interface Props {
-    previousClip: TwitchClipMetadata | undefined;
-    nextClip: TwitchClipMetadata | undefined;
-    selectClip: (clipId: string | null, autonext?: boolean) => void;
-    selectNextClip: (autonext?: boolean) => void;
+    hasPrevClip: boolean;
+    hasNextClip: boolean;
+    selectNextClip: () => void;
+    selectPrevClip: () => void;
     clipProgressOverlay: ReactNode;
 }
 
 const SideBarCollapsed = reatomComponent(function SideBarCollapsed({
-    previousClip,
-    nextClip,
-    selectClip,
+    hasPrevClip,
+    hasNextClip,
+    selectPrevClip,
     selectNextClip,
     clipProgressOverlay,
 }: Props) {
@@ -48,8 +47,8 @@ const SideBarCollapsed = reatomComponent(function SideBarCollapsed({
                 variant="ghost"
                 size="icon"
                 className="rounded-none hover:bg-gray-950"
-                disabled={!previousClip}
-                onClick={() => selectClip(previousClip?.id ?? null)}
+                disabled={!hasPrevClip}
+                onClick={selectPrevClip}
             >
                 <ArrowLeft />
             </Button>
@@ -64,8 +63,8 @@ const SideBarCollapsed = reatomComponent(function SideBarCollapsed({
                 variant="ghost"
                 size="icon"
                 className="grow rounded-none hover:bg-gray-950"
-                disabled={!nextClip}
-                onClick={() => selectNextClip()}
+                disabled={!hasNextClip}
+                onClick={selectNextClip}
             >
                 <ArrowRight />
             </Button>

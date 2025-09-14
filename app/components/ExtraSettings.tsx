@@ -14,19 +14,16 @@ import {
 } from "~/lib/settings/atoms";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Settings } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
 
 interface Props {
-    selectClip: (clipId: string | null, autonext?: boolean) => void;
-    setSelectedGame: Dispatch<SetStateAction<string>>;
+    resetSelectedClip: () => void;
 }
 
 const ExtraSettingsPopover = reatomComponent(function ExtraSettingsPopover({
-    selectClip,
-    setSelectedGame,
+    resetSelectedClip,
 }: Props) {
     const t = useTranslations();
-    const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
+    const viewedClipsLength = useLiveQuery(() => db.viewedClips.toArray())?.length ?? 0;
 
     function clearViewedClips() {
         db.viewedClips.clear();
@@ -70,8 +67,7 @@ const ExtraSettingsPopover = reatomComponent(function ExtraSettingsPopover({
                                 checked={chronologicalOrder()}
                                 onCheckedChange={(value) => {
                                     chronologicalOrder.set(value);
-                                    selectClip(null);
-                                    setSelectedGame("");
+                                    resetSelectedClip();
                                 }}
                             />
                             <Label htmlFor="chronological-order">{t("chronologicalOrder")}</Label>
@@ -94,10 +90,10 @@ const ExtraSettingsPopover = reatomComponent(function ExtraSettingsPopover({
                     <Button
                         variant="destructive"
                         onClick={clearViewedClips}
-                        disabled={!viewedClips?.length}
+                        disabled={!viewedClipsLength}
                         className="h-full"
                     >
-                        {`${t("viewed.clearViewedClips")} (${viewedClips?.length || 0})`}
+                        {`${t("viewed.clearViewedClips")} (${viewedClipsLength})`}
                     </Button>
                 </div>
             </PopoverContent>

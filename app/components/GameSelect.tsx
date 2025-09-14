@@ -62,16 +62,16 @@ export default function GameSelect({ disabled, games, selectedGame, setSelectedG
                                         key={game.id}
                                         value={game.name}
                                         onSelect={(currentValue) => {
-                                            setSelectedGame((prev) => {
-                                                return currentValue === prev ? "" : currentValue;
-                                            });
+                                            setSelectedGame((prev) =>
+                                                currentValue === prev ? "" : currentValue,
+                                            );
                                             setOpen(false);
                                         }}
                                     >
                                         <img
                                             src={imgSrc}
                                             alt={game.name}
-                                            className={`mr-2 h-[${gameImageHeight}px] w-[${gameImageWidth}px]`}
+                                            className={`mr-2 aspect-[0.75] w-8 object-cover`}
                                         />
                                         {game.name}
                                     </CommandItem>

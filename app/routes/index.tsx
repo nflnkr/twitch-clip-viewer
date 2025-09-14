@@ -13,12 +13,6 @@ import { NumberInput } from "~/components/NumberInput";
 import SideBarCollapsed from "~/components/SideBarCollapsed";
 import Spinner from "~/components/Spinner";
 import TwitchClipEmbed from "~/components/TwitchClipEmbed";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "~/components/ui/accordion";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -29,20 +23,28 @@ import { db } from "~/lib/db";
 import { useGames } from "~/lib/games/query";
 import { useTranslations } from "~/lib/locale/locales";
 import {
-    autonextBuffer as autonextBufferAtom,
-    autonextEnabled as autonextEnabledAtom,
+    autonextBuffer,
+    autonextEnabled,
     chronologicalOrder,
     clipAutoplay,
-    markAsViewed as markAsViewedAtom,
+    markAsViewed,
+    selectedClipId,
     sidebarOpen,
-    skipViewed as skipViewedAtom,
+    skipViewed,
 } from "~/lib/settings/atoms";
+import type { TwitchClipMetadata } from "~/model/twitch";
 import { format, parse, subDays } from "date-fns";
 import { useLiveQuery } from "dexie-react-hooks";
 import { ArrowLeft, ArrowRight, CirclePause, CirclePlay, PanelRightClose, X } from "lucide-react";
-import { animate, AnimatePresence, motion, useMotionValue } from "motion/react";
-import type { CSSProperties, KeyboardEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+    animate,
+    AnimatePresence,
+    motion,
+    useMotionValue,
+    useMotionValueEvent,
+} from "motion/react";
+import type { KeyboardEvent } from "react";
+import { useRef, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { z } from "zod";
 
@@ -73,11 +75,6 @@ export const Route = createFileRoute("/")({
     ssr: false,
 });
 
-const initialSidebarStyle = {
-    width: "24rem",
-    padding: "1rem",
-} satisfies CSSProperties;
-
 const Index = reatomComponent(function Index() {
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
@@ -85,17 +82,11 @@ const Index = reatomComponent(function Index() {
     const queryClient = useQueryClient();
     const [tab, setTab] = useState<"settings" | "clips">("settings");
     const [debouncedMinViews] = useDebouncedValue(search.minViews, { wait: 500 });
-    const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
     const [titleFilterField, setTitleFilterField] = useState<string>("");
     const [selectedGame, setSelectedGame] = useState<string>("");
-    const autonextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [debouncedTitleFilterField] = useDebouncedValue(titleFilterField, { wait: 500 });
+    const animationRef = useRef<ReturnType<typeof animate>>(null);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
-
-    const autonextBuffer = autonextBufferAtom();
-    const autonextEnabled = autonextEnabledAtom();
-    const markAsViewed = markAsViewedAtom();
-    const skipViewed = skipViewedAtom();
 
     const channels = search.channels.split(",").filter(Boolean);
     const viewedClipsIds = viewedClips?.map((c) => c.clipId) ?? [];
@@ -134,43 +125,61 @@ const Index = reatomComponent(function Index() {
         return showClip;
     });
 
-    const currentClip = filteredClips?.find((c) => c.id === selectedClipId) ?? filteredClips?.at(0);
+    const currentClip =
+        filteredClips?.find((c) => c.id === selectedClipId()) ?? filteredClips?.at(0);
 
     const currentClipIndex = (currentClip && filteredClips?.indexOf(currentClip)) ?? 0;
     const previousClip = filteredClips?.[currentClipIndex - 1];
-    const nextClip = filteredClips?.[currentClipIndex + 1];
-    const nextNonViewedClip = filteredClips?.find((clip, index) => {
-        if (index <= currentClipIndex) return false;
-        return !viewedClipsIds?.includes(clip.id);
-    });
-    const totalClipsDuration = filteredClips?.reduce((acc, c) => acc + c.duration, 0) ?? 0;
+    const nextClip = skipViewed()
+        ? filteredClips?.find((clip, index) => {
+              if (index <= currentClipIndex) return false;
+              return !viewedClipsIds?.includes(clip.id);
+          })
+        : filteredClips?.[currentClipIndex + 1];
 
-    const sidebarStyle = sidebarOpen() ? initialSidebarStyle : { width: "2.25rem", padding: "0" };
+    const totalClipsDuration = filteredClips?.reduce((acc, c) => acc + c.duration, 0) ?? 0;
 
     const clipProgressOverlayWidth = useMotionValue("0%");
 
-    const clipProgressOverlay = currentClip && autonextEnabled && (
+    const clipProgressOverlay = currentClip && autonextEnabled() && (
         <motion.div
-            key={currentClip.id}
             style={{ width: clipProgressOverlayWidth }}
             className="h-full bg-zinc-400 opacity-10"
         />
     );
 
-    const stopAutonext = useCallback(() => {
-        autonextEnabledAtom.set(false);
-        clearTimeout(autonextTimeoutRef.current ?? 0);
-        autonextTimeoutRef.current = null;
+    useMotionValueEvent(clipProgressOverlayWidth, "animationComplete", () => {
+        if (nextClip && !document.hidden) {
+            selectClip(nextClip);
+            startAutonextTimer(nextClip.duration + autonextBuffer());
+        } else {
+            stopAutonextTimer();
+        }
+    });
+
+    function startAutonextTimer(duration: number) {
+        animationRef.current?.stop();
         clipProgressOverlayWidth.jump("0%");
-    }, [clipProgressOverlayWidth]);
+        animationRef.current = animate(clipProgressOverlayWidth, "100%", {
+            ease: "linear",
+            duration,
+        });
+    }
 
-    const selectClip = useCallback(
-        async (clipId: string | null, autonext = false) => {
-            if (currentClip?.id === clipId) return;
+    function stopAutonextTimer() {
+        autonextEnabled.set(false);
 
-            const leavingClipId = currentClip?.id;
+        animationRef.current?.stop();
+        clipProgressOverlayWidth.jump("0%");
+    }
 
-            if (markAsViewed && leavingClipId && clipId !== null) {
+    async function selectClip(clip: TwitchClipMetadata | null = null) {
+        if (currentClip?.id === clip?.id) return;
+
+        const leavingClipId = currentClip?.id;
+
+        if (markAsViewed() && leavingClipId && clip?.id) {
+            try {
                 const exists = await db.viewedClips.where("clipId").equals(leavingClipId).count();
 
                 if (!exists) {
@@ -179,59 +188,35 @@ const Index = reatomComponent(function Index() {
                         timestamp: Date.now(),
                     });
                 }
+            } catch (error) {
+                console.error(error);
             }
+        }
 
-            setSelectedClipId(clipId);
-            clipProgressOverlayWidth.jump("0%");
-            if (!autonext) stopAutonext();
-        },
-        [clipProgressOverlayWidth, currentClip?.id, markAsViewed, stopAutonext],
-    );
+        selectedClipId.set(clip?.id ?? null);
+    }
 
-    const selectNextClip = useCallback(
-        (autonext = false) => {
-            selectClip((skipViewed ? nextNonViewedClip?.id : nextClip?.id) ?? null, autonext);
-        },
-        [nextClip?.id, nextNonViewedClip?.id, selectClip, skipViewed],
-    );
+    function handleSelectNextClip() {
+        selectClip(nextClip);
+        if (nextClip) startAutonextTimer(nextClip.duration + autonextBuffer());
+    }
 
-    useEffect(
-        function setAutonextTimer() {
-            if (!currentClip || (!autonextEnabled && autonextTimeoutRef.current)) {
-                return stopAutonext();
-            }
+    function handleSelectPrevClip() {
+        selectClip(previousClip);
+        stopAutonextTimer();
+    }
 
-            if (autonextEnabled && !autonextTimeoutRef.current) {
-                animate(clipProgressOverlayWidth, "100%", {
-                    duration: currentClip.duration + autonextBuffer,
-                    ease: "linear",
-                });
-
-                autonextTimeoutRef.current = setTimeout(
-                    () => {
-                        autonextTimeoutRef.current = null;
-                        if (document.hidden) return autonextEnabledAtom.set(false);
-
-                        if (nextClip) selectNextClip(true);
-                        else stopAutonext();
-                    },
-                    (autonextBuffer + currentClip.duration) * 1000,
-                );
-            }
-        },
-        [
-            autonextBuffer,
-            autonextEnabled,
-            clipProgressOverlayWidth,
-            currentClip,
-            nextClip,
-            selectNextClip,
-            stopAutonext,
-        ],
-    );
+    function switchAutonext() {
+        if (autonextEnabled.set((prev) => !prev) && currentClip) {
+            startAutonextTimer(currentClip.duration + autonextBuffer());
+        } else {
+            stopAutonextTimer();
+        }
+    }
 
     function setDateRange(dateRange: DateRange | undefined) {
         selectClip(null);
+        stopAutonextTimer();
         setSelectedGame("");
         navigate({
             search: {
@@ -248,6 +233,7 @@ const Index = reatomComponent(function Index() {
 
     function removeChannel(channel: string) {
         selectClip(null);
+        stopAutonextTimer();
         setSelectedGame("");
         navigate({
             search: {
@@ -278,6 +264,7 @@ const Index = reatomComponent(function Index() {
         event.currentTarget.value = "";
 
         selectClip(null);
+        stopAutonextTimer();
         setSelectedGame("");
         navigate({
             search: {
@@ -301,6 +288,7 @@ const Index = reatomComponent(function Index() {
 
     function handleMinViewsChange(value: number | undefined) {
         selectClip(null);
+        stopAutonextTimer();
         setSelectedGame("");
         chronologicalOrder.set(false);
         navigate({ search: { ...search, minViews: value } });
@@ -329,23 +317,24 @@ const Index = reatomComponent(function Index() {
                                 variant="outline"
                                 className="h-full grow rounded-none"
                                 disabled={!previousClip}
-                                onClick={() => selectClip(previousClip?.id ?? null)}
+                                onClick={handleSelectPrevClip}
                             >
                                 <ArrowLeft />
                             </Button>
                             <Button
                                 variant="outline"
                                 className="h-full rounded-none border-x-0"
-                                onClick={() => autonextEnabledAtom.set((prev) => !prev)}
+                                disabled={!nextClip}
+                                onClick={switchAutonext}
                             >
                                 {t("player.autoplay")}
-                                {autonextEnabled ? <CirclePause /> : <CirclePlay />}
+                                {autonextEnabled() ? <CirclePause /> : <CirclePlay />}
                             </Button>
                             <Button
                                 variant="outline"
                                 className="h-full grow rounded-none border-r-0"
                                 disabled={!nextClip}
-                                onClick={() => selectNextClip()}
+                                onClick={handleSelectNextClip}
                             >
                                 <ArrowRight />
                             </Button>
@@ -357,8 +346,12 @@ const Index = reatomComponent(function Index() {
                 </AnimatePresence>
             </div>
             <motion.div
-                initial={initialSidebarStyle}
-                animate={sidebarStyle}
+                variants={{
+                    collapsed: { width: "2.25rem", padding: "0" },
+                    expanded: { width: "24rem", padding: "1rem" },
+                }}
+                initial="expanded"
+                animate={sidebarOpen() ? "expanded" : "collapsed"}
                 className="h-full overflow-y-auto overflow-x-clip"
             >
                 <AnimatePresence mode="wait">
@@ -461,82 +454,75 @@ const Index = reatomComponent(function Index() {
                                             <div className="mr-auto flex items-center gap-2">
                                                 <Switch
                                                     id="skip-viewed"
-                                                    checked={skipViewedAtom()}
-                                                    onCheckedChange={skipViewedAtom.set}
+                                                    checked={skipViewed()}
+                                                    onCheckedChange={skipViewed.set}
                                                 />
                                                 <Label htmlFor="skip-viewed">
                                                     {t("viewed.skipViewed")}
                                                 </Label>
                                             </div>
                                             <ExtraSettingsPopover
-                                                selectClip={selectClip}
-                                                setSelectedGame={setSelectedGame}
+                                                resetSelectedClip={() => {
+                                                    selectClip(null);
+                                                    stopAutonextTimer();
+                                                    setSelectedGame("");
+                                                }}
                                             />
                                         </div>
-                                        <Accordion
-                                            type="single"
-                                            collapsible
-                                            className="w-full"
-                                        >
-                                            <AccordionItem value="filters">
-                                                <AccordionTrigger>{t("filters")}</AccordionTrigger>
-                                                <AccordionContent className="flex flex-col gap-2 text-balance">
-                                                    <div className="flex flex-col gap-1">
-                                                        <Label htmlFor="title-filter">
-                                                            {t("filterByTitle")}
-                                                        </Label>
-                                                        <div className="flex gap-2">
-                                                            <Input
-                                                                id="title-filter"
-                                                                value={titleFilterField}
-                                                                onChange={(e) =>
-                                                                    setTitleFilterField(
-                                                                        e.target.value,
-                                                                    )
-                                                                }
-                                                            />
-                                                            <Button
-                                                                size="xs"
-                                                                variant="ghost"
-                                                                onClick={() => {
-                                                                    setTitleFilterField("");
-                                                                    stopAutonext();
-                                                                }}
-                                                                disabled={!titleFilterField}
-                                                                className="aspect-square h-full"
-                                                            >
-                                                                <X />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-col gap-1">
-                                                        <Label htmlFor="title-filter">
-                                                            {t("filterByCategory")}
-                                                        </Label>
-                                                        <div className="flex items-center gap-2">
-                                                            <GameSelect
-                                                                disabled={isPendingGames}
-                                                                games={gamesInfo}
-                                                                selectedGame={selectedGame}
-                                                                setSelectedGame={setSelectedGame}
-                                                            />
-                                                            <Button
-                                                                size="xs"
-                                                                variant="ghost"
-                                                                onClick={() => {
-                                                                    setSelectedGame("");
-                                                                    stopAutonext();
-                                                                }}
-                                                                disabled={!selectedGame}
-                                                                className="aspect-square h-full"
-                                                            >
-                                                                <X />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        </Accordion>
+                                        <p className="text-lg">Фильтры</p>
+                                        <div className="flex flex-col gap-2 text-balance">
+                                            <div className="flex flex-col gap-1">
+                                                <Label htmlFor="title-filter">
+                                                    {t("filterByTitle")}
+                                                </Label>
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        id="title-filter"
+                                                        value={titleFilterField}
+                                                        onChange={(e) =>
+                                                            setTitleFilterField(e.target.value)
+                                                        }
+                                                    />
+                                                    <Button
+                                                        size="xs"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setTitleFilterField("");
+                                                            stopAutonextTimer();
+                                                        }}
+                                                        disabled={!titleFilterField}
+                                                        className="aspect-square h-full"
+                                                    >
+                                                        <X />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <Label htmlFor="title-filter">
+                                                    {t("filterByCategory")}
+                                                </Label>
+                                                <div className="flex items-center gap-2">
+                                                    <GameSelect
+                                                        disabled={isPendingGames}
+                                                        games={gamesInfo}
+                                                        selectedGame={selectedGame}
+                                                        setSelectedGame={setSelectedGame}
+                                                    />
+                                                    <Button
+                                                        size="xs"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setSelectedGame("");
+                                                            stopAutonextTimer();
+                                                        }}
+                                                        disabled={!selectedGame}
+                                                        className="aspect-square h-full"
+                                                    >
+                                                        <X />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </TabsContent>
                                 <TabsContent
@@ -560,20 +546,23 @@ const Index = reatomComponent(function Index() {
                                     )}
                                     <ClipList
                                         clips={filteredClips}
-                                        currentClipId={currentClip?.id ?? null}
+                                        currentClipId={currentClip?.id}
                                         currentClipIndex={currentClipIndex}
-                                        skipViewed={skipViewedAtom()}
-                                        onClipClick={selectClip}
+                                        skipViewed={skipViewed()}
+                                        onClipClick={(clip) => {
+                                            selectClip(clip);
+                                            stopAutonextTimer();
+                                        }}
                                     />
                                 </TabsContent>
                             </motion.div>
                         </Tabs>
                     ) : (
                         <SideBarCollapsed
-                            previousClip={previousClip}
-                            nextClip={nextClip}
-                            selectClip={selectClip}
-                            selectNextClip={selectNextClip}
+                            hasPrevClip={Boolean(previousClip)}
+                            hasNextClip={Boolean(nextClip)}
+                            selectNextClip={handleSelectNextClip}
+                            selectPrevClip={handleSelectPrevClip}
                             clipProgressOverlay={clipProgressOverlay}
                         />
                     )}

@@ -10,15 +10,15 @@ import { ScrollArea } from "./ui/scroll-area";
 
 interface Props {
     clips?: TwitchClipMetadata[] | null;
-    currentClipId: string | null;
+    currentClipId: string | undefined | null;
     currentClipIndex: number;
     skipViewed: boolean;
-    onClipClick: (clipId: string) => void;
+    onClipClick: (clip: TwitchClipMetadata) => void;
 }
 
 export default function ClipList({
     clips,
-    currentClipId,
+    currentClipId = null,
     currentClipIndex,
     skipViewed,
     onClipClick,
@@ -69,7 +69,7 @@ export default function ClipList({
                                     "border-accent/50 opacity-30",
                                 currentClipId === clip.id && "border-purple-800",
                             )}
-                            onClick={() => onClipClick(clip.id)}
+                            onClick={() => onClipClick(clip)}
                             style={{
                                 position: "absolute",
                                 top: 0,
