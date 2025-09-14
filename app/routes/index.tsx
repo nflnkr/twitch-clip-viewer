@@ -159,6 +159,8 @@ const Index = reatomComponent(function Index() {
     });
 
     function startAutonextTimer(duration: number) {
+        autonextEnabled.set(true);
+
         animationRef.current?.stop();
         clipProgressOverlayWidth.jump("0%");
         animationRef.current = animate(clipProgressOverlayWidth, "100%", {
@@ -208,7 +210,7 @@ const Index = reatomComponent(function Index() {
     }
 
     function switchAutonext() {
-        if (autonextEnabled.set((prev) => !prev) && currentClip) {
+        if (!autonextEnabled() && currentClip) {
             startAutonextTimer(currentClip.duration + autonextBuffer());
         } else {
             stopAutonextTimer();
