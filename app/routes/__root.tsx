@@ -59,7 +59,7 @@ function RootComponent() {
     const requestLocale = Route.useLoaderData().requestLocale;
     const [locale, setLocale] = useState<AppLocale>(requestLocale);
     const queryClient = useQueryClient();
-    const gamesLoader = useMemo(() => createGamesLoader(queryClient, 500), [queryClient]);
+    const gamesLoader = useMemo(() => createGamesLoader(queryClient), [queryClient]);
 
     return (
         <StrictMode>

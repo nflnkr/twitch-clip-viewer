@@ -12,6 +12,7 @@ import {
     motion,
     useMotionValue,
     useMotionValueEvent,
+    type AnimationPlaybackControlsWithThen,
 } from "motion/react";
 import type { KeyboardEvent } from "react";
 import { useRef, useState } from "react";
@@ -86,7 +87,7 @@ const Index = reatomComponent(function Index() {
     const [titleFilterField, setTitleFilterField] = useState<string>("");
     const [selectedGame, setSelectedGame] = useState<string>("");
     const [debouncedTitleFilterField] = useDebouncedValue(titleFilterField, { wait: 500 });
-    const animationRef = useRef<ReturnType<typeof animate>>(null);
+    const animationRef = useRef<AnimationPlaybackControlsWithThen>(null);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
     const channels = search.channels.split(",").filter(Boolean);

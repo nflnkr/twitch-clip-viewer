@@ -10,8 +10,9 @@ import { getGamesServerFn } from "./api";
 export const GamesLoaderContext = createContext<ReturnType<typeof createGamesLoader>>(null!);
 
 const gamesQueryKey = "games";
+const DELAY = 500;
 
-export function createGamesLoader(queryClient: QueryClient, delay: number) {
+export function createGamesLoader(queryClient: QueryClient) {
     return new DataLoader<{ gameId: string }, TwitchGame, string>(
         async (keys) => {
             const results = await getGamesServerFn({
@@ -25,7 +26,7 @@ export function createGamesLoader(queryClient: QueryClient, delay: number) {
             );
         },
         {
-            batchScheduleFn: (callback) => setTimeout(callback, delay),
+            batchScheduleFn: (callback) => setTimeout(callback, DELAY),
             cacheMap: {
                 clear: () => queryClient.removeQueries({ queryKey: [gamesQueryKey] }),
                 delete: (key) => queryClient.removeQueries({ queryKey: JSON.parse(key) }),
