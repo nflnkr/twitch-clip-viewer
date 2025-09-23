@@ -151,7 +151,7 @@ const Index = reatomComponent(function Index() {
     );
 
     useMotionValueEvent(clipProgressOverlayWidth, "animationComplete", () => {
-        if (nextClip && !document.hidden) {
+        if (nextClip) {
             selectClip(nextClip);
             startAutonextTimer(nextClip.duration + autonextBuffer());
         } else {
