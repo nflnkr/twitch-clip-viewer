@@ -128,7 +128,7 @@
 .dark {
     --background: oklch(0.2178 0 0);
     --foreground: oklch(0.8853 0 0);
-    --card: oklch(0.2435 0 0);
+    --card: oklch(0.26 0 0);
     --card-foreground: oklch(0.8853 0 0);
     --popover: oklch(0.2435 0 0);
     --popover-foreground: oklch(0.8853 0 0);
@@ -190,7 +190,4 @@
         letter-spacing: var(--tracking-normal);
     }
 
-    button:not([disabled]), [role="button"]:not([disabled]) {
-        cursor: pointer;
-    }
 }

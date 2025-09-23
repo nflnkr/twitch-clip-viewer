@@ -1,4 +1,4 @@
-import { Calendar, ExternalLink, Eye, Loader2, User } from "lucide-react";
+import { Calendar, ExternalLink, Loader2, User } from "lucide-react";
 
 import { useTranslations } from "~/lib/locale/locales";
 import { cn, formatSeconds } from "~/lib/utils";
@@ -57,17 +57,13 @@ export default function ClipInfo({
             >
                 {currentClip.title}
             </p>
-            <div className="flex flex-wrap justify-around gap-2">
-                <p className="flex items-center gap-1 text-sm tracking-tight">
-                    <Eye size={20} />
-                    {currentClip.view_count}
-                </p>
-                <p className="flex items-center gap-1 text-sm tracking-tight">
-                    <User size={20} />
+            <div className="flex flex-wrap gap-2">
+                <p className="bg-card flex items-center gap-1 rounded p-1 text-xs tracking-tight">
+                    <User size={16} />
                     {currentClip.creator_name}
                 </p>
-                <p className="flex items-center gap-1 text-sm tracking-tight">
-                    <Calendar size={20} />
+                <p className="bg-card flex items-center gap-1 rounded p-1 text-xs tracking-tight">
+                    <Calendar size={16} />
                     {new Date(currentClip.created_at).toLocaleString()}
                 </p>
             </div>
