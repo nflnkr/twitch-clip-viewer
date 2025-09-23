@@ -1,2 +1,0 @@
-patchedDependencies:
-  dexie-react-hooks: patches/dexie-react-hooks.patch
