@@ -1,0 +1,28 @@
+diff --git a/dist/dexie-react-hooks.mjs b/dist/dexie-react-hooks.mjs
+index 7b201dd378e790a3e8de5b4c9d7f2f4b0e5166ff..a4944ce11d7d4369172c6127ec16fefce6c18d87 100644
+--- a/dist/dexie-react-hooks.mjs
++++ b/dist/dexie-react-hooks.mjs
+@@ -1,4 +1,4 @@
+-import { liveQuery, Dexie } from 'dexie';
++import Dexie from 'dexie';
+ import React from 'react';
+ 
+ function useObservable(observableFactory, arg2, arg3) {
+@@ -98,7 +98,7 @@ function useObservable(observableFactory, arg2, arg3) {
+ }
+ 
+ function useLiveQuery(querier, deps, defaultResult) {
+-    return useObservable(function () { return liveQuery(querier); }, deps || [], defaultResult);
++    return useObservable(function () { return Dexie.liveQuery(querier); }, deps || [], defaultResult);
+ }
+ 
+ function usePermissions(firstArg, table, obj) {
+@@ -118,7 +118,7 @@ function usePermissions(firstArg, table, obj) {
+         db = firstArg;
+     }
+     else {
+-        if (firstArg instanceof Dexie)
++        if (firstArg instanceof Dexie.Dexie)
+             throw new TypeError("Invalid arguments to usePermission(db, table, obj): Missing table and obj arguments.");
+         if (typeof firstArg.table === 'function' &&
+             typeof firstArg.db === 'object') {
