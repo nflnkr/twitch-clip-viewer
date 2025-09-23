@@ -51,8 +51,6 @@ export const getStreamedClips = createServerFn({
                         for await (const clips of clipsGenerator) {
                             if (params.signal.aborted || event.node.res.closed) break;
 
-                            await new Promise((resolve) => setTimeout(resolve, 2000));
-
                             const chunk = JSON.stringify(clips) + "\n";
                             controller.enqueue(encoder.encode(chunk));
                         }
