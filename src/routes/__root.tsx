@@ -51,7 +51,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <LocaleContext value={{ locale, setLocale }}>
                 <html
                     lang="en"
-                    className="dark"
+                    className="dark scheme-dark"
                 >
                     <head>
                         <HeadContent />

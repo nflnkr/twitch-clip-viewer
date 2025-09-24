@@ -68,7 +68,7 @@ export default function ClipList({
                                 skipViewed &&
                                     viewedClipIds.includes(clip.id) &&
                                     "border-accent/50 opacity-30",
-                                currentClipId === clip.id && "border-purple-800",
+                                currentClipId === clip.id && "border-accent dark:border-accent",
                             )}
                             onClick={() => onClipClick(clip)}
                             style={{
