@@ -22,16 +22,9 @@ import {
     SquarePlay,
     X,
 } from "lucide-react";
-import {
-    animate,
-    AnimatePresence,
-    motion,
-    useMotionValue,
-    useMotionValueEvent,
-    type AnimationPlaybackControlsWithThen,
-} from "motion/react";
+import { AnimatePresence, motion, useMotionValueEvent } from "motion/react";
 import type { KeyboardEvent } from "react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { z } from "zod";
 
@@ -54,7 +47,6 @@ import { useGames } from "~/lib/games/query";
 import { useTranslations } from "~/lib/locale/locales";
 import {
     autonextBuffer,
-    autonextEnabled,
     chronologicalOrder,
     clipAutoplay,
     markAsViewed,
@@ -62,6 +54,12 @@ import {
     sidebarOpen,
     skipViewed,
 } from "~/lib/settings/atoms";
+import {
+    autonextEnabled,
+    autonextTimer,
+    startAutonextTimer,
+    stopAutonextTimer,
+} from "~/lib/settings/autonext";
 import { formatSeconds } from "~/lib/utils";
 import { getVodLink } from "~/lib/vod-link";
 import type { TwitchClipMetadata } from "~/model/twitch";
@@ -103,7 +101,6 @@ const Index = reatomComponent(function Index() {
     const [titleFilterField, setTitleFilterField] = useState("");
     const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
     const [debouncedTitleFilterField] = useDebouncedValue(titleFilterField, { wait: 500 });
-    const animationRef = useRef<AnimationPlaybackControlsWithThen>(null);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
     const channels = search.channels.split(",").filter(Boolean);
@@ -171,16 +168,14 @@ const Index = reatomComponent(function Index() {
 
     const vodLink = currentClip ? getVodLink(currentClip.vod_offset, currentClip.video_id) : null;
 
-    const clipProgressOverlayWidth = useMotionValue("0%");
-
     const clipProgressOverlay = currentClip && autonextEnabled() && (
         <motion.div
-            style={{ width: clipProgressOverlayWidth }}
+            style={{ width: autonextTimer }}
             className="h-full bg-zinc-400 opacity-10"
         />
     );
 
-    useMotionValueEvent(clipProgressOverlayWidth, "animationComplete", () => {
+    useMotionValueEvent(autonextTimer, "animationComplete", () => {
         if (nextClip) {
             selectClip(nextClip);
             startAutonextTimer(nextClip.duration + autonextBuffer());
@@ -188,24 +183,6 @@ const Index = reatomComponent(function Index() {
             stopAutonextTimer();
         }
     });
-
-    function startAutonextTimer(duration: number) {
-        autonextEnabled.set(true);
-
-        animationRef.current?.stop();
-        clipProgressOverlayWidth.jump("0%");
-        animationRef.current = animate(clipProgressOverlayWidth, "100%", {
-            ease: "linear",
-            duration,
-        });
-    }
-
-    function stopAutonextTimer() {
-        autonextEnabled.set(false);
-
-        animationRef.current?.stop();
-        clipProgressOverlayWidth.jump("0%");
-    }
 
     async function selectClip(clip: TwitchClipMetadata | null = null) {
         if (currentClip?.id === clip?.id) return;

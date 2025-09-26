@@ -4,7 +4,8 @@ import { motion } from "motion/react";
 import { ReactNode } from "react";
 
 import { Button } from "~/components/ui/button";
-import { autonextEnabled, sidebarOpen } from "~/lib/settings/atoms";
+import { sidebarOpen } from "~/lib/settings/atoms";
+import { autonextEnabled } from "~/lib/settings/autonext";
 
 interface Props {
     hasPrevClip: boolean;
