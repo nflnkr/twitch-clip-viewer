@@ -27,7 +27,7 @@ export function combineQueries<TData>(
     isFetching: boolean;
     error: Error | null;
 } {
-    let isPending = true;
+    let isPending = result.length ? true : false;
     let isFetching = false;
     let error: Error | null = null;
     const items: TData[] = [];

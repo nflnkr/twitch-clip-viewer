@@ -1,4 +1,4 @@
-import { ChevronsUpDownIcon } from "lucide-react";
+import { ChevronsUpDownIcon, X } from "lucide-react";
 import { useState, type Dispatch, type SetStateAction } from "react";
 
 import { useTranslations } from "~/lib/locale/locales";
@@ -18,35 +18,54 @@ const gameImageWidth = Math.round(gameImageHeight * 0.75);
 
 interface Props {
     disabled: boolean;
-    games: { id: string; name: string; box_art_url: string }[];
-    selectedGame: string;
-    setSelectedGame: Dispatch<SetStateAction<string>>;
+    games: { id: string; name: string; box_art_url: string; count: number }[];
+    selectedGameId: string | null;
+    setSelectedGameId: Dispatch<SetStateAction<string | null>>;
+    onClearSelectedGameClick: () => void;
 }
 
-export default function GameSelect({ disabled, games, selectedGame, setSelectedGame }: Props) {
+export default function GameSelect({
+    disabled,
+    games,
+    selectedGameId,
+    setSelectedGameId,
+    onClearSelectedGameClick,
+}: Props) {
     const [open, setOpen] = useState(false);
     const t = useTranslations();
+
+    const selectedGame = games.find((game) => game.id === selectedGameId);
 
     return (
         <Popover
             open={open}
             onOpenChange={setOpen}
         >
-            <PopoverTrigger asChild>
+            <div className="flex items-center">
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        disabled={disabled}
+                        className="grow justify-between truncate rounded-r-none"
+                    >
+                        <span className="truncate">
+                            {selectedGame ? selectedGame.name : t("selectCategory")}
+                        </span>
+                        <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </PopoverTrigger>
                 <Button
                     variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    disabled={disabled}
-                    className="grow justify-between truncate"
+                    size="icon"
+                    onClick={onClearSelectedGameClick}
+                    className="h-full rounded-l-none border-l-0"
                 >
-                    <span className="truncate">
-                        {selectedGame ? selectedGame : t("selectCategory")}
-                    </span>
-                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <X />
                 </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[22rem] p-0">
+            </div>
+            <PopoverContent className="w-[20rem] p-0">
                 <Command>
                     <CommandInput placeholder={t("searchCategory")} />
                     <CommandList>
@@ -61,20 +80,22 @@ export default function GameSelect({ disabled, games, selectedGame, setSelectedG
                                 return (
                                     <CommandItem
                                         key={game.id}
-                                        value={game.name}
+                                        value={game.id}
                                         onSelect={(currentValue) => {
-                                            setSelectedGame((prev) =>
-                                                currentValue === prev ? "" : currentValue,
-                                            );
+                                            setSelectedGameId(currentValue);
                                             setOpen(false);
                                         }}
                                     >
                                         <img
                                             src={imgSrc}
                                             alt={game.name}
-                                            className={`mr-2 aspect-[0.75] w-8 object-cover`}
+                                            className="aspect-[3/4] object-cover"
+                                            style={{
+                                                width: `${gameImageWidth}px`,
+                                            }}
                                         />
-                                        {game.name}
+                                        <p>{game.name}</p>
+                                        <p className="ml-auto">{game.count}</p>
                                     </CommandItem>
                                 );
                             })}

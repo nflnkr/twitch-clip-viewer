@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays, endOfYear, format, subDays, subMonths, subYears } from "date-fns";
-import { CalendarIcon, Clock9 } from "lucide-react";
+import { CalendarIcon, CalendarRange } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 
 import { Button } from "~/components/ui/button";
@@ -100,49 +100,48 @@ export default function DateRangePicker({
     }
 
     return (
-        <div className="flex gap-1">
-            <div className="grid grow gap-2">
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                            id="date"
-                            variant={"outline"}
-                            className={cn(
-                                "w-full justify-start text-left font-normal",
-                                !dateRange && "text-muted-foreground",
-                            )}
-                        >
-                            <CalendarIcon />
-                            {dateRange?.from
-                                ? dateRange.to
-                                    ? `${format(dateRange.from, "dd.MM.y")} - ${format(dateRange.to, "dd.MM.y")}`
-                                    : format(dateRange.from, "dd.MM.y")
-                                : null}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                        className="w-auto p-0"
-                        align="start"
+        <div className="flex">
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                            "grow justify-start rounded-r-none text-left font-normal",
+                            !dateRange && "text-muted-foreground",
+                        )}
                     >
-                        <Calendar
-                            initialFocus
-                            locale={datefnsLocaleByAppLocale[locale]}
-                            mode="range"
-                            selected={dateRange}
-                            onSelect={setDateRange}
-                            numberOfMonths={2}
-                            defaultMonth={dateRange?.to}
-                        />
-                    </PopoverContent>
-                </Popover>
-            </div>
+                        <CalendarIcon />
+                        {dateRange?.from
+                            ? dateRange.to
+                                ? `${format(dateRange.from, "dd.MM.y")} - ${format(dateRange.to, "dd.MM.y")}`
+                                : format(dateRange.from, "dd.MM.y")
+                            : null}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                    className="w-auto p-0"
+                    align="start"
+                >
+                    <Calendar
+                        initialFocus
+                        locale={datefnsLocaleByAppLocale[locale]}
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                        defaultMonth={dateRange?.to}
+                    />
+                </PopoverContent>
+            </Popover>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
                         variant="outline"
                         size="icon"
+                        className="rounded-l-none border-l-0"
                     >
-                        <Clock9 />
+                        <CalendarRange />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56">

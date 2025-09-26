@@ -111,28 +111,30 @@ export function NumberInput({
                 prefix={prefix}
                 customInput={Input}
                 placeholder={placeholder}
-                className="relative h-10 rounded-r-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="relative h-10 [appearance:textfield] rounded-r-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 getInputRef={ref}
                 {...props}
             />
             <div className="flex flex-col">
                 <Button
                     aria-label="Increase value"
-                    className="h-5 rounded-l-none rounded-br-none border-b-[0.5px] border-l-0 border-input px-[10px] focus-visible:relative"
+                    className="border-input h-5 rounded-l-none rounded-br-none border-b-[0.5px] border-l-0 !px-[9px] focus-visible:relative"
                     variant="outline"
+                    size="icon"
                     onClick={handleIncrement}
                     disabled={value === max || props.disabled}
                 >
-                    <ChevronUp size={15} />
+                    <ChevronUp />
                 </Button>
                 <Button
                     aria-label="Decrease value"
-                    className="h-5 rounded-l-none rounded-tr-none border-l-0 border-t-[0.5px] border-input px-[10px] focus-visible:relative"
+                    className="border-input h-5 rounded-l-none rounded-tr-none border-t-[0.5px] border-l-0 !px-[9px] focus-visible:relative"
                     variant="outline"
+                    size="icon"
                     onClick={handleDecrement}
                     disabled={value === min || props.disabled}
                 >
-                    <ChevronDown size={15} />
+                    <ChevronDown />
                 </Button>
             </div>
         </div>

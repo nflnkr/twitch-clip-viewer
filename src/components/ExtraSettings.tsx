@@ -4,26 +4,24 @@ import { Settings } from "lucide-react";
 
 import { NumberInput } from "~/components/NumberInput";
 import { Button } from "~/components/ui/button";
-import { Label } from "~/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { Switch } from "~/components/ui/switch";
-import { db } from "~/lib/db";
-import { useTranslations } from "~/lib/locale/locales";
 import {
-    autonextBuffer,
-    chronologicalOrder,
-    clipAutoplay,
-    markAsViewed,
-} from "~/lib/settings/atoms";
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "~/components/ui/dialog";
+import { Label } from "~/components/ui/label";
+import { db } from "~/lib/db";
+import { useLocaleContext, useTranslations } from "~/lib/locale/locales";
+import { autonextBuffer } from "~/lib/settings/atoms";
+import { cn } from "~/lib/utils";
+import EnFlag from "./EnFlag";
+import RuFlag from "./RuFlag";
 
-interface Props {
-    resetSelectedClip: () => void;
-}
-
-const ExtraSettingsPopover = reatomComponent(function ExtraSettingsPopover({
-    resetSelectedClip,
-}: Props) {
+const ExtraSettingsDialog = reatomComponent(function ExtraSettingsDialog() {
     const t = useTranslations();
+    const { locale, setLocale } = useLocaleContext();
     const viewedClipsLength = useLiveQuery(() => db.viewedClips.toArray())?.length ?? 0;
 
     function clearViewedClips() {
@@ -31,48 +29,40 @@ const ExtraSettingsPopover = reatomComponent(function ExtraSettingsPopover({
     }
 
     return (
-        <Popover>
-            <PopoverTrigger asChild>
+        <Dialog>
+            <DialogTrigger asChild>
                 <Button
-                    variant="outline"
+                    variant="secondary"
                     size="icon"
                 >
                     <Settings />
                 </Button>
-            </PopoverTrigger>
-            <PopoverContent
-                className="w-[20rem] gap-6"
-                side="left"
+            </DialogTrigger>
+            <DialogContent
+                className="gap-6 sm:max-w-[26rem]"
+                aria-describedby={undefined}
             >
+                <DialogHeader>
+                    <DialogTitle>{t("settings")}</DialogTitle>
+                </DialogHeader>
                 <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                        <div className="mr-auto flex items-center gap-2">
-                            <Switch
-                                id="clip-autoplay"
-                                checked={clipAutoplay()}
-                                onCheckedChange={clipAutoplay.set}
-                            />
-                            <Label htmlFor="clip-autoplay">{t("clipAutoplay")}</Label>
-                        </div>
-                        <div className="mr-auto flex items-center gap-2">
-                            <Switch
-                                id="mark-as-viewed"
-                                checked={markAsViewed()}
-                                onCheckedChange={markAsViewed.set}
-                            />
-                            <Label htmlFor="mark-as-viewed">{t("viewed.markAsViewed")}</Label>
-                        </div>
-                        <div className="mr-auto flex items-center gap-2">
-                            <Switch
-                                id="chronological-order"
-                                checked={chronologicalOrder()}
-                                onCheckedChange={(value) => {
-                                    chronologicalOrder.set(value);
-                                    resetSelectedClip();
-                                }}
-                            />
-                            <Label htmlFor="chronological-order">{t("chronologicalOrder")}</Label>
-                        </div>
+                    <div className="flex flex-wrap gap-1">
+                        <Button
+                            variant="secondary"
+                            onClick={() => setLocale("en")}
+                            className={cn("border p-1", locale === "en" && "border-accent")}
+                        >
+                            <EnFlag />
+                            English
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => setLocale("ru")}
+                            className={cn("border p-1", locale === "ru" && "border-accent")}
+                        >
+                            <RuFlag />
+                            Русский
+                        </Button>
                     </div>
                     <div className="flex flex-col gap-1">
                         <Label htmlFor="autonext-buffer">{t("autonextBuffer")}</Label>
@@ -92,14 +82,13 @@ const ExtraSettingsPopover = reatomComponent(function ExtraSettingsPopover({
                         variant="destructive"
                         onClick={clearViewedClips}
                         disabled={!viewedClipsLength}
-                        className="h-full"
                     >
                         {`${t("viewed.clearViewedClips")} (${viewedClipsLength})`}
                     </Button>
                 </div>
-            </PopoverContent>
-        </Popover>
+            </DialogContent>
+        </Dialog>
     );
 });
 
-export default ExtraSettingsPopover;
+export default ExtraSettingsDialog;
