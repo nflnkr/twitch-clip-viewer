@@ -49,8 +49,8 @@ import ClipList from "~/routes/index/-components/ClipList";
 import Filters from "~/routes/index/-components/Filters";
 import SideBarCollapsed from "~/routes/index/-components/SideBarCollapsed";
 import TwitchClipEmbed from "~/routes/index/-components/TwitchClipEmbed";
-import ExtraSettingsDialog from "./index/-components/ExtraSettings";
-import GameSelect from "./index/-components/GameSelect";
+import ExtraSettingsDialog from "./-components/ExtraSettings";
+import GameSelect from "./-components/GameSelect";
 
 const defaultMinViews = 10;
 const getDefaultFrom = () => format(subDays(new Date(), 7), "yyyy-MM-dd");
