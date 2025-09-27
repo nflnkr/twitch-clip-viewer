@@ -70,7 +70,7 @@ export function useClips({
     return {
         clips: uniqueSortedClips,
         isLoadingFirstPage,
-        isLoadingAllClips: isLoadingStreamedClips,
+        isLoadingClips: isLoadingFirstPage || isLoadingStreamedClips,
         error: errorFirstPage ?? errorStreamedClips,
     };
 }

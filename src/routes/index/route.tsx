@@ -17,7 +17,6 @@ import {
 import { AnimatePresence, motion, useMotionValueEvent } from "motion/react";
 import { z } from "zod";
 
-import Spinner from "~/components/Spinner";
 import ToggleWithTooltip from "~/components/ToggleWithTooltip";
 import { Button } from "~/components/ui/button";
 import { useClips } from "~/lib/clips/query";
@@ -89,7 +88,7 @@ const Index = reatomComponent(function Index() {
     const channels = search.channels.split(",").filter(Boolean);
     const viewedClipsIds = viewedClips?.map((c) => c.clipId) ?? [];
 
-    const { clips, isLoadingFirstPage, isLoadingAllClips, error } = useClips({
+    const { clips, isLoadingClips, error } = useClips({
         channels,
         from: search.from,
         to: search.to,
@@ -329,17 +328,15 @@ const Index = reatomComponent(function Index() {
                             <div className="mt-2 flex min-h-0 flex-col gap-2">
                                 {error ? (
                                     <p className="text-red-500">Error: {error.message}</p>
-                                ) : isLoadingFirstPage ? (
-                                    <Spinner />
                                 ) : (
-                                    currentClip && (
-                                        <div className="flex items-center gap-2">
-                                            {isLoadingAllClips && (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                            )}
+                                    <div className="flex items-center gap-2">
+                                        {isLoadingClips && (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        )}
+                                        {currentClip && (
                                             <p className="text-sm">{`${currentClipIndex + 1}/${filteredClips?.length ?? 0} (${formatSeconds(totalClipsDuration)})`}</p>
-                                        </div>
-                                    )
+                                        )}
+                                    </div>
                                 )}
                                 <ClipList
                                     clips={filteredClips}
