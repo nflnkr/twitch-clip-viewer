@@ -1,11 +1,10 @@
 import { reatomComponent } from "@reatom/react";
 import { ArrowLeft, ArrowRight, CirclePause, CirclePlay, PanelLeftClose } from "lucide-react";
 import { motion } from "motion/react";
-import { ReactNode } from "react";
 
 import { Button } from "~/components/ui/button";
 import { sidebarOpen } from "~/lib/settings/atoms";
-import { autonextEnabled } from "~/lib/settings/autonext";
+import { autonextEnabled, autonextTimer } from "~/lib/settings/autonext";
 
 interface Props {
     hasPrevClip: boolean;
@@ -13,16 +12,14 @@ interface Props {
     selectNextClip: () => void;
     selectPrevClip: () => void;
     switchAutonext: () => void;
-    clipProgressOverlay: ReactNode;
 }
 
-const SideBarCollapsed = reatomComponent(function SideBarCollapsed({
+function SideBarCollapsed({
     hasPrevClip,
     hasNextClip,
     selectPrevClip,
     selectNextClip,
     switchAutonext,
-    clipProgressOverlay,
 }: Props) {
     return (
         <motion.div
@@ -65,9 +62,14 @@ const SideBarCollapsed = reatomComponent(function SideBarCollapsed({
             >
                 <ArrowRight />
             </Button>
-            <div className="pointer-events-none absolute inset-0">{clipProgressOverlay}</div>
+            <div className="pointer-events-none absolute inset-0">
+                <motion.div
+                    style={{ width: autonextTimer }}
+                    className="h-full bg-zinc-400 opacity-10"
+                />
+            </div>
         </motion.div>
     );
-});
+}
 
-export default SideBarCollapsed;
+export default reatomComponent(SideBarCollapsed);

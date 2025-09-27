@@ -2,7 +2,9 @@ import { reatomComponent } from "@reatom/react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Settings } from "lucide-react";
 
+import EnFlag from "~/components/EnFlag";
 import { NumberInput } from "~/components/NumberInput";
+import RuFlag from "~/components/RuFlag";
 import { Button } from "~/components/ui/button";
 import {
     Dialog,
@@ -16,8 +18,6 @@ import { db } from "~/lib/db";
 import { useLocaleContext, useTranslations } from "~/lib/locale/locales";
 import { autonextBuffer } from "~/lib/settings/atoms";
 import { cn } from "~/lib/utils";
-import EnFlag from "./EnFlag";
-import RuFlag from "./RuFlag";
 
 const ExtraSettingsDialog = reatomComponent(function ExtraSettingsDialog() {
     const t = useTranslations();

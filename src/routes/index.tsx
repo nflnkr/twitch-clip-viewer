@@ -1,18 +1,11 @@
 import { reatomComponent } from "@reatom/react";
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { format, parse, subDays } from "date-fns";
+import { format, subDays } from "date-fns";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
-    ArrowLeft,
-    ArrowRight,
-    Calendar,
     CalendarArrowDown,
-    CirclePause,
-    CirclePlay,
-    ExternalLink,
     EyeOff,
     ListChevronsDownUp,
     ListChevronsUpDown,
@@ -20,28 +13,14 @@ import {
     Loader2,
     PanelRightClose,
     SquarePlay,
-    X,
 } from "lucide-react";
 import { AnimatePresence, motion, useMotionValueEvent } from "motion/react";
-import type { KeyboardEvent } from "react";
-import { useState } from "react";
-import type { DateRange } from "react-day-picker";
 import { z } from "zod";
 
-import ClipList from "~/components/ClipList";
-import DateRangePicker from "~/components/DateRangePicker";
-import ExtraSettingsDialog from "~/components/ExtraSettings";
-import GameSelect from "~/components/GameSelect";
-import { NumberInput } from "~/components/NumberInput";
-import SideBarCollapsed from "~/components/SideBarCollapsed";
 import Spinner from "~/components/Spinner";
-import TwitchClipEmbed from "~/components/TwitchClipEmbed";
+import ToggleWithTooltip from "~/components/ToggleWithTooltip";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Toggle } from "~/components/ui/toggle";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
-import { clipsOptions, useClips } from "~/lib/clips/query";
+import { useClips } from "~/lib/clips/query";
 import { db } from "~/lib/db";
 import { useGames } from "~/lib/games/query";
 import { useTranslations } from "~/lib/locale/locales";
@@ -49,10 +28,13 @@ import {
     autonextBuffer,
     chronologicalOrder,
     clipAutoplay,
+    filtersOpen,
     markAsViewed,
     selectedClipId,
+    selectedGameId,
     sidebarOpen,
     skipViewed,
+    titleFilterField,
 } from "~/lib/settings/atoms";
 import {
     autonextEnabled,
@@ -61,8 +43,14 @@ import {
     stopAutonextTimer,
 } from "~/lib/settings/autonext";
 import { formatSeconds } from "~/lib/utils";
-import { getVodLink } from "~/lib/vod-link";
 import type { TwitchClipMetadata } from "~/model/twitch";
+import BottomBar from "~/routes/index/-components/BottomBar";
+import ClipList from "~/routes/index/-components/ClipList";
+import Filters from "~/routes/index/-components/Filters";
+import SideBarCollapsed from "~/routes/index/-components/SideBarCollapsed";
+import TwitchClipEmbed from "~/routes/index/-components/TwitchClipEmbed";
+import ExtraSettingsDialog from "./index/-components/ExtraSettings";
+import GameSelect from "./index/-components/GameSelect";
 
 const defaultMinViews = 10;
 const getDefaultFrom = () => format(subDays(new Date(), 7), "yyyy-MM-dd");
@@ -93,14 +81,9 @@ export const Route = createFileRoute("/")({
 
 const Index = reatomComponent(function Index() {
     const search = Route.useSearch();
-    const navigate = Route.useNavigate();
     const t = useTranslations();
-    const queryClient = useQueryClient();
-    const [filtersOpen, setFiltersOpen] = useState(true);
     const [debouncedMinViews] = useDebouncedValue(search.minViews, { wait: 500 });
-    const [titleFilterField, setTitleFilterField] = useState("");
-    const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
-    const [debouncedTitleFilterField] = useDebouncedValue(titleFilterField, { wait: 500 });
+    const [debouncedTitleFilterField] = useDebouncedValue(titleFilterField(), { wait: 500 });
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
     const channels = search.channels.split(",").filter(Boolean);
@@ -116,7 +99,7 @@ const Index = reatomComponent(function Index() {
 
     const uniqueGameIds = Array.from(new Set(clips?.map((c) => c.game_id)));
 
-    const { data: gamesInfo = [], isPending: isPendingGames } = useGames(uniqueGameIds);
+    const { data: gamesInfo, isPending: isPendingGames } = useGames(uniqueGameIds);
 
     const gameCountById: Record<string, number> = {};
     clips?.forEach((clip) => {
@@ -130,11 +113,6 @@ const Index = reatomComponent(function Index() {
         }))
         .sort((a, b) => b.count - a.count);
 
-    const dateRange = {
-        from: parse(search.from, "yyyy-MM-dd", new Date()),
-        to: parse(search.to, "yyyy-MM-dd", new Date()),
-    };
-
     const filteredClips = clips?.filter((clip) => {
         let showClip = true;
 
@@ -144,7 +122,7 @@ const Index = reatomComponent(function Index() {
         }
 
         const selectedGameInfo =
-            selectedGameId && gamesInfo.find((game) => game.id === selectedGameId);
+            selectedGameId() && gamesInfo.find((game) => game.id === selectedGameId());
         if (selectedGameInfo && clip.game_id !== selectedGameInfo.id) {
             showClip = false;
         }
@@ -165,15 +143,6 @@ const Index = reatomComponent(function Index() {
         : filteredClips?.[currentClipIndex + 1];
 
     const totalClipsDuration = filteredClips?.reduce((acc, c) => acc + c.duration, 0) ?? 0;
-
-    const vodLink = currentClip ? getVodLink(currentClip.vod_offset, currentClip.video_id) : null;
-
-    const clipProgressOverlay = currentClip && autonextEnabled() && (
-        <motion.div
-            style={{ width: autonextTimer }}
-            className="h-full bg-zinc-400 opacity-10"
-        />
-    );
 
     useMotionValueEvent(autonextTimer, "animationComplete", () => {
         if (nextClip) {
@@ -225,86 +194,6 @@ const Index = reatomComponent(function Index() {
         }
     }
 
-    function setDateRange(dateRange: DateRange | undefined) {
-        selectClip(null);
-        stopAutonextTimer();
-        setSelectedGameId(null);
-        navigate({
-            search: {
-                ...search,
-                from: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
-                to: dateRange?.to
-                    ? format(dateRange.to, "yyyy-MM-dd")
-                    : dateRange?.from
-                      ? format(dateRange.from, "yyyy-MM-dd")
-                      : undefined,
-            },
-        });
-    }
-
-    function removeChannel(channel: string) {
-        selectClip(null);
-        stopAutonextTimer();
-        setSelectedGameId(null);
-        navigate({
-            search: {
-                ...search,
-                channels: channels.filter((c) => c !== channel).join(","),
-            },
-        });
-    }
-
-    function openChannelClips(channel: string) {
-        const currentUrl = new URL(window.location.href);
-
-        currentUrl.searchParams.set("channels", channel);
-
-        window.open(currentUrl.href, "_blank");
-    }
-
-    function handleNewChannelEnterPress(event: KeyboardEvent<HTMLInputElement>) {
-        if (event.key !== "Enter") return;
-
-        const filteredNewChannels = event.currentTarget.value
-            .split(" ")
-            .map((s) => s.toLowerCase())
-            .filter((s) => /^[a-zA-Z0-9][\w]{2,24}$/.test(s));
-        const newChannels = [...channels, ...filteredNewChannels];
-        const uniqueChannels = [...new Set(newChannels)];
-
-        event.currentTarget.value = "";
-
-        selectClip(null);
-        stopAutonextTimer();
-        setSelectedGameId(null);
-        navigate({
-            search: {
-                ...search,
-                channels: uniqueChannels.join(","),
-            },
-        });
-    }
-
-    function prefetchChannelsBeforeRemove(channel: string) {
-        const newChannels = channels.filter((c) => c !== channel);
-
-        queryClient.prefetchQuery(
-            clipsOptions({
-                channels: newChannels.toSorted().join(","),
-                from: search.from,
-                to: search.to,
-            }),
-        );
-    }
-
-    function handleMinViewsChange(value: number | undefined) {
-        selectClip(null);
-        stopAutonextTimer();
-        setSelectedGameId(null);
-        chronologicalOrder.set(false);
-        navigate({ search: { ...search, minViews: value } });
-    }
-
     return (
         <div className="flex h-full divide-x">
             <div className="flex h-full min-w-0 grow flex-col">
@@ -318,87 +207,14 @@ const Index = reatomComponent(function Index() {
                 </div>
                 <AnimatePresence>
                     {sidebarOpen() && (
-                        <motion.div
-                            initial={{ height: 0, padding: 0 }}
-                            animate={{ height: "5rem", padding: "0.25rem" }}
-                            exit={{ height: 0, padding: 0 }}
-                            className="flex flex-col gap-1 overflow-y-clip"
-                        >
-                            {currentClip && (
-                                <div className="flex grow items-center justify-between gap-2">
-                                    <p
-                                        title={currentClip.title}
-                                        className="truncate px-2 text-xl font-semibold tracking-tighter"
-                                    >
-                                        {currentClip.title}
-                                    </p>
-                                    <div className="flex gap-1">
-                                        <Button
-                                            variant="link"
-                                            size="sm"
-                                            className="tracking-tight"
-                                            asChild
-                                        >
-                                            <a
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                color="secondary"
-                                                href={`https://twitch.tv/${currentClip.broadcaster_name.toLowerCase()}`}
-                                            >
-                                                {currentClip.broadcaster_name}
-                                                <ExternalLink />
-                                            </a>
-                                        </Button>
-                                        <Button
-                                            variant="link"
-                                            size="sm"
-                                            asChild
-                                            className="tracking-tight"
-                                        >
-                                            <a
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                color="secondary"
-                                                href={vodLink ?? undefined}
-                                            >
-                                                {new Date(currentClip.created_at).toLocaleString()}
-                                                {vodLink ? <ExternalLink /> : <Calendar />}
-                                            </a>
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                            <div className="relative flex grow gap-1">
-                                <Button
-                                    variant="outline"
-                                    disabled={!previousClip}
-                                    onClick={handleSelectPrevClip}
-                                    className="h-full grow"
-                                >
-                                    <ArrowLeft />
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    disabled={!nextClip}
-                                    onClick={switchAutonext}
-                                    className="h-full"
-                                >
-                                    {t("player.autoplay")}
-                                    {autonextEnabled() ? <CirclePause /> : <CirclePlay />}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    disabled={!nextClip}
-                                    onClick={handleSelectNextClip}
-                                    className="h-full grow"
-                                >
-                                    <ArrowRight />
-                                </Button>
-                                <div className="pointer-events-none absolute inset-0">
-                                    {clipProgressOverlay}
-                                </div>
-                            </div>
-                        </motion.div>
+                        <BottomBar
+                            currentClip={currentClip}
+                            hasNextClip={Boolean(nextClip)}
+                            hasPrevClip={Boolean(previousClip)}
+                            selectNextClip={handleSelectNextClip}
+                            selectPrevClip={handleSelectPrevClip}
+                            switchAutonext={switchAutonext}
+                        />
                     )}
                 </AnimatePresence>
             </div>
@@ -424,10 +240,10 @@ const Index = reatomComponent(function Index() {
                                 <Button
                                     variant="secondary"
                                     size="icon"
-                                    onClick={() => setFiltersOpen((o) => !o)}
+                                    onClick={() => filtersOpen.set((o) => !o)}
                                 >
                                     <AnimatePresence mode="popLayout">
-                                        {filtersOpen ? (
+                                        {filtersOpen() ? (
                                             <motion.span
                                                 key="close"
                                                 initial={{ opacity: 0, x: -10 }}
@@ -449,71 +265,39 @@ const Index = reatomComponent(function Index() {
                                     </AnimatePresence>
                                 </Button>
                                 <div className="flex gap-1">
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span>
-                                                <Toggle
-                                                    pressed={skipViewed()}
-                                                    onPressedChange={skipViewed.set}
-                                                >
-                                                    <EyeOff />
-                                                </Toggle>
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p> {t("viewed.skipViewed")}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span>
-                                                <Toggle
-                                                    pressed={markAsViewed()}
-                                                    onPressedChange={markAsViewed.set}
-                                                >
-                                                    <ListTodo />
-                                                </Toggle>
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>{t("viewed.markAsViewed")}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span>
-                                                <Toggle
-                                                    pressed={clipAutoplay()}
-                                                    onPressedChange={clipAutoplay.set}
-                                                >
-                                                    <SquarePlay />
-                                                </Toggle>
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>{t("clipAutoplay")}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span>
-                                                <Toggle
-                                                    pressed={chronologicalOrder()}
-                                                    onPressedChange={(value) => {
-                                                        chronologicalOrder.set(value);
-                                                        selectClip(null);
-                                                        stopAutonextTimer();
-                                                        setSelectedGameId(null);
-                                                    }}
-                                                >
-                                                    <CalendarArrowDown />
-                                                </Toggle>
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>{t("chronologicalOrder")}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
+                                    <ToggleWithTooltip
+                                        pressed={skipViewed()}
+                                        onPressedChange={skipViewed.set}
+                                        title={t("viewed.skipViewed")}
+                                    >
+                                        <EyeOff />
+                                    </ToggleWithTooltip>
+                                    <ToggleWithTooltip
+                                        pressed={markAsViewed()}
+                                        onPressedChange={markAsViewed.set}
+                                        title={t("viewed.markAsViewed")}
+                                    >
+                                        <ListTodo />
+                                    </ToggleWithTooltip>
+                                    <ToggleWithTooltip
+                                        pressed={clipAutoplay()}
+                                        onPressedChange={clipAutoplay.set}
+                                        title={t("clipAutoplay")}
+                                    >
+                                        <SquarePlay />
+                                    </ToggleWithTooltip>
+                                    <ToggleWithTooltip
+                                        pressed={chronologicalOrder()}
+                                        onPressedChange={(value) => {
+                                            chronologicalOrder.set(value);
+                                            selectClip(null);
+                                            stopAutonextTimer();
+                                            selectedGameId.set(null);
+                                        }}
+                                        title={t("chronologicalOrder")}
+                                    >
+                                        <CalendarArrowDown />
+                                    </ToggleWithTooltip>
                                 </div>
                                 <div className="flex gap-2">
                                     <ExtraSettingsDialog />
@@ -527,100 +311,19 @@ const Index = reatomComponent(function Index() {
                                 </div>
                             </div>
                             <AnimatePresence>
-                                {filtersOpen && (
-                                    <motion.div
-                                        initial={{ opacity: 0, marginTop: 0, height: 0 }}
-                                        animate={{
-                                            opacity: 1,
-                                            marginTop: "0.5rem",
-                                            height: "auto",
+                                {filtersOpen() && (
+                                    <Filters
+                                        currentClipCreatedAt={currentClip?.created_at}
+                                        resetSelected={() => {
+                                            selectClip(null);
+                                            selectedGameId.set(null);
                                         }}
-                                        exit={{ opacity: 0, marginTop: 0, height: 0 }}
-                                        className="flex flex-col gap-2"
                                     >
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    placeholder={t("addChannel")}
-                                                    enterKeyHint="done"
-                                                    onKeyUp={handleNewChannelEnterPress}
-                                                />
-                                            </div>
-                                            <div className="flex flex-wrap gap-1">
-                                                {channels.map((channel, index) => (
-                                                    <Button
-                                                        key={index}
-                                                        size="xs"
-                                                        variant="outline"
-                                                        onMouseEnter={() =>
-                                                            prefetchChannelsBeforeRemove(channel)
-                                                        }
-                                                        onClick={(event) => {
-                                                            if (event.shiftKey)
-                                                                openChannelClips(channel);
-                                                            else removeChannel(channel);
-                                                        }}
-                                                    >
-                                                        {channel}
-                                                        <X />
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex flex-col gap-1">
-                                                <Label htmlFor="min-views"> {t("minViews")}</Label>
-                                                <NumberInput
-                                                    id="min-views"
-                                                    name="minViews"
-                                                    value={search.minViews}
-                                                    onValueChange={handleMinViewsChange}
-                                                    stepper={10}
-                                                    min={0}
-                                                />
-                                            </div>
-                                            <DateRangePicker
-                                                channels={channels}
-                                                currentClipDate={currentClip?.created_at}
-                                                dateRange={dateRange}
-                                                setDateRange={setDateRange}
-                                            />
-                                        </div>
-                                        <div className="flex">
-                                            <Input
-                                                placeholder={t("filterByTitle")}
-                                                id="title-filter"
-                                                value={titleFilterField}
-                                                onChange={(e) =>
-                                                    setTitleFilterField(e.target.value)
-                                                }
-                                                className="rounded-r-none"
-                                            />
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setTitleFilterField("");
-                                                    stopAutonextTimer();
-                                                }}
-                                                className="h-full rounded-l-none border-l-0"
-                                            >
-                                                <X />
-                                            </Button>
-                                        </div>
                                         <GameSelect
-                                            disabled={
-                                                isPendingGames || gamesInfoWithCount.length === 0
-                                            }
+                                            disabled={isPendingGames || gamesInfo.length === 0}
                                             games={gamesInfoWithCount}
-                                            selectedGameId={selectedGameId}
-                                            setSelectedGameId={setSelectedGameId}
-                                            onClearSelectedGameClick={() => {
-                                                setSelectedGameId("");
-                                                stopAutonextTimer();
-                                            }}
                                         />
-                                    </motion.div>
+                                    </Filters>
                                 )}
                             </AnimatePresence>
                             <div className="mt-2 flex min-h-0 flex-col gap-2">
@@ -656,7 +359,6 @@ const Index = reatomComponent(function Index() {
                             hasNextClip={Boolean(nextClip)}
                             selectNextClip={handleSelectNextClip}
                             selectPrevClip={handleSelectPrevClip}
-                            clipProgressOverlay={clipProgressOverlay}
                             switchAutonext={switchAutonext}
                         />
                     )}

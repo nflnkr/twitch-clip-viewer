@@ -12,11 +12,10 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { PopoverContent } from "~/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { clipsOptions } from "~/lib/clips/query";
 import { datefnsLocaleByAppLocale, useLocaleContext, useTranslations } from "~/lib/locale/locales";
 import { cn, getYearsArray } from "~/lib/utils";
-import { Popover, PopoverTrigger } from "./ui/popover";
 
 interface Props {
     channels: string[];
@@ -124,7 +123,7 @@ export default function DateRangePicker({
                     align="start"
                 >
                     <Calendar
-                        initialFocus
+                        autoFocus
                         locale={datefnsLocaleByAppLocale[locale]}
                         mode="range"
                         selected={dateRange}

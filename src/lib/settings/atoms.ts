@@ -6,4 +6,7 @@ export const clipAutoplay = atom(true);
 export const autonextBuffer = atom(4);
 export const skipViewed = atom(false);
 export const sidebarOpen = atom(true);
+export const filtersOpen = atom(true);
 export const selectedClipId = atom<string | null>(null);
+export const titleFilterField = atom("");
+export const selectedGameId = atom<string | null>(null);

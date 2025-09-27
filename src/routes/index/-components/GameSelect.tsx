@@ -1,8 +1,8 @@
+import { reatomComponent } from "@reatom/react";
 import { ChevronsUpDownIcon, X } from "lucide-react";
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useState } from "react";
 
-import { useTranslations } from "~/lib/locale/locales";
-import { Button } from "./ui/button";
+import { Button } from "~/components/ui/button";
 import {
     Command,
     CommandEmpty,
@@ -10,8 +10,11 @@ import {
     CommandInput,
     CommandItem,
     CommandList,
-} from "./ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+} from "~/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { useTranslations } from "~/lib/locale/locales";
+import { selectedGameId } from "~/lib/settings/atoms";
+import { stopAutonextTimer } from "~/lib/settings/autonext";
 
 const gameImageHeight = 44;
 const gameImageWidth = Math.round(gameImageHeight * 0.75);
@@ -19,22 +22,13 @@ const gameImageWidth = Math.round(gameImageHeight * 0.75);
 interface Props {
     disabled: boolean;
     games: { id: string; name: string; box_art_url: string; count: number }[];
-    selectedGameId: string | null;
-    setSelectedGameId: Dispatch<SetStateAction<string | null>>;
-    onClearSelectedGameClick: () => void;
 }
 
-export default function GameSelect({
-    disabled,
-    games,
-    selectedGameId,
-    setSelectedGameId,
-    onClearSelectedGameClick,
-}: Props) {
+function GameSelect({ disabled, games }: Props) {
     const [open, setOpen] = useState(false);
     const t = useTranslations();
 
-    const selectedGame = games.find((game) => game.id === selectedGameId);
+    const selectedGame = games.find((game) => game.id === selectedGameId());
 
     return (
         <Popover
@@ -59,7 +53,10 @@ export default function GameSelect({
                 <Button
                     variant="outline"
                     size="icon"
-                    onClick={onClearSelectedGameClick}
+                    onClick={() => {
+                        selectedGameId.set(null);
+                        stopAutonextTimer();
+                    }}
                     className="h-full rounded-l-none border-l-0"
                 >
                     <X />
@@ -82,7 +79,7 @@ export default function GameSelect({
                                         key={game.id}
                                         value={game.id}
                                         onSelect={(currentValue) => {
-                                            setSelectedGameId(currentValue);
+                                            selectedGameId.set(currentValue);
                                             setOpen(false);
                                         }}
                                     >
@@ -106,3 +103,5 @@ export default function GameSelect({
         </Popover>
     );
 }
+
+export default reatomComponent(GameSelect);

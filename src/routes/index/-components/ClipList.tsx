@@ -3,11 +3,11 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Check } from "lucide-react";
 import { useEffect, useRef } from "react";
 
+import { Button } from "~/components/ui/button";
+import { ScrollArea } from "~/components/ui/scroll-area";
 import { db } from "~/lib/db";
 import { cn } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
-import { Button } from "./ui/button";
-import { ScrollArea } from "./ui/scroll-area";
 
 interface Props {
     clips?: TwitchClipMetadata[] | null;
