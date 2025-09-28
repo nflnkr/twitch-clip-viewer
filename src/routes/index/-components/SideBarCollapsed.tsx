@@ -1,5 +1,5 @@
 import { reatomComponent } from "@reatom/react";
-import { ArrowLeft, ArrowRight, CirclePause, CirclePlay, PanelLeftClose } from "lucide-react";
+import { ArrowLeft, ArrowRight, PanelLeftClose, Pause, Play } from "lucide-react";
 import { motion } from "motion/react";
 
 import { Button } from "~/components/ui/button";
@@ -51,7 +51,7 @@ function SideBarCollapsed({
                 className="rounded-none"
                 onClick={switchAutonext}
             >
-                {autonextEnabled() ? <CirclePause /> : <CirclePlay />}
+                {autonextEnabled() ? <Pause /> : <Play />}
             </Button>
             <Button
                 variant="ghost"

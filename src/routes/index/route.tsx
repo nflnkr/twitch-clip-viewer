@@ -197,12 +197,17 @@ const Index = reatomComponent(function Index() {
         <div className="flex h-full divide-x">
             <div className="flex h-full min-w-0 grow flex-col">
                 <div className="flex grow items-center justify-center">
+                    {channels.length === 0 ? (
+                        <p className="text-3xl">No Channels</p>
+                    ) : !currentClip ? (
+                        <p className="text-3xl">No clips</p>
+                    ) : (
                     <TwitchClipEmbed
                         key={currentClip?.id}
-                        clip={currentClip}
-                        noChannels={channels.length === 0}
                         autoplay={clipAutoplay()}
+                            embedUrl={currentClip.embed_url}
                     />
+                    )}
                 </div>
                 <AnimatePresence>
                     {sidebarOpen() && (

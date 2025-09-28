@@ -143,7 +143,10 @@ export default function DateRangePicker({
                         <CalendarRange />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
+                <DropdownMenuContent
+                    align="end"
+                    className="w-56"
+                >
                     <DropdownMenuGroup>
                         <DropdownMenuItem
                             onClick={() =>

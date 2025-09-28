@@ -1,12 +1,5 @@
 import { reatomComponent } from "@reatom/react";
-import {
-    ArrowLeft,
-    ArrowRight,
-    Calendar,
-    CirclePause,
-    CirclePlay,
-    ExternalLink,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, ExternalLink, Pause, Play } from "lucide-react";
 import { motion } from "motion/react";
 
 import { Button } from "~/components/ui/button";
@@ -100,8 +93,7 @@ function BottomBar({
                     onClick={switchAutonext}
                     className="h-full"
                 >
-                    {t("player.autoplay")}
-                    {autonextEnabled() ? <CirclePause /> : <CirclePlay />}
+                    {autonextEnabled() ? <Pause /> : <Play />}
                 </Button>
                 <Button
                     variant="outline"
