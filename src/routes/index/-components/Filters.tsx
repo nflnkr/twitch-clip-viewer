@@ -1,5 +1,4 @@
 import { reatomComponent } from "@reatom/react";
-import { useQueryClient } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { format, parse } from "date-fns";
 import { X } from "lucide-react";
@@ -11,7 +10,6 @@ import { NumberInput } from "~/components/NumberInput";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { clipsOptions } from "~/lib/clips/query";
 import { useTranslations } from "~/lib/locale/locales";
 import { chronologicalOrder, titleFilterField } from "~/lib/settings/atoms";
 import { stopAutonextTimer } from "~/lib/settings/autonext";
@@ -26,10 +24,9 @@ interface Props {
 }
 
 function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
-    const t = useTranslations();
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
-    const queryClient = useQueryClient();
+    const t = useTranslations();
 
     const channels = search.channels.split(",").filter(Boolean);
 
@@ -65,18 +62,6 @@ function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
         resetSelected();
         chronologicalOrder.set(false);
         navigate({ search: { ...search, minViews: value } });
-    }
-
-    function prefetchChannelsBeforeRemove(channel: string) {
-        const newChannels = channels.filter((c) => c !== channel);
-
-        queryClient.prefetchQuery(
-            clipsOptions({
-                channels: newChannels.toSorted().join(","),
-                from: search.from,
-                to: search.to,
-            }),
-        );
     }
 
     function openChannelClips(channel: string) {
@@ -139,7 +124,6 @@ function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
                             key={index}
                             size="xs"
                             variant="outline"
-                            onMouseEnter={() => prefetchChannelsBeforeRemove(channel)}
                             onClick={(event) => {
                                 if (event.shiftKey) openChannelClips(channel);
                                 else removeChannel(channel);
@@ -164,7 +148,6 @@ function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
                     />
                 </div>
                 <DateRangePicker
-                    channels={channels}
                     currentClipDate={currentClipCreatedAt}
                     dateRange={dateRange}
                     setDateRange={setDateRange}

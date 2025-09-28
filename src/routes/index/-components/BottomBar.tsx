@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, Calendar, ExternalLink, Pause, Play } from "luci
 import { motion } from "motion/react";
 
 import { Button } from "~/components/ui/button";
-import { useTranslations } from "~/lib/locale/locales";
+import { clipAutoplay, filtersOpen } from "~/lib/settings/atoms";
 import { autonextEnabled, autonextTimer } from "~/lib/settings/autonext";
 import { getVodLink } from "~/lib/vod-link";
 import type { TwitchClipMetadata } from "~/model/twitch";
@@ -23,8 +23,6 @@ function BottomBar({
     selectPrevClip: () => void;
     switchAutonext: () => void;
 }) {
-    const t = useTranslations();
-
     const vodLink = currentClip ? getVodLink(currentClip.vod_offset, currentClip.video_id) : null;
 
     return (
@@ -90,7 +88,14 @@ function BottomBar({
                 <Button
                     variant="outline"
                     disabled={!hasNextClip}
-                    onClick={switchAutonext}
+                    onClick={() => {
+                        switchAutonext();
+
+                        if (autonextEnabled()) {
+                            filtersOpen.set(false);
+                            clipAutoplay.set(true);
+                        }
+                    }}
                     className="h-full"
                 >
                     {autonextEnabled() ? <Pause /> : <Play />}

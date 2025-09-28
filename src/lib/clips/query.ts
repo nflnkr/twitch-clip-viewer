@@ -1,14 +1,25 @@
-import { queryOptions, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import {
+    queryOptions,
+    experimental_streamedQuery as streamedQuery,
+    useQuery,
+} from "@tanstack/react-query";
+import { useMemo } from "react";
 
 import { twitchClipMetadataArraySchema, type TwitchClipMetadata } from "~/model/twitch";
-import { getClips } from "./api/get-clips";
 import { getStreamedClips } from "./api/get-streamed-clips";
 
-export function clipsOptions(params: Parameters<typeof getClips>[0]["data"]) {
+export function clipsOptions(params: {
+    channels: string[];
+    from: string;
+    to: string;
+    minViews: number;
+}) {
     return queryOptions({
         queryKey: ["clips", params],
-        queryFn: () => getClips({ data: params }),
+        queryFn: streamedQuery({
+            streamFn: ({ signal }) => generateClips({ signal, params }),
+        }),
+        enabled: params.channels.length > 0,
     });
 }
 
@@ -26,29 +37,15 @@ export function useClips({
     chronologicalOrder: boolean;
 }) {
     const {
-        data: clipsFirstPage,
-        isLoading: isLoadingFirstPage,
-        error: errorFirstPage,
-    } = useQuery(
-        clipsOptions({
-            channels: channels.toSorted().join(",") || "",
-            from,
-            to,
-        }),
-    );
-    const {
-        clips: streamedClips,
-        isLoading: isLoadingStreamedClips,
-        error: errorStreamedClips,
-    } = useStreamedClips({ channels, from, to, minViews });
+        data: clips,
+        isFetching,
+        error,
+    } = useQuery(clipsOptions({ channels: channels.toSorted(), from, to, minViews }));
 
     const uniqueSortedClips = useMemo(() => {
         const clipById: Record<string, TwitchClipMetadata> = {};
 
-        clipsFirstPage?.forEach((clip) => {
-            clipById[clip.id] = clip;
-        });
-        streamedClips?.forEach((clip) => {
+        clips?.flat().forEach((clip) => {
             clipById[clip.id] = clip;
         });
 
@@ -65,99 +62,69 @@ export function useClips({
         if (clipsArray.length === 0) return null;
 
         return clipsArray;
-    }, [chronologicalOrder, clipsFirstPage, minViews, streamedClips]);
+    }, [chronologicalOrder, clips, minViews]);
 
     return {
         clips: uniqueSortedClips,
-        isLoadingFirstPage,
-        isLoadingClips: isLoadingFirstPage || isLoadingStreamedClips,
-        error: errorFirstPage ?? errorStreamedClips,
+        isFetching,
+        error,
     };
 }
 
-function useStreamedClips({
-    channels,
-    from,
-    to,
-    minViews,
+async function* generateClips({
+    signal,
+    params: { channels, from, to, minViews },
 }: {
-    channels: string[];
-    from: string;
-    to: string;
-    minViews: number;
+    signal: AbortSignal;
+    params: { channels: string[]; from: string; to: string; minViews: number };
 }) {
-    const [clips, setClips] = useState<TwitchClipMetadata[] | undefined>();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
-
-    const channelsString = channels.toSorted().join(",");
-
-    useEffect(() => {
-        const controller = new AbortController();
-
-        async function fetchClips() {
-            setIsLoading(true);
-            setClips(undefined);
-            setError(null);
-
-            try {
-                const response = await getStreamedClips({
-                    signal: controller.signal,
-                    data: { channels: channelsString, from, to, minViews },
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const reader = response.body?.getReader();
-                if (!reader) {
-                    throw new Error("Response body is empty or not readable.");
-                }
-
-                const decoder = new TextDecoder();
-                let accumulatedString = "";
-                let done = false;
-
-                do {
-                    const read = await reader.read();
-                    done = read.done;
-
-                    accumulatedString += decoder.decode(read.value);
-
-                    if (accumulatedString.endsWith("\n")) {
-                        const lines = accumulatedString.split("\n").filter(Boolean);
-
-                        const clips: TwitchClipMetadata[] = [];
-                        for (const line of lines) {
-                            const data = JSON.parse(line);
-                            const newClips = twitchClipMetadataArraySchema.parse(data);
-
-                            clips.push(...newClips);
-                        }
-                        setClips((prevClips) => [...(prevClips ?? []), ...clips]);
-                        accumulatedString = "";
-                    }
-                } while (!done);
-
-                reader.releaseLock();
-                setIsLoading(false);
-            } catch (error: unknown) {
-                if (!(error instanceof Error)) throw error;
-
-                if (error.name !== "AbortError") {
-                    console.error("%cFetch clips error:", "color: red", error);
-                    setError(error);
-                    setIsLoading(false);
-                }
-            }
+    try {
+        const response = await getStreamedClips({
+            signal,
+            data: { channels: channels.toSorted().join(","), from, to, minViews },
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        fetchClips();
+        const reader = response.body?.getReader();
+        if (!reader) {
+            throw new Error("Response body is empty or not readable.");
+        }
 
-        return () => {
-            controller.abort();
-        };
-    }, [channelsString, from, minViews, to]);
+        const decoder = new TextDecoder();
+        let accumulatedString = "";
+        let done = false;
 
-    return { clips, isLoading, error };
+        do {
+            const read = await reader.read();
+            done = read.done;
+
+            accumulatedString += decoder.decode(read.value);
+
+            if (accumulatedString.endsWith("\n")) {
+                const lines = accumulatedString.split("\n").filter(Boolean);
+
+                const clips: TwitchClipMetadata[] = [];
+                for (const line of lines) {
+                    const data = JSON.parse(line);
+                    const newClips = twitchClipMetadataArraySchema.parse(data);
+
+                    clips.push(...newClips);
+                }
+
+                yield clips;
+
+                accumulatedString = "";
+            }
+        } while (!done);
+
+        reader.releaseLock();
+    } catch (error: unknown) {
+        if (!(error instanceof Error)) throw error;
+
+        if (error.name !== "AbortError") {
+            console.error("%cFetch clips error:", "color: red", error);
+        }
+    }
 }

@@ -1,3 +1,4 @@
+import { reatomComponent } from "@reatom/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Check } from "lucide-react";
@@ -6,6 +7,7 @@ import { useEffect, useRef } from "react";
 import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { db } from "~/lib/db";
+import { chronologicalOrder } from "~/lib/settings/atoms";
 import { cn } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
 
@@ -17,7 +19,7 @@ interface Props {
     onClipClick: (clip: TwitchClipMetadata) => void;
 }
 
-export default function ClipList({
+function ClipList({
     clips,
     currentClipId = null,
     currentClipIndex,
@@ -95,7 +97,11 @@ export default function ClipList({
                                 </div>
                                 <div className="flex justify-between gap-2">
                                     <p className="truncate">{clip.broadcaster_name}</p>
-                                    <p>{clip.view_count}</p>
+                                    {chronologicalOrder() ? (
+                                        <p>{new Date(clip.created_at).toLocaleString()}</p>
+                                    ) : (
+                                        <p>{clip.view_count}</p>
+                                    )}
                                 </div>
                             </div>
                         </Button>
@@ -105,3 +111,5 @@ export default function ClipList({
         </ScrollArea>
     );
 }
+
+export default reatomComponent(ClipList);

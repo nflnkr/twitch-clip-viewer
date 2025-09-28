@@ -86,9 +86,9 @@ const Index = reatomComponent(function Index() {
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
     const channels = search.channels.split(",").filter(Boolean);
-    const viewedClipsIds = viewedClips?.map((c) => c.clipId) ?? [];
+    const viewedClipsIds = viewedClips?.map((c) => c.clipId);
 
-    const { clips, isLoadingClips, error } = useClips({
+    const { clips, isFetching, error } = useClips({
         channels,
         from: search.from,
         to: search.to,
@@ -141,7 +141,13 @@ const Index = reatomComponent(function Index() {
           })
         : filteredClips?.[currentClipIndex + 1];
 
-    const totalClipsDuration = filteredClips?.reduce((acc, c) => acc + c.duration, 0) ?? 0;
+    const totalClipsDuration = skipViewed()
+        ? filteredClips
+              ?.filter((clip) => {
+                  return !viewedClipsIds?.includes(clip.id);
+              })
+              .reduce((acc, c) => acc + c.duration, 0)
+        : filteredClips?.reduce((acc, c) => acc + c.duration, 0);
 
     useMotionValueEvent(autonextTimer, "animationComplete", () => {
         if (nextClip) {
@@ -202,11 +208,11 @@ const Index = reatomComponent(function Index() {
                     ) : !currentClip ? (
                         <p className="text-3xl">No clips</p>
                     ) : (
-                    <TwitchClipEmbed
-                        key={currentClip?.id}
-                        autoplay={clipAutoplay()}
+                        <TwitchClipEmbed
+                            key={currentClip?.id}
+                            autoplay={clipAutoplay()}
                             embedUrl={currentClip.embed_url}
-                    />
+                        />
                     )}
                 </div>
                 <AnimatePresence>
@@ -335,10 +341,8 @@ const Index = reatomComponent(function Index() {
                                     <p className="text-red-500">Error: {error.message}</p>
                                 ) : (
                                     <div className="flex items-center gap-2">
-                                        {isLoadingClips && (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        )}
-                                        {currentClip && (
+                                        {isFetching && <Loader2 className="h-4 w-4 animate-spin" />}
+                                        {currentClip && totalClipsDuration && (
                                             <p className="text-sm">{`${currentClipIndex + 1}/${filteredClips?.length ?? 0} (${formatSeconds(totalClipsDuration)})`}</p>
                                         )}
                                     </div>
