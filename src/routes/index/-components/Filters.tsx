@@ -135,45 +135,47 @@ function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
                     ))}
                 </div>
             </div>
-            <div className="flex flex-col gap-2">
-                <div className="flex flex-col gap-1">
-                    <Label htmlFor="min-views"> {t("minViews")}</Label>
-                    <NumberInput
-                        id="min-views"
-                        name="minViews"
-                        value={search.minViews}
-                        onValueChange={handleMinViewsChange}
-                        stepper={10}
-                        min={0}
-                    />
+            <DateRangePicker
+                currentClipDate={currentClipCreatedAt}
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+            />
+            <div className="flex items-center gap-1">
+                <div className="flex grow flex-col gap-1">
+                    <div className="flex flex-col gap-1">
+                        <Label htmlFor="min-views"> {t("minViews")}</Label>
+                        <NumberInput
+                            id="min-views"
+                            name="minViews"
+                            value={search.minViews}
+                            onValueChange={handleMinViewsChange}
+                            stepper={10}
+                            min={0}
+                        />
+                    </div>
+                    <div className="flex">
+                        <Input
+                            placeholder={t("filterByTitle")}
+                            id="title-filter"
+                            value={titleFilterField()}
+                            onChange={(e) => titleFilterField.set(e.target.value)}
+                            className="rounded-r-none"
+                        />
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                                titleFilterField.set("");
+                                stopAutonextTimer();
+                            }}
+                            className="rounded-l-none border-l-0"
+                        >
+                            <X />
+                        </Button>
+                    </div>
                 </div>
-                <DateRangePicker
-                    currentClipDate={currentClipCreatedAt}
-                    dateRange={dateRange}
-                    setDateRange={setDateRange}
-                />
+                {children}
             </div>
-            <div className="flex">
-                <Input
-                    placeholder={t("filterByTitle")}
-                    id="title-filter"
-                    value={titleFilterField()}
-                    onChange={(e) => titleFilterField.set(e.target.value)}
-                    className="rounded-r-none"
-                />
-                <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                        titleFilterField.set("");
-                        stopAutonextTimer();
-                    }}
-                    className="h-full rounded-l-none border-l-0"
-                >
-                    <X />
-                </Button>
-            </div>
-            {children}
         </motion.div>
     );
 }

@@ -1,5 +1,5 @@
 import { reatomComponent } from "@reatom/react";
-import { ChevronsUpDownIcon, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -16,8 +16,9 @@ import { useTranslations } from "~/lib/locale/locales";
 import { selectedGameId } from "~/lib/settings/atoms";
 import { stopAutonextTimer } from "~/lib/settings/autonext";
 
-const gameImageHeight = 44;
+const gameImageHeight = 80;
 const gameImageWidth = Math.round(gameImageHeight * 0.75);
+const noGameBoxArtUrl = `https://static-cdn.jtvnw.net/ttv-boxart/66082-${gameImageWidth}x${gameImageHeight}.jpg`;
 
 interface Props {
     disabled: boolean;
@@ -30,34 +31,38 @@ function GameSelect({ disabled, games }: Props) {
 
     const selectedGame = games.find((game) => game.id === selectedGameId());
 
+    const selectedGameImgSrc =
+        selectedGame?.box_art_url.replace(
+            "{width}x{height}",
+            `${gameImageWidth}x${gameImageHeight}`,
+        ) ?? noGameBoxArtUrl;
+
     return (
         <Popover
             open={open}
             onOpenChange={setOpen}
         >
-            <div className="flex items-center">
+            <div className="flex h-20 items-center self-end">
                 <PopoverTrigger asChild>
                     <Button
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
                         disabled={disabled}
-                        className="grow justify-between truncate rounded-r-none"
-                    >
-                        <span className="truncate">
-                            {selectedGame ? selectedGame.name : t("selectCategory")}
-                        </span>
-                        <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
+                        className="aspect-[3/4] h-full rounded-r-none bg-cover dark:hover:opacity-70"
+                        style={{
+                            backgroundImage: `url(${selectedGameImgSrc})`,
+                        }}
+                    />
                 </PopoverTrigger>
                 <Button
+                    size="xs"
                     variant="outline"
-                    size="icon"
                     onClick={() => {
                         selectedGameId.set(null);
                         stopAutonextTimer();
                     }}
-                    className="h-full rounded-l-none border-l-0"
+                    className="h-full w-6 rounded-l-none"
                 >
                     <X />
                 </Button>
@@ -78,6 +83,7 @@ function GameSelect({ disabled, games }: Props) {
                                     <CommandItem
                                         key={game.id}
                                         value={game.id}
+                                        keywords={[game.name]}
                                         onSelect={(currentValue) => {
                                             selectedGameId.set(currentValue);
                                             setOpen(false);
@@ -86,10 +92,7 @@ function GameSelect({ disabled, games }: Props) {
                                         <img
                                             src={imgSrc}
                                             alt={game.name}
-                                            className="aspect-[3/4] object-cover"
-                                            style={{
-                                                width: `${gameImageWidth}px`,
-                                            }}
+                                            className="aspect-[3/4] w-8 object-cover"
                                         />
                                         <p>{game.name}</p>
                                         <p className="ml-auto">{game.count}</p>
