@@ -11,8 +11,8 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { useTranslations } from "~/lib/locale/locales";
-import { chronologicalOrder, titleFilterField } from "~/lib/settings/atoms";
-import { stopAutonextTimer } from "~/lib/settings/autonext";
+import { chronologicalOrder, titleFilterField } from "~/lib/store/atoms";
+import { stopAutonextTimer } from "~/lib/store/autonext";
 import DateRangePicker from "./DateRangePicker";
 
 const Route = getRouteApi("/");

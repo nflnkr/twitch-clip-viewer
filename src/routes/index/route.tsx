@@ -34,13 +34,13 @@ import {
     sidebarOpen,
     skipViewed,
     titleFilterField,
-} from "~/lib/settings/atoms";
+} from "~/lib/store/atoms";
 import {
     autonextEnabled,
     autonextTimer,
     startAutonextTimer,
     stopAutonextTimer,
-} from "~/lib/settings/autonext";
+} from "~/lib/store/autonext";
 import { formatSeconds } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
 import BottomBar from "./-components/BottomBar";

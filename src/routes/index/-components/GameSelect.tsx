@@ -13,8 +13,8 @@ import {
 } from "~/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { useTranslations } from "~/lib/locale/locales";
-import { selectedGameId } from "~/lib/settings/atoms";
-import { stopAutonextTimer } from "~/lib/settings/autonext";
+import { selectedGameId } from "~/lib/store/atoms";
+import { stopAutonextTimer } from "~/lib/store/autonext";
 
 const gameImageHeight = 80;
 const gameImageWidth = Math.round(gameImageHeight * 0.75);

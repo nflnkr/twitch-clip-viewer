@@ -16,7 +16,7 @@ import {
 import { Label } from "~/components/ui/label";
 import { db } from "~/lib/db";
 import { useLocaleContext, useTranslations } from "~/lib/locale/locales";
-import { autonextBuffer } from "~/lib/settings/atoms";
+import { autonextBuffer } from "~/lib/store/atoms";
 import { cn } from "~/lib/utils";
 
 const ExtraSettingsDialog = reatomComponent(function ExtraSettingsDialog() {

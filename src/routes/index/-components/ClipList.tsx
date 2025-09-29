@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { db } from "~/lib/db";
-import { chronologicalOrder } from "~/lib/settings/atoms";
+import { chronologicalOrder } from "~/lib/store/atoms";
 import { cn } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
 

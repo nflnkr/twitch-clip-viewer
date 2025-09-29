@@ -3,8 +3,8 @@ import { ArrowLeft, ArrowRight, PanelLeftClose, Pause, Play } from "lucide-react
 import { motion } from "motion/react";
 
 import { Button } from "~/components/ui/button";
-import { sidebarOpen } from "~/lib/settings/atoms";
-import { autonextEnabled, autonextTimer } from "~/lib/settings/autonext";
+import { sidebarOpen } from "~/lib/store/atoms";
+import { autonextEnabled, autonextTimer } from "~/lib/store/autonext";
 
 interface Props {
     hasPrevClip: boolean;

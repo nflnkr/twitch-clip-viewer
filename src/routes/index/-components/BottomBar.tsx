@@ -3,8 +3,8 @@ import { ArrowLeft, ArrowRight, Calendar, ExternalLink, Pause, Play } from "luci
 import { motion } from "motion/react";
 
 import { Button } from "~/components/ui/button";
-import { clipAutoplay, filtersOpen } from "~/lib/settings/atoms";
-import { autonextEnabled, autonextTimer } from "~/lib/settings/autonext";
+import { clipAutoplay, filtersOpen } from "~/lib/store/atoms";
+import { autonextEnabled, autonextTimer } from "~/lib/store/autonext";
 import { getVodLink } from "~/lib/vod-link";
 import type { TwitchClipMetadata } from "~/model/twitch";
 
