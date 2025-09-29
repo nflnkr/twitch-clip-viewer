@@ -13,7 +13,7 @@ import { Label } from "~/components/ui/label";
 import { useTranslations } from "~/lib/locale/locales";
 import { chronologicalOrder, titleFilterField } from "~/lib/settings/atoms";
 import { stopAutonextTimer } from "~/lib/settings/autonext";
-import DateRangePicker from "~/routes/index/-components/DateRangePicker";
+import DateRangePicker from "./DateRangePicker";
 
 const Route = getRouteApi("/");
 
@@ -155,7 +155,7 @@ function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
                     </div>
                     <div className="flex">
                         <Input
-                            placeholder={t("filterByTitle")}
+                            placeholder={t("search")}
                             id="title-filter"
                             value={titleFilterField()}
                             onChange={(e) => titleFilterField.set(e.target.value)}

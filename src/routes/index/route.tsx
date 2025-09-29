@@ -43,13 +43,13 @@ import {
 } from "~/lib/settings/autonext";
 import { formatSeconds } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
-import BottomBar from "~/routes/index/-components/BottomBar";
-import ClipList from "~/routes/index/-components/ClipList";
-import Filters from "~/routes/index/-components/Filters";
-import SideBarCollapsed from "~/routes/index/-components/SideBarCollapsed";
-import TwitchClipEmbed from "~/routes/index/-components/TwitchClipEmbed";
+import BottomBar from "./-components/BottomBar";
+import ClipList from "./-components/ClipList";
 import ExtraSettingsDialog from "./-components/ExtraSettings";
+import Filters from "./-components/Filters";
 import GameSelect from "./-components/GameSelect";
+import SideBarCollapsed from "./-components/SideBarCollapsed";
+import TwitchClipEmbed from "./-components/TwitchClipEmbed";
 
 const defaultMinViews = 10;
 const getDefaultFrom = () => format(subDays(new Date(), 7), "yyyy-MM-dd");
