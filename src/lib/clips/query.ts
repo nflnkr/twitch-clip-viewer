@@ -36,16 +36,14 @@ export function useClips({
     minViews: number;
     chronologicalOrder: boolean;
 }) {
-    const {
-        data: clips,
-        isFetching,
-        error,
-    } = useQuery(clipsOptions({ channels: channels.toSorted(), from, to, minViews }));
+    const clipsQuery = useQuery(
+        clipsOptions({ channels: channels.toSorted(), from, to, minViews }),
+    );
 
     const uniqueSortedClips = useMemo(() => {
         const clipById: Record<string, TwitchClipMetadata> = {};
 
-        clips?.flat().forEach((clip) => {
+        clipsQuery.data?.flat().forEach((clip) => {
             clipById[clip.id] = clip;
         });
 
@@ -62,12 +60,11 @@ export function useClips({
         if (clipsArray.length === 0) return null;
 
         return clipsArray;
-    }, [chronologicalOrder, clips, minViews]);
+    }, [chronologicalOrder, clipsQuery.data, minViews]);
 
     return {
+        ...clipsQuery,
         clips: uniqueSortedClips,
-        isFetching,
-        error,
     };
 }
 

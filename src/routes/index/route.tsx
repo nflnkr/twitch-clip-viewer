@@ -4,6 +4,7 @@ import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { format, subDays } from "date-fns";
 import { useLiveQuery } from "dexie-react-hooks";
+import fuzzysort from "fuzzysort";
 import {
     CalendarArrowDown,
     EyeOff,
@@ -112,42 +113,35 @@ const Index = reatomComponent(function Index() {
         }))
         .sort((a, b) => b.count - a.count);
 
-    const filteredClips = clips?.filter((clip) => {
-        let showClip = true;
+    const filteredClips = selectedGameId()
+        ? clips?.filter((clip) => clip.game_id === selectedGameId())
+        : clips;
 
-        const title = clip.title.toLowerCase();
-        if (debouncedTitleFilterField && !title.includes(debouncedTitleFilterField.toLowerCase())) {
-            showClip = false;
-        }
+    const sortedClips =
+        filteredClips &&
+        fuzzysort
+            .go(debouncedTitleFilterField, filteredClips, {
+                key: "title",
+                threshold: 0.3,
+                all: true,
+            })
+            .map((result) => result.obj);
 
-        const selectedGameInfo =
-            selectedGameId() && gamesInfo.find((game) => game.id === selectedGameId());
-        if (selectedGameInfo && clip.game_id !== selectedGameInfo.id) {
-            showClip = false;
-        }
-
-        return showClip;
-    });
-
-    const currentClip =
-        filteredClips?.find((c) => c.id === selectedClipId()) ?? filteredClips?.at(0);
-
-    const currentClipIndex = (currentClip && filteredClips?.indexOf(currentClip)) ?? 0;
-    const previousClip = filteredClips?.[currentClipIndex - 1];
+    const currentClip = sortedClips?.find((c) => c.id === selectedClipId()) ?? sortedClips?.at(0);
+    const currentClipIndex = (currentClip && sortedClips?.indexOf(currentClip)) ?? 0;
+    const previousClip = sortedClips?.[currentClipIndex - 1];
     const nextClip = skipViewed()
-        ? filteredClips?.find((clip, index) => {
+        ? sortedClips?.find((clip, index) => {
               if (index <= currentClipIndex) return false;
               return !viewedClipsIds?.includes(clip.id);
           })
-        : filteredClips?.[currentClipIndex + 1];
+        : sortedClips?.[currentClipIndex + 1];
 
     const totalClipsDuration = skipViewed()
-        ? filteredClips
-              ?.filter((clip) => {
-                  return !viewedClipsIds?.includes(clip.id);
-              })
+        ? sortedClips
+              ?.filter((clip) => !viewedClipsIds?.includes(clip.id))
               .reduce((acc, c) => acc + c.duration, 0)
-        : filteredClips?.reduce((acc, c) => acc + c.duration, 0);
+        : sortedClips?.reduce((acc, c) => acc + c.duration, 0);
 
     useMotionValueEvent(autonextTimer, "animationComplete", () => {
         if (nextClip) {
@@ -343,20 +337,21 @@ const Index = reatomComponent(function Index() {
                                     <div className="flex items-center gap-2">
                                         {isFetching && <Loader2 className="h-4 w-4 animate-spin" />}
                                         {currentClip && totalClipsDuration && (
-                                            <p className="text-sm">{`${currentClipIndex + 1}/${filteredClips?.length ?? 0} (${formatSeconds(totalClipsDuration)})`}</p>
+                                            <p className="text-sm">{`${currentClipIndex + 1}/${sortedClips?.length ?? 0} (${formatSeconds(totalClipsDuration)})`}</p>
                                         )}
                                     </div>
                                 )}
-                                <ClipList
-                                    clips={filteredClips}
-                                    currentClipId={currentClip?.id}
-                                    currentClipIndex={currentClipIndex}
-                                    skipViewed={skipViewed()}
-                                    onClipClick={(clip) => {
-                                        selectClip(clip);
-                                        stopAutonextTimer();
-                                    }}
-                                />
+                                {sortedClips && (
+                                    <ClipList
+                                        clips={sortedClips}
+                                        currentClipId={currentClip?.id}
+                                        currentClipIndex={currentClipIndex}
+                                        onClipClick={(clip) => {
+                                            selectClip(clip);
+                                            stopAutonextTimer();
+                                        }}
+                                    />
+                                )}
                             </div>
                         </motion.div>
                     ) : (

@@ -7,25 +7,18 @@ import { useEffect, useRef } from "react";
 import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { db } from "~/lib/db";
-import { chronologicalOrder } from "~/lib/store/atoms";
+import { chronologicalOrder, skipViewed } from "~/lib/store/atoms";
 import { cn } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
 
 interface Props {
-    clips?: TwitchClipMetadata[] | null;
+    clips: TwitchClipMetadata[];
     currentClipId: string | undefined | null;
     currentClipIndex: number;
-    skipViewed: boolean;
     onClipClick: (clip: TwitchClipMetadata) => void;
 }
 
-function ClipList({
-    clips,
-    currentClipId = null,
-    currentClipIndex,
-    skipViewed,
-    onClipClick,
-}: Props) {
+function ClipList({ clips, currentClipId = null, currentClipIndex, onClipClick }: Props) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemsContainerRef = useRef<HTMLDivElement>(null);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
@@ -44,7 +37,6 @@ function ClipList({
         rowVirtualizer.scrollToIndex(currentClipIndex, { align: "start", behavior: "smooth" });
     }, [currentClipIndex, rowVirtualizer]);
 
-    if (!clips) return null;
     if (clips.length === 0) return <p className="px-2 text-xl">No clips</p>;
 
     return (
@@ -67,7 +59,7 @@ function ClipList({
                             variant="outline"
                             className={cn(
                                 "border-accent flex h-auto w-full flex-col items-stretch gap-0 overflow-hidden border-2 p-0 transition-opacity",
-                                skipViewed &&
+                                skipViewed() &&
                                     viewedClipIds.includes(clip.id) &&
                                     "border-accent/50 opacity-30",
                                 currentClipId === clip.id && "border-accent dark:border-accent",

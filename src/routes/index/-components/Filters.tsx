@@ -43,7 +43,7 @@ function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
             .map((s) => s.toLowerCase())
             .filter((s) => /^[a-zA-Z0-9][\w]{2,24}$/.test(s));
         const newChannels = [...channels, ...filteredNewChannels];
-        const uniqueChannels = [...new Set(newChannels)];
+        const uniqueChannels = Array.from(new Set(newChannels));
 
         event.currentTarget.value = "";
 
