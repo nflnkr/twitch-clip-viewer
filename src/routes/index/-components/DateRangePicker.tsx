@@ -1,3 +1,4 @@
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { addDays, endOfYear, format, subDays, subMonths, subYears } from "date-fns";
 import { CalendarIcon, CalendarRange } from "lucide-react";
 import { type DateRange } from "react-day-picker";
@@ -15,15 +16,37 @@ import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover
 import { datefnsLocaleByAppLocale, useLocaleContext, useTranslations } from "~/lib/locale/locales";
 import { cn, getYearsArray } from "~/lib/utils";
 
+const Route = getRouteApi("/");
+
 interface Props {
     currentClipDate: string | undefined;
-    dateRange: DateRange | undefined;
-    setDateRange: (dateRange: DateRange | undefined) => void;
+    dateRange: DateRange;
+    onDateRangeChange: () => void;
 }
 
-export default function DateRangePicker({ currentClipDate, dateRange, setDateRange }: Props) {
+export default function DateRangePicker({ currentClipDate, dateRange, onDateRangeChange }: Props) {
+    const navigate = Route.useNavigate();
     const t = useTranslations();
     const { locale } = useLocaleContext();
+
+    function getNewDateRange({ from, to }: DateRange) {
+        return {
+            from: from ? format(from, "yyyy-MM-dd") : undefined,
+            to: to ? format(to, "yyyy-MM-dd") : from ? format(from, "yyyy-MM-dd") : undefined,
+        };
+    }
+
+    function selectDateRange(dateRange: DateRange | undefined) {
+        if (!dateRange) return;
+
+        onDateRangeChange();
+        navigate({
+            search: (search) => ({
+                ...search,
+                ...getNewDateRange(dateRange),
+            }),
+        });
+    }
 
     return (
         <div className="flex">
@@ -54,7 +77,7 @@ export default function DateRangePicker({ currentClipDate, dateRange, setDateRan
                         locale={datefnsLocaleByAppLocale[locale]}
                         mode="range"
                         selected={dateRange}
-                        onSelect={setDateRange}
+                        onSelect={selectDateRange}
                         numberOfMonths={2}
                         defaultMonth={dateRange?.to}
                     />
@@ -75,70 +98,107 @@ export default function DateRangePicker({ currentClipDate, dateRange, setDateRan
                     className="w-56"
                 >
                     <DropdownMenuGroup>
-                        <DropdownMenuItem
-                            onClick={() =>
-                                setDateRange({
-                                    from: subDays(new Date(), 7),
-                                    to: new Date(),
-                                })
-                            }
-                        >
-                            {t("time.lastWeek")}
+                        <DropdownMenuItem asChild>
+                            <Link
+                                to="/"
+                                search={(search) => ({
+                                    ...search,
+                                    ...getNewDateRange({
+                                        from: subDays(new Date(), 7),
+                                        to: new Date(),
+                                    }),
+                                })}
+                                onClick={() => onDateRangeChange()}
+                                className="cursor-pointer"
+                            >
+                                {t("time.lastWeek")}
+                            </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() =>
-                                setDateRange({
-                                    from: subMonths(new Date(), 1),
-                                    to: new Date(),
-                                })
-                            }
-                        >
-                            {t("time.lastMonth")}
+                        <DropdownMenuItem asChild>
+                            <Link
+                                to="/"
+                                search={(search) => ({
+                                    ...search,
+                                    ...getNewDateRange({
+                                        from: subMonths(new Date(), 1),
+                                        to: new Date(),
+                                    }),
+                                })}
+                                onClick={() => onDateRangeChange()}
+                                className="cursor-pointer"
+                            >
+                                {t("time.lastMonth")}
+                            </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() =>
-                                setDateRange({
-                                    from: subYears(new Date(), 1),
-                                    to: new Date(),
-                                })
-                            }
-                        >
-                            {t("time.lastYear")}
+                        <DropdownMenuItem asChild>
+                            <Link
+                                to="/"
+                                search={(search) => ({
+                                    ...search,
+                                    ...getNewDateRange({
+                                        from: subYears(new Date(), 1),
+                                        to: new Date(),
+                                    }),
+                                })}
+                                onClick={() => onDateRangeChange()}
+                                className="cursor-pointer"
+                            >
+                                {t("time.lastYear")}
+                            </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() =>
-                                setDateRange({
-                                    from: new Date(2011, 0, 1),
-                                    to: new Date(),
-                                })
-                            }
-                        >
-                            {t("time.all")}
+                        <DropdownMenuItem asChild>
+                            <Link
+                                to="/"
+                                search={(search) => ({
+                                    ...search,
+                                    ...getNewDateRange({
+                                        from: new Date(2016, 0, 1),
+                                        to: new Date(),
+                                    }),
+                                })}
+                                onClick={() => onDateRangeChange()}
+                                className="cursor-pointer"
+                            >
+                                {t("time.all")}
+                            </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                            disabled={!currentClipDate}
-                            onClick={() => {
-                                if (!currentClipDate) return;
-
-                                setDateRange({
-                                    from: new Date(currentClipDate),
-                                    to: addDays(new Date(currentClipDate), 1),
-                                });
-                            }}
-                        >
-                            {t("time.currentClipDate")}
-                        </DropdownMenuItem>
+                        {currentClipDate && (
+                            <DropdownMenuItem asChild>
+                                <Link
+                                    to="/"
+                                    search={(search) => ({
+                                        ...search,
+                                        ...getNewDateRange({
+                                            from: new Date(currentClipDate),
+                                            to: addDays(new Date(currentClipDate), 1),
+                                        }),
+                                    })}
+                                    onClick={() => onDateRangeChange()}
+                                    className="cursor-pointer"
+                                >
+                                    {t("time.currentClipDate")}
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
                         {getYearsArray().map((year) => (
                             <DropdownMenuItem
                                 key={year}
-                                onClick={() =>
-                                    setDateRange({
-                                        from: new Date(year, 0, 1),
-                                        to: endOfYear(new Date(year, 0, 1)),
-                                    })
-                                }
+                                asChild
                             >
-                                {year}
+                                <Link
+                                    to="/"
+                                    search={(search) => ({
+                                        ...search,
+                                        ...getNewDateRange({
+                                            from: new Date(year, 0, 1),
+                                            to: endOfYear(new Date(year, 0, 1)),
+                                        }),
+                                    })}
+                                    onClick={() => onDateRangeChange()}
+                                    className="cursor-pointer"
+                                >
+                                    {year}
+                                </Link>
                             </DropdownMenuItem>
                         ))}
                     </DropdownMenuGroup>

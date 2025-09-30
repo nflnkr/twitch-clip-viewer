@@ -1,18 +1,19 @@
 import { reatomComponent } from "@reatom/react";
-import { getRouteApi } from "@tanstack/react-router";
-import { format, parse } from "date-fns";
-import { X } from "lucide-react";
+import { getRouteApi, Link } from "@tanstack/react-router";
+import { parse } from "date-fns";
+import { ListIndentIncrease, X } from "lucide-react";
 import { motion } from "motion/react";
 import type { KeyboardEvent, ReactNode } from "react";
-import type { DateRange } from "react-day-picker";
 
 import { NumberInput } from "~/components/NumberInput";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useTranslations } from "~/lib/locale/locales";
-import { chronologicalOrder, titleFilterField } from "~/lib/store/atoms";
+import { chronologicalOrder, selectedGameId, titleFilterField } from "~/lib/store/atoms";
 import { stopAutonextTimer } from "~/lib/store/autonext";
+import { cn } from "~/lib/utils";
 import DateRangePicker from "./DateRangePicker";
 
 const Route = getRouteApi("/");
@@ -20,10 +21,10 @@ const Route = getRouteApi("/");
 interface Props {
     currentClipCreatedAt: string | undefined;
     children: ReactNode;
-    resetSelected: () => void;
+    resetSelectedClip: () => void;
 }
 
-function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
+function Filters({ currentClipCreatedAt, children, resetSelectedClip }: Props) {
     const search = Route.useSearch();
     const navigate = Route.useNavigate();
     const t = useTranslations();
@@ -48,55 +49,28 @@ function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
         event.currentTarget.value = "";
 
         stopAutonextTimer();
-        resetSelected();
+        resetSelectedClip();
+        selectedGameId.set(null);
         navigate({
-            search: {
+            search: (search) => ({
                 ...search,
                 channels: uniqueChannels.join(","),
-            },
+            }),
         });
     }
 
     function handleMinViewsChange(value: number | undefined) {
         stopAutonextTimer();
-        resetSelected();
+        resetSelectedClip();
+        selectedGameId.set(null);
         chronologicalOrder.set(false);
-        navigate({ search: { ...search, minViews: value } });
+        navigate({ search: (search) => ({ ...search, minViews: value }) });
     }
 
-    function openChannelClips(channel: string) {
-        const currentUrl = new URL(window.location.href);
-
-        currentUrl.searchParams.set("channels", channel);
-
-        window.open(currentUrl.href, "_blank");
-    }
-
-    function removeChannel(channel: string) {
+    function onDateRangeChange() {
         stopAutonextTimer();
-        resetSelected();
-        navigate({
-            search: {
-                ...search,
-                channels: channels.filter((c) => c !== channel).join(","),
-            },
-        });
-    }
-
-    function setDateRange(dateRange: DateRange | undefined) {
-        stopAutonextTimer();
-        resetSelected();
-        navigate({
-            search: {
-                ...search,
-                from: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
-                to: dateRange?.to
-                    ? format(dateRange.to, "yyyy-MM-dd")
-                    : dateRange?.from
-                      ? format(dateRange.from, "yyyy-MM-dd")
-                      : undefined,
-            },
-        });
+        resetSelectedClip();
+        selectedGameId.set(null);
     }
 
     return (
@@ -120,25 +94,66 @@ function Filters({ currentClipCreatedAt, children, resetSelected }: Props) {
                 </div>
                 <div className="flex flex-wrap gap-1">
                     {channels.map((channel, index) => (
-                        <Button
+                        <div
                             key={index}
-                            size="xs"
-                            variant="outline"
-                            onClick={(event) => {
-                                if (event.shiftKey) openChannelClips(channel);
-                                else removeChannel(channel);
-                            }}
+                            className={cn(
+                                buttonVariants({ variant: "outline", size: "xs" }),
+                                "pr-1 select-none",
+                            )}
                         >
-                            {channel}
-                            <X />
-                        </Button>
+                            <p className="text-xs">{channel}</p>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Link
+                                        to="/"
+                                        search={(search) => ({
+                                            ...search,
+                                            channels: channel,
+                                        })}
+                                        onClick={() => {
+                                            stopAutonextTimer();
+                                            resetSelectedClip();
+                                            selectedGameId.set(null);
+                                        }}
+                                    >
+                                        <ListIndentIncrease />
+                                    </Link>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{t("keepOnlyThisChannel")}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Link
+                                        to="/"
+                                        search={(search) => ({
+                                            ...search,
+                                            channels: channels
+                                                .filter((c) => c !== channel)
+                                                .join(","),
+                                        })}
+                                        onClick={() => {
+                                            stopAutonextTimer();
+                                            resetSelectedClip();
+                                            selectedGameId.set(null);
+                                        }}
+                                    >
+                                        <X />
+                                    </Link>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{t("removeChannel")}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
                     ))}
                 </div>
             </div>
             <DateRangePicker
                 currentClipDate={currentClipCreatedAt}
                 dateRange={dateRange}
-                setDateRange={setDateRange}
+                onDateRangeChange={onDateRangeChange}
             />
             <div className="flex items-center gap-1">
                 <div className="flex grow flex-col gap-1">

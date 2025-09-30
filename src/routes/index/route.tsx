@@ -326,10 +326,7 @@ const Index = reatomComponent(function Index() {
                                 {filtersOpen() && (
                                     <Filters
                                         currentClipCreatedAt={currentClip?.created_at}
-                                        resetSelected={() => {
-                                            selectClip(null);
-                                            selectedGameId.set(null);
-                                        }}
+                                        resetSelectedClip={() => selectClip(null)}
                                     >
                                         <GameSelect
                                             disabled={isPendingGames || gamesInfo.length === 0}
