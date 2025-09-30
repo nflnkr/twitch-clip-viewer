@@ -13,7 +13,7 @@ export default function TwitchClipEmbed({ autoplay, embedUrl }: Props) {
 
     useEffect(() => {
         opacity.jump(0);
-        animate(opacity, 1, { duration: 5.7 });
+        animate(opacity, 1, { duration: 0.7 });
     }, [opacity, embedUrl, autoplay]);
 
     if (!hostname) return <p className="text-3xl">No clips</p>;
