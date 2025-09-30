@@ -1,4 +1,5 @@
-import { motion } from "motion/react";
+import { animate, motion, useMotionValue } from "motion/react";
+import { useEffect } from "react";
 
 const hostname = globalThis.location?.hostname;
 
@@ -8,6 +9,13 @@ interface Props {
 }
 
 export default function TwitchClipEmbed({ autoplay, embedUrl }: Props) {
+    const opacity = useMotionValue(0);
+
+    useEffect(() => {
+        opacity.jump(0);
+        animate(opacity, 1, { duration: 5.7 });
+    }, [opacity, embedUrl, autoplay]);
+
     if (!hostname) return <p className="text-3xl">No clips</p>;
 
     return (
@@ -16,13 +24,7 @@ export default function TwitchClipEmbed({ autoplay, embedUrl }: Props) {
             allow="autoplay; picture-in-picture"
             allowFullScreen
             className="h-full w-full"
-            initial={{
-                opacity: 0,
-            }}
-            animate={{
-                opacity: 1,
-                transition: { delay: 0.7 },
-            }}
+            style={{ opacity }}
         />
     );
 }

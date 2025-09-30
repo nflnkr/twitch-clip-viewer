@@ -203,7 +203,6 @@ const Index = reatomComponent(function Index() {
                         <p className="text-3xl">No clips</p>
                     ) : (
                         <TwitchClipEmbed
-                            key={currentClip?.id}
                             autoplay={clipAutoplay()}
                             embedUrl={currentClip.embed_url}
                         />
