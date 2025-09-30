@@ -116,6 +116,8 @@ async function* generateClips({
             }
         } while (!done);
 
+        yield [];
+
         reader.releaseLock();
     } catch (error: unknown) {
         if (!(error instanceof Error)) throw error;
