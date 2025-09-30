@@ -26,7 +26,7 @@ function ClipList({ clips, currentClipId = null, currentClipIndex, onClipClick }
     const viewedClipIds = viewedClips?.map((c) => c.clipId) ?? [];
 
     const rowVirtualizer = useVirtualizer({
-        count: clips?.length ?? 0,
+        count: clips.length,
         getScrollElement: () =>
             scrollContainerRef.current?.querySelector("[data-radix-scroll-area-viewport]") ?? null,
         estimateSize: () => 270,
@@ -36,8 +36,6 @@ function ClipList({ clips, currentClipId = null, currentClipIndex, onClipClick }
     useEffect(() => {
         rowVirtualizer.scrollToIndex(currentClipIndex, { align: "start", behavior: "smooth" });
     }, [currentClipIndex, rowVirtualizer]);
-
-    if (clips.length === 0) return <p className="px-2 text-xl">No clips</p>;
 
     return (
         <ScrollArea

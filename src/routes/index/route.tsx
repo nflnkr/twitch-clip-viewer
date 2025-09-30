@@ -50,7 +50,6 @@ import ExtraSettingsDialog from "./-components/ExtraSettings";
 import Filters from "./-components/Filters";
 import GameSelect from "./-components/GameSelect";
 import SideBarCollapsed from "./-components/SideBarCollapsed";
-import TwitchClipEmbed from "./-components/TwitchClipEmbed";
 
 const defaultMinViews = 10;
 const getDefaultFrom = () => format(subDays(new Date(), 7), "yyyy-MM-dd");
@@ -200,12 +199,21 @@ const Index = reatomComponent(function Index() {
                     {channels.length === 0 ? (
                         <p className="text-3xl">No Channels</p>
                     ) : !currentClip ? (
-                        <p className="text-3xl">No clips</p>
+                        <p className="text-3xl">No clip</p>
                     ) : (
-                        <TwitchClipEmbed
-                            key={currentClip?.id}
-                            autoplay={clipAutoplay()}
-                            embedUrl={currentClip.embed_url}
+                        <motion.iframe
+                            key={currentClip.id}
+                            src={`${currentClip.embed_url}&parent=${globalThis.location.hostname}&autoplay=${clipAutoplay()}`}
+                            allow="autoplay; picture-in-picture"
+                            allowFullScreen
+                            className="h-full w-full"
+                            initial={{
+                                opacity: 0,
+                            }}
+                            animate={{
+                                opacity: 1,
+                                transition: { delay: 0.7 },
+                            }}
                         />
                     )}
                 </div>
@@ -341,7 +349,7 @@ const Index = reatomComponent(function Index() {
                                         )}
                                     </div>
                                 )}
-                                {sortedClips && (
+                                {!!sortedClips?.length && (
                                     <ClipList
                                         clips={sortedClips}
                                         currentClipId={currentClip?.id}

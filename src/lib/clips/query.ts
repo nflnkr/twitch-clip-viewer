@@ -41,9 +41,11 @@ export function useClips({
     );
 
     const uniqueSortedClips = useMemo(() => {
+        if (!clipsQuery.data) return null;
+
         const clipById: Record<string, TwitchClipMetadata> = {};
 
-        clipsQuery.data?.flat().forEach((clip) => {
+        clipsQuery.data.flat().forEach((clip) => {
             clipById[clip.id] = clip;
         });
 
@@ -57,7 +59,6 @@ export function useClips({
                 return clipB.view_count - clipA.view_count;
             })
             .filter((clip) => clip.view_count >= minViews);
-        if (clipsArray.length === 0) return null;
 
         return clipsArray;
     }, [chronologicalOrder, clipsQuery.data, minViews]);
