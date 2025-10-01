@@ -233,7 +233,7 @@ const Index = reatomComponent(function Index() {
             <motion.div
                 variants={{
                     collapsed: { width: "2.25rem", minWidth: "2.25rem", padding: "0" },
-                    expanded: { width: "24rem", minWidth: "24rem", padding: "1rem" },
+                    expanded: { width: "26rem", minWidth: "26rem", padding: "1rem" },
                 }}
                 initial="expanded"
                 animate={sidebarOpen() ? "expanded" : "collapsed"}
@@ -246,7 +246,7 @@ const Index = reatomComponent(function Index() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="flex h-full min-h-0 min-w-[22rem] flex-col"
+                            className="flex h-full min-h-0 min-w-[24rem] flex-col"
                         >
                             <div className="flex justify-between gap-2">
                                 <Button
