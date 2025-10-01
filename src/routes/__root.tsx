@@ -66,7 +66,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                                 },
                                 {
                                     name: "Tanstack Query",
-                                    render: <ReactQueryDevtoolsPanel />,
+                                    render: <ReactQueryDevtoolsPanel style={{ height: "100%" }} />,
                                 },
                             ]}
                         />
