@@ -17,7 +17,7 @@ export function clipsOptions(params: {
     return queryOptions({
         queryKey: ["clips", params],
         queryFn: streamedQuery({
-            streamFn: ({ signal }) => generateClips({ signal, params }),
+            streamFn: () => generateClips(params),
         }),
         enabled: params.channels.length > 0,
     });
@@ -70,15 +70,18 @@ export function useClips({
 }
 
 async function* generateClips({
-    signal,
-    params: { channels, from, to, minViews },
+    channels,
+    from,
+    to,
+    minViews,
 }: {
-    signal: AbortSignal;
-    params: { channels: string[]; from: string; to: string; minViews: number };
+    channels: string[];
+    from: string;
+    to: string;
+    minViews: number;
 }) {
     try {
         const response = await getStreamedClips({
-            signal,
             data: { channels: channels.toSorted().join(","), from, to, minViews },
         });
         if (!response.ok) {
