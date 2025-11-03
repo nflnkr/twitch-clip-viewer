@@ -23,7 +23,6 @@ import { z } from "zod";
 import ToggleWithTooltip from "~/components/ToggleWithTooltip";
 import { Button } from "~/components/ui/button";
 import { useClips } from "~/lib/clips/query";
-import { isDefined, uniqueIds } from "~/lib/dataloader-query";
 import { db } from "~/lib/db";
 import { gameOptions, GamesLoaderContext } from "~/lib/games/query";
 import { useTranslations } from "~/lib/locale/locales";
@@ -45,7 +44,7 @@ import {
     startAutonextTimer,
     stopAutonextTimer,
 } from "~/lib/store/autonext";
-import { formatSeconds } from "~/lib/utils";
+import { formatSeconds, isDefined, uniqueIds } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
 import BottomBar from "./-components/BottomBar";
 import ClipList from "./-components/ClipList";

@@ -43,11 +43,3 @@ export function createDataLoaderQueryOptions<TParams, TResult>({
         createDataLoader,
     };
 }
-
-export function uniqueIds<TItemId extends string | number>(ids: TItemId[] | undefined): TItemId[] {
-    return Array.from(new Set(ids));
-}
-
-export function isDefined<T>(value: T | null | undefined): value is NonNullable<T> {
-    return value !== null && value !== undefined;
-}
