@@ -20,7 +20,7 @@ export function createDataLoaderQueryOptions<TParams, TResult, TItemId>(
             },
             {
                 batchScheduleFn: (callback) => setTimeout(callback, params.batchDelay),
-                cacheKeyFn: (key: unknown) => hashKey([params.queryKey, key]),
+                cacheKeyFn: (key) => hashKey([params.queryKey, key]),
                 maxBatchSize: params.maxBatchSize,
             },
         );
