@@ -1,27 +1,29 @@
 import { hashKey, queryOptions } from "@tanstack/react-query";
 import DataLoader, { type BatchLoadFn } from "dataloader";
 
-type CreateDataLoaderQueryParams<TParams, TResult, TItemId> = {
+export function createDataLoaderQueryOptions<TParams, TResult>({
+    queryKey,
+    defaultQueryOptions,
+    batchDelay,
+    maxBatchSize,
+    batchLoadFn,
+}: {
     queryKey: string;
-    queryOptions?: Omit<ReturnType<typeof queryOptions<TResult>>, "queryKey" | "queryFn">;
+    defaultQueryOptions?: Omit<Parameters<typeof queryOptions<TResult>>[0], "queryKey" | "queryFn">;
     batchDelay: number;
     maxBatchSize?: number;
-    batchLoadFn: BatchLoadFn<TParams & { id: TItemId }, TResult>;
-};
-
-export function createDataLoaderQueryOptions<TParams, TResult, TItemId>(
-    params: CreateDataLoaderQueryParams<TParams, TResult, TItemId>,
-) {
+    batchLoadFn: BatchLoadFn<TParams, TResult>;
+}) {
     function createDataLoader() {
-        const dataLoader = new DataLoader<TParams & { id: TItemId }, TResult, string>(
+        const dataLoader = new DataLoader<TParams, TResult, string>(
             async (keys) => {
                 dataLoader.clearAll();
-                return params.batchLoadFn(keys);
+                return batchLoadFn(keys);
             },
             {
-                batchScheduleFn: (callback) => setTimeout(callback, params.batchDelay),
-                cacheKeyFn: (key) => hashKey([params.queryKey, key]),
-                maxBatchSize: params.maxBatchSize,
+                batchScheduleFn: (callback) => setTimeout(callback, batchDelay),
+                cacheKeyFn: (key) => hashKey([queryKey, key]),
+                maxBatchSize: maxBatchSize,
             },
         );
 
@@ -30,19 +32,16 @@ export function createDataLoaderQueryOptions<TParams, TResult, TItemId>(
 
     const defaultDataLoader = createDataLoader();
 
-    function _queryOptions(
-        id: TItemId,
-        queryParams: TParams,
-        dataLoader: ReturnType<typeof createDataLoader> = defaultDataLoader,
-    ) {
-        return queryOptions({
-            ...params.queryOptions,
-            queryKey: [params.queryKey, { ...queryParams, id }],
-            queryFn: () => dataLoader.load({ ...queryParams, id }),
-        });
-    }
-
-    return { queryOptions: _queryOptions, createDataLoader } as const;
+    return {
+        queryOptions(params: TParams, dataLoader = defaultDataLoader) {
+            return queryOptions({
+                ...defaultQueryOptions,
+                queryKey: [queryKey, params],
+                queryFn: () => dataLoader.load(params),
+            });
+        },
+        createDataLoader,
+    };
 }
 
 export function uniqueIds<TItemId extends string | number>(ids: TItemId[] | undefined): TItemId[] {

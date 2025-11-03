@@ -25,7 +25,7 @@ import { Button } from "~/components/ui/button";
 import { useClips } from "~/lib/clips/query";
 import { isDefined, uniqueIds } from "~/lib/dataloader-query";
 import { db } from "~/lib/db";
-import { GamesLoaderContext, gamesOptions } from "~/lib/games/query";
+import { gameOptions, GamesLoaderContext } from "~/lib/games/query";
 import { useTranslations } from "~/lib/locale/locales";
 import {
     autonextBuffer,
@@ -100,7 +100,7 @@ const Index = reatomComponent(function Index() {
 
     const gamesInfo = useQueries({
         queries: uniqueIds(clips?.map((c) => c.game_id)).map((gameId) =>
-            gamesOptions(gameId, {}, use(GamesLoaderContext)),
+            gameOptions(gameId, use(GamesLoaderContext)),
         ),
         combine: (queries) => queries.map((q) => q.data).filter(isDefined),
     });

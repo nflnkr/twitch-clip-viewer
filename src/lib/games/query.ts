@@ -6,17 +6,15 @@ import { getGamesServerFn } from "./api";
 
 export const GamesLoaderContext = createContext<ReturnType<typeof createGamesLoader>>(null!);
 
-export const { queryOptions: gamesOptions, createDataLoader: createGamesLoader } =
-    createDataLoaderQueryOptions<unknown, TwitchGame | null, string>({
+export const { queryOptions: gameOptions, createDataLoader: createGamesLoader } =
+    createDataLoaderQueryOptions<string, TwitchGame | null>({
         queryKey: "games",
-        queryOptions: { staleTime: Infinity },
+        defaultQueryOptions: { staleTime: Infinity },
         batchDelay: 1000,
         maxBatchSize: 100,
-        batchLoadFn: async (keys) => {
-            const results = await getGamesServerFn({
-                data: { gameIds: keys.map((key) => key.id) },
-            });
+        batchLoadFn: async (gameIds) => {
+            const results = await getGamesServerFn({ data: { gameIds: gameIds.filter(Boolean) } });
 
-            return keys.map((key) => results.find((game) => game.id === key.id) || null);
+            return gameIds.map((gameId) => results.find((game) => game.id === gameId) ?? null);
         },
     });
