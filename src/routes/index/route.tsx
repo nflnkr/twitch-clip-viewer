@@ -1,5 +1,6 @@
 import { reatomComponent } from "@reatom/react";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { useQueries } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { format, subDays } from "date-fns";
@@ -16,13 +17,15 @@ import {
     SquarePlay,
 } from "lucide-react";
 import { AnimatePresence, motion, useMotionValueEvent } from "motion/react";
+import { use } from "react";
 import { z } from "zod";
 
 import ToggleWithTooltip from "~/components/ToggleWithTooltip";
 import { Button } from "~/components/ui/button";
 import { useClips } from "~/lib/clips/query";
+import { isDefined, uniqueIds } from "~/lib/dataloader-query";
 import { db } from "~/lib/db";
-import { useGames } from "~/lib/games/query";
+import { GamesLoaderContext, gamesOptions } from "~/lib/games/query";
 import { useTranslations } from "~/lib/locale/locales";
 import {
     autonextBuffer,
@@ -75,7 +78,6 @@ export const Route = createFileRoute("/")({
         ],
     },
     component: () => <Index />,
-    ssr: true,
 });
 
 const Index = reatomComponent(function Index() {
@@ -96,9 +98,12 @@ const Index = reatomComponent(function Index() {
         chronologicalOrder: chronologicalOrder(),
     });
 
-    const uniqueGameIds = Array.from(new Set(clips?.map((c) => c.game_id)));
-
-    const { data: gamesInfo, isPending: isPendingGames } = useGames(uniqueGameIds);
+    const gamesInfo = useQueries({
+        queries: uniqueIds(clips?.map((c) => c.game_id)).map((gameId) =>
+            gamesOptions(gameId, {}, use(GamesLoaderContext)),
+        ),
+        combine: (queries) => queries.map((q) => q.data).filter(isDefined),
+    });
 
     const gameCountById: Record<string, number> = {};
     clips?.forEach((clip) => {
@@ -329,7 +334,7 @@ const Index = reatomComponent(function Index() {
                                         resetSelectedClip={() => selectClip(null)}
                                     >
                                         <GameSelect
-                                            disabled={isPendingGames || gamesInfo.length === 0}
+                                            disabled={gamesInfo.length === 0}
                                             games={gamesInfoWithCount}
                                         />
                                     </Filters>

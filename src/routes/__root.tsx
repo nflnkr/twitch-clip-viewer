@@ -1,10 +1,9 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { createGamesLoader, GamesLoaderContext } from "~/lib/games/query";
 import { getRequestLocale } from "~/lib/locale/api";
@@ -43,8 +42,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootDocument({ children }: { children: React.ReactNode }) {
     const requestLocale = Route.useLoaderData().requestLocale;
     const [locale, setLocale] = useState<AppLocale>(requestLocale);
-    const queryClient = useQueryClient();
-    const gamesLoader = useMemo(() => createGamesLoader(queryClient), [queryClient]);
+    const [gamesLoader] = useState(createGamesLoader);
 
     return (
         <GamesLoaderContext value={gamesLoader}>
