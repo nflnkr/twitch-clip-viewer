@@ -78,6 +78,7 @@ export const Route = createFileRoute("/")({
         ],
     },
     component: () => <Index />,
+    ssr: false,
 });
 
 const Index = reatomComponent(function Index() {
