@@ -1,5 +1,17 @@
 import { getRouteApi, Link } from "@tanstack/react-router";
-import { addDays, endOfYear, format, subDays, subMonths, subYears } from "date-fns";
+import {
+    addDays,
+    addMonths,
+    endOfMonth,
+    endOfYear,
+    format,
+    isBefore,
+    isSameDay,
+    startOfMonth,
+    subDays,
+    subMonths,
+    subYears,
+} from "date-fns";
 import { CalendarIcon, CalendarRange } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 
@@ -13,6 +25,7 @@ import {
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { capitalizeFirstLetter } from "~/lib/capitalize-first-letter";
 import { datefnsLocaleByAppLocale, useLocaleContext, useTranslations } from "~/lib/locale/locales";
 import { cn, getYearsArray } from "~/lib/utils";
 
@@ -47,6 +60,19 @@ export default function DateRangePicker({ currentClipDate, dateRange, onDateRang
             }),
         });
     }
+
+    const endMonth = dateRange?.to ?? null;
+    const monthBefore = dateRange.to ? subMonths(dateRange.to, 1) : null;
+    const monthAfter =
+        dateRange.to && isBefore(dateRange.to, startOfMonth(new Date()))
+            ? addMonths(dateRange.to, 1)
+            : null;
+
+    const isEndMonthSelected =
+        dateRange.from && dateRange.to && endMonth
+            ? isSameDay(dateRange.from, startOfMonth(endMonth)) &&
+              isSameDay(dateRange.to, endOfMonth(endMonth))
+            : false;
 
     return (
         <div className="flex">
@@ -162,6 +188,75 @@ export default function DateRangePicker({ currentClipDate, dateRange, onDateRang
                                 {t("time.all")}
                             </Link>
                         </DropdownMenuItem>
+                        {monthBefore && (
+                            <DropdownMenuItem asChild>
+                                <Link
+                                    to="/"
+                                    search={(search) => ({
+                                        ...search,
+                                        ...getNewDateRange({
+                                            from: startOfMonth(monthBefore),
+                                            to: endOfMonth(monthBefore),
+                                        }),
+                                    })}
+                                    onClick={() => onDateRangeChange()}
+                                    className="cursor-pointer"
+                                >
+                                    {capitalizeFirstLetter(
+                                        format(monthBefore, "LLLL yyyy", {
+                                            locale: datefnsLocaleByAppLocale[locale],
+                                        }),
+                                    )}
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
+                        {endMonth && (
+                            <DropdownMenuItem asChild>
+                                <Link
+                                    to="/"
+                                    search={(search) => ({
+                                        ...search,
+                                        ...getNewDateRange({
+                                            from: startOfMonth(endMonth),
+                                            to: endOfMonth(endMonth),
+                                        }),
+                                    })}
+                                    onClick={() => onDateRangeChange()}
+                                    className={cn(
+                                        "cursor-pointer",
+                                        isEndMonthSelected && "font-bold",
+                                    )}
+                                >
+                                    {capitalizeFirstLetter(
+                                        format(endMonth, "LLLL yyyy", {
+                                            locale: datefnsLocaleByAppLocale[locale],
+                                        }),
+                                    )}
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
+                        {monthAfter && (
+                            <DropdownMenuItem asChild>
+                                <Link
+                                    to="/"
+                                    search={(search) => ({
+                                        ...search,
+                                        ...getNewDateRange({
+                                            from: startOfMonth(monthAfter),
+                                            to: endOfMonth(monthAfter),
+                                        }),
+                                    })}
+                                    onClick={() => onDateRangeChange()}
+                                    className="cursor-pointer"
+                                >
+                                    {capitalizeFirstLetter(
+                                        format(monthAfter, "LLLL yyyy", {
+                                            locale: datefnsLocaleByAppLocale[locale],
+                                        }),
+                                    )}
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
                         {currentClipDate && (
                             <DropdownMenuItem asChild>
                                 <Link
