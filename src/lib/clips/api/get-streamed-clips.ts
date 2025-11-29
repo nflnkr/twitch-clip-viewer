@@ -12,9 +12,9 @@ export const getStreamedClips = createServerFn({
 })
     .validator(
         z.object({
-            channels: z.string(),
-            from: z.string().date(),
-            to: z.string().date(),
+            channels: z.string().nonempty(),
+            from: z.iso.date(),
+            to: z.iso.date(),
             minViews: z.number(),
         }),
     )

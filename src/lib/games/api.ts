@@ -9,7 +9,7 @@ import { twitchAuthToken } from "../twitch-auth-token";
 export const getGamesServerFn = createServerFn({ method: "GET" })
     .validator(
         z.object({
-            gameIds: z.array(z.string()),
+            gameIds: z.array(z.string()).nonempty(),
         }),
     )
     .handler(async (params) => {
