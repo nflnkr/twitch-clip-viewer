@@ -29,7 +29,7 @@ export const getGamesServerFn = createServerFn({ method: "GET" })
 
             return response.data.data;
         } catch (err) {
-            logger.error(err, "Error fetching broadcaster clips");
+            logger.error(err, "Error fetching games");
 
             throw err;
         }
