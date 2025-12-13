@@ -3,7 +3,6 @@ FROM node:22-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
-RUN corepack prepare pnpm@9.15.2 --activate
 
 FROM base AS prod
 
@@ -17,8 +16,6 @@ FROM base
 
 COPY --from=prod /app/node_modules /app/node_modules
 COPY --from=prod /app/.output /app/.output
-COPY --from=prod /app/.tanstack /app/.tanstack
-COPY --from=prod /app/.nitro /app/.nitro
 
 EXPOSE 3000
 
