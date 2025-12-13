@@ -14,11 +14,12 @@ export default defineConfig([
     },
     tseslint.configs.recommended,
     pluginReact.configs.flat.recommended,
-    reactHooks.configs["recommended-latest"],
+    reactHooks.configs.flat.recommended,
     {
         rules: {
             "react/react-in-jsx-scope": "off",
             "react/prop-types": "off",
+            "react-hooks/incompatible-library": "off",
             "react-refresh/only-export-components": "off",
             "@typescript-eslint/ban-ts-comment": "off",
             "@typescript-eslint/no-empty-function": "off",

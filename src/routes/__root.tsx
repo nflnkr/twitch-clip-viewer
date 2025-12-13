@@ -8,7 +8,7 @@ import { useState } from "react";
 import { createGamesLoader, GamesLoaderContext } from "~/lib/games/query";
 import { getRequestLocale } from "~/lib/locale/api";
 import { LocaleContext, type AppLocale } from "~/lib/locale/locales";
-import appCss from "~/styles/app.css?url";
+import appCss from "~/styles.css?url";
 
 interface MyRouterContext {
     queryClient: QueryClient;

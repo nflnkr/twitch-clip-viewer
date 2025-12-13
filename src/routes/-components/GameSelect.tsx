@@ -49,7 +49,7 @@ function GameSelect({ disabled, games }: Props) {
                         role="combobox"
                         aria-expanded={open}
                         disabled={disabled}
-                        className="aspect-[3/4] h-full rounded-r-none bg-cover dark:hover:opacity-70"
+                        className="aspect-3/4 h-full rounded-r-none bg-cover dark:hover:opacity-70"
                         style={{
                             backgroundImage: `url(${selectedGameImgSrc})`,
                         }}
@@ -92,7 +92,7 @@ function GameSelect({ disabled, games }: Props) {
                                         <img
                                             src={imgSrc}
                                             alt={game.name}
-                                            className="aspect-[3/4] w-8 object-cover"
+                                            className="aspect-3/4 w-8 object-cover"
                                         />
                                         <p>{game.name}</p>
                                         <p className="ml-auto">{game.count}</p>

@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getEvent } from "@tanstack/react-start/server";
 import { endOfDay, parse, startOfDay } from "date-fns";
 import { z } from "zod";
 
@@ -8,9 +7,8 @@ import { fetchBroadcasterClips } from "./fetch-broadcaster-clips";
 
 export const getStreamedClips = createServerFn({
     method: "GET",
-    response: "raw",
 })
-    .validator(
+    .inputValidator(
         z.object({
             channels: z.string().nonempty(),
             from: z.iso.date(),
@@ -30,7 +28,6 @@ export const getStreamedClips = createServerFn({
             .split(",")
             .filter((channel) => /^[a-zA-Z0-9][\w]{2,24}$/.test(channel));
 
-        const event = getEvent();
         const encoder = new TextEncoder();
 
         const stream = new ReadableStream({
@@ -49,7 +46,7 @@ export const getStreamedClips = createServerFn({
                         });
 
                         for await (const clips of clipsGenerator) {
-                            if (params.signal.aborted || event.node.res.closed) break;
+                            if (params.signal.aborted) break;
 
                             const chunk = JSON.stringify(clips) + "\n";
                             controller.enqueue(encoder.encode(chunk));

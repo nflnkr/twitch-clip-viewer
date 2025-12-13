@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getHeader } from "@tanstack/react-start/server";
+import { getRequestHeader } from "@tanstack/react-start/server";
 
 import { defaultLocale, locales, type AppLocale } from "./locales";
 
 export const getRequestLocale = createServerFn({ method: "GET" }).handler(() => {
-    const acceptLanguage = getHeader("accept-language");
+    const acceptLanguage = getRequestHeader("accept-language");
 
     const firstLang = acceptLanguage?.split(",")[0];
 

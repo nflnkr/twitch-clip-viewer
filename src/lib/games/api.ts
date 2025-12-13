@@ -7,7 +7,7 @@ import { logger } from "../logger";
 import { twitchAuthToken } from "../twitch-auth-token";
 
 export const getGamesServerFn = createServerFn({ method: "GET" })
-    .validator(
+    .inputValidator(
         z.object({
             gameIds: z.array(z.string()).nonempty(),
         }),
