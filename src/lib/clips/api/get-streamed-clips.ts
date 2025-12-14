@@ -30,12 +30,13 @@ export const getStreamedClips = createServerFn({
 
         const encoder = new TextEncoder();
 
-        const stream = new ReadableStream({
-            async start(controller) {
-                params.signal.addEventListener("abort", () => {
-                    controller.close();
-                });
+        let cancelled = false;
 
+        const stream = new ReadableStream({
+            cancel() {
+                cancelled = true;
+            },
+            async start(controller) {
                 await Promise.all(
                     broadcasterNameArray.map(async (broadcasterName) => {
                         const clipsGenerator = generateBroadcasterClips({
@@ -46,7 +47,7 @@ export const getStreamedClips = createServerFn({
                         });
 
                         for await (const clips of clipsGenerator) {
-                            if (params.signal.aborted) break;
+                            if (cancelled) break;
 
                             const chunk = JSON.stringify(clips) + "\n";
                             controller.enqueue(encoder.encode(chunk));
@@ -54,7 +55,7 @@ export const getStreamedClips = createServerFn({
                     }),
                 );
 
-                controller.close();
+                if (!cancelled) controller.close();
             },
         });
 

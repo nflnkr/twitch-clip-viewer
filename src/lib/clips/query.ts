@@ -17,7 +17,7 @@ export function clipsOptions(params: {
     return queryOptions({
         queryKey: ["clips", params],
         queryFn: streamedQuery({
-            streamFn: () => generateClips(params),
+            streamFn: (ctx) => generateClips(params, ctx.signal),
         }),
         enabled: params.channels.length > 0,
     });
@@ -69,20 +69,24 @@ export function useClips({
     };
 }
 
-async function* generateClips({
-    channels,
-    from,
-    to,
-    minViews,
-}: {
-    channels: string[];
-    from: string;
-    to: string;
-    minViews: number;
-}) {
+async function* generateClips(
+    {
+        channels,
+        from,
+        to,
+        minViews,
+    }: {
+        channels: string[];
+        from: string;
+        to: string;
+        minViews: number;
+    },
+    signal: AbortSignal,
+) {
     try {
         const response = await getStreamedClips({
             data: { channels: channels.toSorted().join(","), from, to, minViews },
+            signal,
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
