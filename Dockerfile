@@ -6,10 +6,16 @@ RUN corepack enable
 
 FROM base AS prod
 
-COPY . /app 
-
 WORKDIR /app
-RUN pnpm install
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches patches
+
+RUN pnpm fetch
+
+COPY . ./
+
+RUN pnpm install --offline
 RUN pnpm run build
 
 FROM base
