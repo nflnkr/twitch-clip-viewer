@@ -64,8 +64,8 @@ export const Route = createFileRoute("/")({
     validateSearch: zodValidator(
         z.object({
             channels: z.string().optional().default("").catch(""),
-            from: z.string().date().optional().default(getDefaultFrom).catch(getDefaultFrom),
-            to: z.string().date().optional().default(getDefaultTo).catch(getDefaultTo),
+            from: z.iso.date().optional().default(getDefaultFrom).catch(getDefaultFrom),
+            to: z.iso.date().optional().default(getDefaultTo).catch(getDefaultTo),
             minViews: z.number().optional().default(defaultMinViews).catch(defaultMinViews),
         }),
     ),

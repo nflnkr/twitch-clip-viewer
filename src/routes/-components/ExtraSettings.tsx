@@ -39,7 +39,7 @@ const ExtraSettingsDialog = reatomComponent(function ExtraSettingsDialog() {
                 </Button>
             </DialogTrigger>
             <DialogContent
-                className="gap-6 sm:max-w-[26rem]"
+                className="gap-6 sm:max-w-104"
                 aria-describedby={undefined}
             >
                 <DialogHeader>
