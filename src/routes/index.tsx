@@ -22,10 +22,13 @@ import { z } from "zod";
 
 import ToggleWithTooltip from "~/components/ToggleWithTooltip";
 import { Button } from "~/components/ui/button";
+import { capitalizeFirstLetter } from "~/lib/capitalize-first-letter";
 import { useClips } from "~/lib/clips/query";
 import { db } from "~/lib/db";
 import { gameOptions, GamesLoaderContext } from "~/lib/games/query";
+import { getHost } from "~/lib/get-hostname";
 import { useTranslations } from "~/lib/locale/locales";
+import { seo } from "~/lib/seo";
 import {
     autonextBuffer,
     chronologicalOrder,
@@ -75,6 +78,42 @@ export const Route = createFileRoute("/")({
                 to: getDefaultTo(),
             }),
         ],
+    },
+    async head(ctx) {
+        const search = ctx.match.search;
+
+        let title = "Twitch Clip Viewer";
+        const channels = search.channels.split(",").filter(Boolean);
+
+        if (channels.length) {
+            const cutoff = 3;
+            const remaining = channels.length - cutoff;
+
+            let channelsStr = channels
+                .slice(0, cutoff)
+                .map((channel) => capitalizeFirstLetter(channel))
+                .join(", ");
+
+            if (remaining > 0) channelsStr += ` (and ${remaining} more)`;
+
+            title = `${channelsStr} Clips`;
+        }
+
+        const host = getHost();
+
+        const imageUrl = channels.length
+            ? `http${import.meta.env.DEV ? "" : "s"}://${host}/og?channels=${channels}`
+            : undefined;
+
+        return {
+            meta: [
+                ...seo({
+                    title,
+                    description: `${search.from} - ${search.to}`,
+                    image: imageUrl,
+                }),
+            ],
+        };
     },
     component: () => <Index />,
     ssr: false,
