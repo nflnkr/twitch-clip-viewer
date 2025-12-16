@@ -9,12 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as OgRouteImport } from './routes/og'
+import { Route as OgImageRouteImport } from './routes/og-image'
 import { Route as IndexRouteImport } from './routes/index'
 
-const OgRoute = OgRouteImport.update({
-  id: '/og',
-  path: '/og',
+const OgImageRoute = OgImageRouteImport.update({
+  id: '/og-image',
+  path: '/og-image',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,37 +25,37 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/og': typeof OgRoute
+  '/og-image': typeof OgImageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/og': typeof OgRoute
+  '/og-image': typeof OgImageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/og': typeof OgRoute
+  '/og-image': typeof OgImageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/og'
+  fullPaths: '/' | '/og-image'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/og'
-  id: '__root__' | '/' | '/og'
+  to: '/' | '/og-image'
+  id: '__root__' | '/' | '/og-image'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  OgRoute: typeof OgRoute
+  OgImageRoute: typeof OgImageRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/og': {
-      id: '/og'
-      path: '/og'
-      fullPath: '/og'
-      preLoaderRoute: typeof OgRouteImport
+    '/og-image': {
+      id: '/og-image'
+      path: '/og-image'
+      fullPath: '/og-image'
+      preLoaderRoute: typeof OgImageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,7 +70,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  OgRoute: OgRoute,
+  OgImageRoute: OgImageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

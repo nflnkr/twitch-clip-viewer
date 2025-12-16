@@ -102,7 +102,7 @@ export const Route = createFileRoute("/")({
         const host = getHost();
 
         const imageUrl = channels.length
-            ? `http${import.meta.env.DEV ? "" : "s"}://${host}/og?channels=${channels}`
+            ? `http${import.meta.env.DEV ? "" : "s"}://${host}/og-image?channels=${channels}`
             : undefined;
 
         return {
