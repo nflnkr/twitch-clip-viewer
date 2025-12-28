@@ -5,9 +5,7 @@ import { z } from "zod";
 import { logger } from "../../logger";
 import { fetchBroadcasterClips } from "./fetch-broadcaster-clips";
 
-export const getStreamedClips = createServerFn({
-    method: "GET",
-})
+export const getStreamedClips = createServerFn({ method: "POST" })
     .inputValidator(
         z.object({
             channels: z.string().nonempty(),

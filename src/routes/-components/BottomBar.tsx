@@ -16,7 +16,7 @@ function BottomBar({
     selectPrevClip,
     switchAutonext,
 }: {
-    currentClip: TwitchClipMetadata | undefined;
+    currentClip: TwitchClipMetadata | null;
     hasPrevClip: boolean;
     hasNextClip: boolean;
     selectNextClip: () => void;

@@ -20,6 +20,9 @@ const config = defineConfig({
     server: {
         port: 4135,
     },
+    optimizeDeps: {
+        exclude: ["@napi-rs/canvas"],
+    },
 });
 
 export default config;

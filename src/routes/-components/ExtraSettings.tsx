@@ -19,7 +19,7 @@ import { useLocaleContext, useTranslations } from "~/lib/locale/locales";
 import { autonextBuffer } from "~/lib/store/atoms";
 import { cn } from "~/lib/utils";
 
-const ExtraSettingsDialog = reatomComponent(function ExtraSettingsDialog() {
+function ExtraSettingsDialog() {
     const t = useTranslations();
     const { locale, setLocale } = useLocaleContext();
     const viewedClipsLength = useLiveQuery(() => db.viewedClips.toArray())?.length ?? 0;
@@ -70,11 +70,7 @@ const ExtraSettingsDialog = reatomComponent(function ExtraSettingsDialog() {
                             id="autonext-buffer"
                             name="autonext-buffer"
                             value={autonextBuffer()}
-                            onValueChange={(v) => {
-                                if (v !== undefined) {
-                                    autonextBuffer.set(v);
-                                }
-                            }}
+                            onValueChange={autonextBuffer.set}
                             min={0}
                         />
                     </div>
@@ -89,6 +85,6 @@ const ExtraSettingsDialog = reatomComponent(function ExtraSettingsDialog() {
             </DialogContent>
         </Dialog>
     );
-});
+}
 
-export default ExtraSettingsDialog;
+export default reatomComponent(ExtraSettingsDialog);

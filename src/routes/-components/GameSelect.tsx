@@ -1,6 +1,7 @@
 import { reatomComponent } from "@reatom/react";
+import { useQueries } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { use, useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -12,24 +13,45 @@ import {
     CommandList,
 } from "~/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { gameOptions, GamesLoaderContext } from "~/lib/games/query";
 import { useTranslations } from "~/lib/locale/locales";
 import { selectedGameId } from "~/lib/store/atoms";
 import { stopAutonextTimer } from "~/lib/store/autonext";
+import { isDefined, uniqueIds } from "~/lib/utils";
+import { TwitchClipMetadata } from "~/model/twitch";
 
 const gameImageHeight = 80;
 const gameImageWidth = Math.round(gameImageHeight * 0.75);
 const noGameBoxArtUrl = `https://static-cdn.jtvnw.net/ttv-boxart/66082-${gameImageWidth}x${gameImageHeight}.jpg`;
 
 interface Props {
-    disabled: boolean;
-    games: { id: string; name: string; box_art_url: string; count: number }[];
+    clips: TwitchClipMetadata[] | null;
 }
 
-function GameSelect({ disabled, games }: Props) {
+function GameSelect({ clips }: Props) {
     const [open, setOpen] = useState(false);
     const t = useTranslations();
 
-    const selectedGame = games.find((game) => game.id === selectedGameId());
+    const gamesInfo = useQueries({
+        queries: uniqueIds(clips?.map((c) => c.game_id)).map((gameId) =>
+            gameOptions(gameId, use(GamesLoaderContext)),
+        ),
+        combine: (queries) => queries.map((q) => q.data).filter(isDefined),
+    });
+
+    const gameCountById: Record<string, number> = {};
+    clips?.forEach((clip) => {
+        gameCountById[clip.game_id] = (gameCountById[clip.game_id] ?? 0) + 1;
+    });
+
+    const gamesInfoWithCount = gamesInfo
+        .map((game) => ({
+            ...game,
+            count: gameCountById[game.id] ?? 0,
+        }))
+        .sort((a, b) => b.count - a.count);
+
+    const selectedGame = gamesInfoWithCount.find((game) => game.id === selectedGameId());
 
     const selectedGameImgSrc =
         selectedGame?.box_art_url.replace(
@@ -48,7 +70,7 @@ function GameSelect({ disabled, games }: Props) {
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        disabled={disabled}
+                        disabled={gamesInfo.length === 0}
                         className="aspect-3/4 h-full rounded-r-none bg-cover dark:hover:opacity-70"
                         style={{
                             backgroundImage: `url(${selectedGameImgSrc})`,
@@ -73,7 +95,7 @@ function GameSelect({ disabled, games }: Props) {
                     <CommandList>
                         <CommandEmpty>{t("notFound")}</CommandEmpty>
                         <CommandGroup>
-                            {games.map((game) => {
+                            {gamesInfoWithCount.map((game) => {
                                 const imgSrc = game.box_art_url.replace(
                                     "{width}x{height}",
                                     `${gameImageWidth}x${gameImageHeight}`,

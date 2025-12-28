@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { differenceInDays, endOfToday, subYears } from "date-fns";
 
-import { fetchBroadcasterClips } from "~/lib/clips/api/fetch-broadcaster-clips";
+import { fetchBroadcasterClips } from "~/lib/clips/by-broadcaster/fetch-broadcaster-clips";
 import { composeImageGrid } from "~/lib/compose-image-grid";
 
 export const Route = createFileRoute("/og-image")({

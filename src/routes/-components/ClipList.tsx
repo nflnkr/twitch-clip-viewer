@@ -13,14 +13,13 @@ import type { TwitchClipMetadata } from "~/model/twitch";
 
 interface Props {
     clips: TwitchClipMetadata[];
-    currentClipId: string | undefined | null;
+    currentClipId: string | null;
     currentClipIndex: number;
     onClipClick: (clip: TwitchClipMetadata) => void;
 }
 
 function ClipList({ clips, currentClipId = null, currentClipIndex, onClipClick }: Props) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const itemsContainerRef = useRef<HTMLDivElement>(null);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
     const viewedClipIds = viewedClips?.map((c) => c.clipId) ?? [];
@@ -43,7 +42,6 @@ function ClipList({ clips, currentClipId = null, currentClipIndex, onClipClick }
             className="-mr-3 overflow-hidden pr-3"
         >
             <div
-                ref={itemsContainerRef}
                 className="relative"
                 style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
             >

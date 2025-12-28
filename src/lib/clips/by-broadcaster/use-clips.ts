@@ -6,22 +6,7 @@ import {
 import { useMemo } from "react";
 
 import { twitchClipMetadataArraySchema, type TwitchClipMetadata } from "~/model/twitch";
-import { getStreamedClips } from "./api/get-streamed-clips";
-
-export function clipsOptions(params: {
-    channels: string[];
-    from: string;
-    to: string;
-    minViews: number;
-}) {
-    return queryOptions({
-        queryKey: ["clips", params],
-        queryFn: streamedQuery({
-            streamFn: (ctx) => generateClips(params, ctx.signal),
-        }),
-        enabled: params.channels.length > 0,
-    });
-}
+import { getStreamedClips } from "./get-streamed-clips";
 
 export function useClips({
     channels,
@@ -67,6 +52,16 @@ export function useClips({
         ...clipsQuery,
         clips: uniqueSortedClips,
     };
+}
+
+function clipsOptions(params: { channels: string[]; from: string; to: string; minViews: number }) {
+    return queryOptions({
+        queryKey: ["clips", params],
+        queryFn: streamedQuery({
+            streamFn: (ctx) => generateClips(params, ctx.signal),
+        }),
+        enabled: params.channels.length > 0,
+    });
 }
 
 async function* generateClips(

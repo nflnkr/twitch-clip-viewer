@@ -1,6 +1,5 @@
 import { reatomComponent } from "@reatom/react";
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import { useQueries } from "@tanstack/react-query";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { format, subDays } from "date-fns";
@@ -17,15 +16,13 @@ import {
     SquarePlay,
 } from "lucide-react";
 import { AnimatePresence, motion, useMotionValueEvent } from "motion/react";
-import { use } from "react";
 import { z } from "zod";
 
 import ToggleWithTooltip from "~/components/ToggleWithTooltip";
 import { Button } from "~/components/ui/button";
 import { capitalizeFirstLetter } from "~/lib/capitalize-first-letter";
-import { useClips } from "~/lib/clips/query";
+import { useClips } from "~/lib/clips/by-broadcaster/use-clips";
 import { db } from "~/lib/db";
-import { gameOptions, GamesLoaderContext } from "~/lib/games/query";
 import { getHost } from "~/lib/get-hostname";
 import { useTranslations } from "~/lib/locale/locales";
 import { seo } from "~/lib/seo";
@@ -47,7 +44,7 @@ import {
     startAutonextTimer,
     stopAutonextTimer,
 } from "~/lib/store/autonext";
-import { formatSeconds, isDefined, uniqueIds } from "~/lib/utils";
+import { formatSeconds } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
 import BottomBar from "./-components/BottomBar";
 import ClipList from "./-components/ClipList";
@@ -115,11 +112,11 @@ export const Route = createFileRoute("/")({
             ],
         };
     },
-    component: () => <Index />,
+    component: reatomComponent(Index),
     ssr: false,
 });
 
-const Index = reatomComponent(function Index() {
+function Index() {
     const search = Route.useSearch();
     const t = useTranslations();
     const [debouncedMinViews] = useDebouncedValue(search.minViews, { wait: 500 });
@@ -137,25 +134,6 @@ const Index = reatomComponent(function Index() {
         chronologicalOrder: chronologicalOrder(),
     });
 
-    const gamesInfo = useQueries({
-        queries: uniqueIds(clips?.map((c) => c.game_id)).map((gameId) =>
-            gameOptions(gameId, use(GamesLoaderContext)),
-        ),
-        combine: (queries) => queries.map((q) => q.data).filter(isDefined),
-    });
-
-    const gameCountById: Record<string, number> = {};
-    clips?.forEach((clip) => {
-        gameCountById[clip.game_id] = (gameCountById[clip.game_id] ?? 0) + 1;
-    });
-
-    const gamesInfoWithCount = gamesInfo
-        .map((game) => ({
-            ...game,
-            count: gameCountById[game.id] ?? 0,
-        }))
-        .sort((a, b) => b.count - a.count);
-
     const filteredClips = selectedGameId()
         ? clips?.filter((clip) => clip.game_id === selectedGameId())
         : clips;
@@ -170,7 +148,8 @@ const Index = reatomComponent(function Index() {
             })
             .map((result) => result.obj);
 
-    const currentClip = sortedClips?.find((c) => c.id === selectedClipId()) ?? sortedClips?.at(0);
+    const currentClip =
+        sortedClips?.find((c) => c.id === selectedClipId()) ?? sortedClips?.at(0) ?? null;
     const currentClipIndex = (currentClip && sortedClips?.indexOf(currentClip)) ?? 0;
     const previousClip = sortedClips?.[currentClipIndex - 1];
     const nextClip = skipViewed()
@@ -369,13 +348,10 @@ const Index = reatomComponent(function Index() {
                             <AnimatePresence>
                                 {filtersOpen() && (
                                     <Filters
-                                        currentClipCreatedAt={currentClip?.created_at}
+                                        currentClipCreatedAt={currentClip?.created_at ?? null}
                                         resetSelectedClip={() => selectClip(null)}
                                     >
-                                        <GameSelect
-                                            disabled={gamesInfo.length === 0}
-                                            games={gamesInfoWithCount}
-                                        />
+                                        <GameSelect clips={clips} />
                                     </Filters>
                                 )}
                             </AnimatePresence>
@@ -395,7 +371,7 @@ const Index = reatomComponent(function Index() {
                                 {!!sortedClips?.length && (
                                     <ClipList
                                         clips={sortedClips}
-                                        currentClipId={currentClip?.id}
+                                        currentClipId={currentClip?.id ?? null}
                                         currentClipIndex={currentClipIndex}
                                         onClipClick={(clip) => {
                                             selectClip(clip);
@@ -418,4 +394,4 @@ const Index = reatomComponent(function Index() {
             </motion.div>
         </div>
     );
-});
+}

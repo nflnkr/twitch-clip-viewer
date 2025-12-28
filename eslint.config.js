@@ -20,6 +20,8 @@ export default defineConfig([
             "react/react-in-jsx-scope": "off",
             "react/prop-types": "off",
             "react-hooks/incompatible-library": "off",
+            "react-hooks/immutability": "off",
+            "react-hooks/purity": "off",
             "react-refresh/only-export-components": "off",
             "@typescript-eslint/ban-ts-comment": "off",
             "@typescript-eslint/no-empty-function": "off",

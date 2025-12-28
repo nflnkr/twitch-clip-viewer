@@ -32,7 +32,7 @@ import { cn, getYearsArray } from "~/lib/utils";
 const Route = getRouteApi("/");
 
 interface Props {
-    currentClipDate: string | undefined;
+    currentClipDate: string | null;
     dateRange: DateRange;
     onDateRangeChange: () => void;
 }

@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { NumericFormat, type NumericFormatProps } from "react-number-format";
 
 import { Button } from "./ui/button";
@@ -7,56 +7,40 @@ import { Input } from "./ui/input";
 
 export interface NumberInputProps extends Omit<NumericFormatProps, "value" | "onValueChange"> {
     stepper?: number;
-    thousandSeparator?: string;
-    placeholder?: string;
-    defaultValue?: number;
     min?: number;
     max?: number;
-    value?: number; // Controlled value
-    suffix?: string;
-    prefix?: string;
-    onValueChange?: (value: number | undefined) => void;
-    fixedDecimalScale?: boolean;
-    decimalScale?: number;
+    value: number;
+    onValueChange: (prevState: number) => void;
 }
 
 export function NumberInput({
     stepper,
-    thousandSeparator,
-    placeholder,
-    defaultValue,
     min = -Infinity,
     max = Infinity,
     onValueChange,
-    fixedDecimalScale = false,
-    decimalScale = 0,
-    suffix,
-    prefix,
-    value: controlledValue,
+    value,
     ...props
 }: NumberInputProps) {
-    const [value, setValue] = useState<number | undefined>(controlledValue ?? defaultValue);
     const ref = useRef<HTMLInputElement>(null);
 
-    const handleIncrement = useCallback(() => {
-        setValue((prev) =>
-            prev === undefined ? (stepper ?? 1) : Math.min(prev + (stepper ?? 1), max),
-        );
-    }, [stepper, max]);
+    const handleIncrement = () => {
+        onValueChange(Math.min(value + (stepper ?? 1), max));
+    };
 
-    const handleDecrement = useCallback(() => {
-        setValue((prev) =>
-            prev === undefined ? -(stepper ?? 1) : Math.max(prev - (stepper ?? 1), min),
-        );
-    }, [stepper, min]);
+    const handleDecrement = () => {
+        onValueChange(Math.max(value - (stepper ?? 1), min));
+    };
+
+    const handleIncrementEvent = useEffectEvent(handleIncrement);
+    const handleDecrementEvent = useEffectEvent(handleDecrement);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (document.activeElement === ref.current) {
                 if (e.key === "ArrowUp") {
-                    handleIncrement();
+                    handleIncrementEvent();
                 } else if (e.key === "ArrowDown") {
-                    handleDecrement();
+                    handleDecrementEvent();
                 }
             }
         };
@@ -66,31 +50,21 @@ export function NumberInput({
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [handleIncrement, handleDecrement, ref]);
-
-    useEffect(() => {
-        if (controlledValue !== undefined) {
-            setValue(controlledValue);
-        }
-    }, [controlledValue]);
+    }, []);
 
     const handleChange = (values: { value: string; floatValue: number | undefined }) => {
         const newValue = values.floatValue === undefined ? undefined : values.floatValue;
-        setValue(newValue);
-        if (onValueChange) {
-            onValueChange(newValue);
-        }
+
+        if (newValue === undefined) return;
+
+        onValueChange(newValue);
     };
 
     const handleBlur = () => {
-        if (value !== undefined) {
-            if (value < min) {
-                setValue(min);
-                ref.current!.value = String(min);
-            } else if (value > max) {
-                setValue(max);
-                ref.current!.value = String(max);
-            }
+        if (value < min) {
+            onValueChange(min);
+        } else if (value > max) {
+            onValueChange(max);
         }
     };
 
@@ -99,18 +73,12 @@ export function NumberInput({
             <NumericFormat
                 value={value}
                 onValueChange={handleChange}
-                thousandSeparator={thousandSeparator}
-                decimalScale={decimalScale}
-                fixedDecimalScale={fixedDecimalScale}
                 allowNegative={min < 0}
                 valueIsNumericString
                 onBlur={handleBlur}
                 max={max}
                 min={min}
-                suffix={suffix}
-                prefix={prefix}
                 customInput={Input}
-                placeholder={placeholder}
                 className="relative h-10 [appearance:textfield] rounded-r-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 getInputRef={ref}
                 {...props}
@@ -118,7 +86,7 @@ export function NumberInput({
             <div className="flex flex-col">
                 <Button
                     aria-label="Increase value"
-                    className="border-input h-5 rounded-l-none rounded-br-none border-b-[0.5px] border-l-0 !px-[9px] focus-visible:relative"
+                    className="border-input h-5 rounded-l-none rounded-br-none border-b-[0.5px] border-l-0 px-2.25! focus-visible:relative"
                     variant="outline"
                     size="icon"
                     onClick={handleIncrement}
@@ -128,7 +96,7 @@ export function NumberInput({
                 </Button>
                 <Button
                     aria-label="Decrease value"
-                    className="border-input h-5 rounded-l-none rounded-tr-none border-t-[0.5px] border-l-0 !px-[9px] focus-visible:relative"
+                    className="border-input h-5 rounded-l-none rounded-tr-none border-t-[0.5px] border-l-0 px-2.25! focus-visible:relative"
                     variant="outline"
                     size="icon"
                     onClick={handleDecrement}

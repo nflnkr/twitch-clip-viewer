@@ -6,7 +6,7 @@ import type { TwitchGame } from "~/model/twitch";
 import { logger } from "../logger";
 import { twitchAuthToken } from "../twitch-auth-token";
 
-export const getGamesServerFn = createServerFn({ method: "GET" })
+export const getGamesServerFn = createServerFn({ method: "POST" })
     .inputValidator(
         z.object({
             gameIds: z.array(z.string()).nonempty(),
@@ -28,9 +28,9 @@ export const getGamesServerFn = createServerFn({ method: "GET" })
             });
 
             return response.data.data;
-        } catch (err) {
-            logger.error(err, "Error fetching games");
+        } catch (error) {
+            logger.error(error, "Error fetching games");
 
-            throw err;
+            throw error;
         }
     });

@@ -19,7 +19,7 @@ import DateRangePicker from "./DateRangePicker";
 const Route = getRouteApi("/");
 
 interface Props {
-    currentClipCreatedAt: string | undefined;
+    currentClipCreatedAt: string | null;
     children: ReactNode;
     resetSelectedClip: () => void;
 }
@@ -59,7 +59,7 @@ function Filters({ currentClipCreatedAt, children, resetSelectedClip }: Props) {
         });
     }
 
-    function handleMinViewsChange(value: number | undefined) {
+    function handleMinViewsChange(value: number) {
         stopAutonextTimer();
         resetSelectedClip();
         selectedGameId.set(null);
