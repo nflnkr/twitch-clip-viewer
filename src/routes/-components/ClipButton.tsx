@@ -31,13 +31,14 @@ function ClipButton({
     return (
         <Button
             variant="outline"
+            {...props}
             className={cn(
                 "border-accent flex h-full w-full flex-col items-stretch gap-0 overflow-hidden border-2 p-0 transition-opacity",
+                props.className,
                 small && "flex-row",
                 fade && "border-accent/50 opacity-30",
                 selected && "border-accent dark:border-accent",
             )}
-            {...props}
         >
             <img
                 src={thumbnailUrl}
