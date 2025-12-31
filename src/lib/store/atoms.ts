@@ -10,3 +10,4 @@ export const filtersOpen = atom(true);
 export const selectedClipId = atom<string | null>(null);
 export const titleFilterField = atom("");
 export const selectedGameId = atom<string | null>(null);
+export const smallClipButton = atom(false);

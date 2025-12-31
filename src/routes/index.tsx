@@ -10,16 +10,24 @@ import {
     EyeOff,
     ListChevronsDownUp,
     ListChevronsUpDown,
+    ListEnd,
+    ListStart,
     ListTodo,
     Loader2,
     PanelRightClose,
+    Rows2,
+    Rows4,
     SquarePlay,
 } from "lucide-react";
 import { AnimatePresence, motion, useMotionValueEvent } from "motion/react";
+import { useRef } from "react";
 import { z } from "zod";
 
 import ToggleWithTooltip from "~/components/ToggleWithTooltip";
 import { Button } from "~/components/ui/button";
+import { ButtonGroup } from "~/components/ui/button-group";
+import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { capitalizeFirstLetter } from "~/lib/capitalize-first-letter";
 import { useClips } from "~/lib/clips/by-broadcaster/use-clips";
 import { db } from "~/lib/db";
@@ -36,6 +44,7 @@ import {
     selectedGameId,
     sidebarOpen,
     skipViewed,
+    smallClipButton,
     titleFilterField,
 } from "~/lib/store/atoms";
 import {
@@ -47,7 +56,7 @@ import {
 import { formatSeconds } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
 import BottomBar from "./-components/BottomBar";
-import ClipList from "./-components/ClipList";
+import ClipList, { type ClipListRef } from "./-components/ClipList";
 import ExtraSettingsDialog from "./-components/ExtraSettings";
 import Filters from "./-components/Filters";
 import GameSelect from "./-components/GameSelect";
@@ -119,6 +128,7 @@ export const Route = createFileRoute("/")({
 function Index() {
     const search = Route.useSearch();
     const t = useTranslations();
+    const cliplistRef = useRef<ClipListRef>(null);
     const [debouncedMinViews] = useDebouncedValue(search.minViews, { wait: 500 });
     const [debouncedTitleFilterField] = useDebouncedValue(titleFilterField(), { wait: 500 });
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
@@ -359,17 +369,74 @@ function Index() {
                                 {error ? (
                                     <p className="text-red-500">Error: {error.message}</p>
                                 ) : (
-                                    <div className="flex items-center gap-2">
-                                        {isFetching && <Loader2 className="h-4 w-4 animate-spin" />}
-                                        {currentClip && totalClipsDuration && (
-                                            <p className="text-sm">
-                                                {`${currentClipIndex + 1}/${sortedClips?.length ?? 0} (${formatSeconds(totalClipsDuration)})`}
-                                            </p>
-                                        )}
+                                    <div className="flex justify-between gap-4">
+                                        <div className="flex items-center gap-2">
+                                            {isFetching && (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            )}
+                                            {currentClip && totalClipsDuration && (
+                                                <p className="text-sm">
+                                                    {`${currentClipIndex + 1}/${sortedClips?.length ?? 0} (${formatSeconds(totalClipsDuration)})`}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <ButtonGroup>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon-sm"
+                                                        onClick={() => {
+                                                            cliplistRef.current?.scrollToStart();
+                                                        }}
+                                                    >
+                                                        <ListStart />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{t("scrollToStart")}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon-sm"
+                                                        onClick={() => {
+                                                            cliplistRef.current?.scrollToIndex(
+                                                                currentClipIndex,
+                                                            );
+                                                        }}
+                                                    >
+                                                        <ListEnd />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{t("scrollToIndex")}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </ButtonGroup>
+                                        <ToggleGroup
+                                            type="single"
+                                            size="sm"
+                                            value={smallClipButton() ? "small" : "big"}
+                                            onValueChange={(value) => {
+                                                if (value === "small") smallClipButton.set(true);
+                                                if (value === "big") smallClipButton.set(false);
+                                            }}
+                                        >
+                                            <ToggleGroupItem value="big">
+                                                <Rows2 />
+                                            </ToggleGroupItem>
+                                            <ToggleGroupItem value="small">
+                                                <Rows4 />
+                                            </ToggleGroupItem>
+                                        </ToggleGroup>
                                     </div>
                                 )}
                                 {!!sortedClips?.length && (
                                     <ClipList
+                                        ref={cliplistRef}
                                         clips={sortedClips}
                                         currentClipId={currentClip?.id ?? null}
                                         currentClipIndex={currentClipIndex}

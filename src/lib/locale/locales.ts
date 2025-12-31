@@ -57,6 +57,8 @@ const en = {
     "time.lastYear": "Last year",
     "time.all": "All",
     "time.currentClipDate": "Current clip + 1d",
+    scrollToIndex: "Scroll to selected clip",
+    scrollToStart: "Scroll to start",
 } as const;
 
 const translations: Record<
@@ -87,5 +89,7 @@ const translations: Record<
         "time.lastYear": "Последний год",
         "time.all": "Все",
         "time.currentClipDate": "Текущий клип + 1д",
+        scrollToIndex: "Прокрутить до выбранного клипа",
+        scrollToStart: "Прокрутить в начало",
     },
 };

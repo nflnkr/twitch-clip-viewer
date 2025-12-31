@@ -1,36 +1,53 @@
 import { reatomComponent } from "@reatom/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { milliseconds } from "date-fns";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Check } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { RefObject, useEffect, useImperativeHandle, useRef } from "react";
 
-import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { db } from "~/lib/db";
-import { chronologicalOrder, skipViewed } from "~/lib/store/atoms";
-import { cn } from "~/lib/utils";
+import { chronologicalOrder, skipViewed, smallClipButton } from "~/lib/store/atoms";
 import type { TwitchClipMetadata } from "~/model/twitch";
+import ClipButton from "./ClipButton";
+
+export type ClipListRef = {
+    scrollToIndex: (index: number) => void;
+    scrollToStart: () => void;
+} | null;
 
 interface Props {
+    ref: RefObject<ClipListRef>;
     clips: TwitchClipMetadata[];
     currentClipId: string | null;
     currentClipIndex: number;
     onClipClick: (clip: TwitchClipMetadata) => void;
 }
 
-function ClipList({ clips, currentClipId = null, currentClipIndex, onClipClick }: Props) {
+function ClipList({ ref, clips, currentClipId = null, currentClipIndex, onClipClick }: Props) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
     const viewedClipIds = viewedClips?.map((c) => c.clipId) ?? [];
 
+    const small = smallClipButton();
+    const clipHeight = small ? 68 : 270;
+
     const rowVirtualizer = useVirtualizer({
         count: clips.length,
         getScrollElement: () =>
             scrollContainerRef.current?.querySelector("[data-radix-scroll-area-viewport]") ?? null,
-        estimateSize: () => 270,
+        estimateSize: () => clipHeight,
         gap: 5,
     });
+
+    useImperativeHandle(ref, () => ({
+        scrollToIndex: (index) => {
+            rowVirtualizer.scrollToIndex(index, { align: "start" });
+        },
+        scrollToStart: () => {
+            rowVirtualizer.scrollToOffset(0);
+        },
+    }));
 
     useEffect(() => {
         rowVirtualizer.scrollToIndex(currentClipIndex, { align: "start", behavior: "smooth" });
@@ -40,6 +57,7 @@ function ClipList({ clips, currentClipId = null, currentClipIndex, onClipClick }
         <ScrollArea
             ref={scrollContainerRef}
             className="-mr-3 overflow-hidden pr-3"
+            scrollHideDelay={milliseconds({ seconds: 10 })}
         >
             <div
                 className="relative"
@@ -50,49 +68,30 @@ function ClipList({ clips, currentClipId = null, currentClipIndex, onClipClick }
                     if (!clip) return null;
 
                     return (
-                        <Button
-                            key={clip.id}
-                            variant="outline"
-                            className={cn(
-                                "border-accent flex h-auto w-full flex-col items-stretch gap-0 overflow-hidden border-2 p-0 transition-opacity",
-                                skipViewed() &&
-                                    viewedClipIds.includes(clip.id) &&
-                                    "border-accent/50 opacity-30",
-                                currentClipId === clip.id && "border-accent dark:border-accent",
-                            )}
+                        <ClipButton
+                            key={clip.id + small.toString()}
+                            ref={rowVirtualizer.measureElement}
+                            fade={skipViewed() && viewedClipIds.includes(clip.id)}
+                            selected={currentClipId === clip.id}
+                            viewed={viewedClipIds.includes(clip.id)}
+                            thumbnailUrl={clip.thumbnail_url}
+                            title={clip.title}
+                            leftText={clip.broadcaster_name}
+                            rightText={
+                                chronologicalOrder() ? (
+                                    <p>{new Date(clip.created_at).toLocaleString()}</p>
+                                ) : (
+                                    <p>{clip.view_count}</p>
+                                )
+                            }
                             onClick={() => onClipClick(clip)}
+                            data-index={virtualItem.index}
+                            className="absolute top-0 left-0 w-full"
                             style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                height: `${virtualItem.size}px`,
+                                height: clipHeight,
                                 transform: `translateY(${virtualItem.start}px)`,
                             }}
-                        >
-                            <img
-                                src={clip.thumbnail_url}
-                                alt={clip.title}
-                                loading="lazy"
-                                className="min-h-0 grow object-cover"
-                            />
-                            <div className="flex flex-col gap-2 p-2">
-                                <div className="flex items-center gap-1">
-                                    {viewedClipIds.includes(clip.id) && <Check />}
-                                    <p className="max-w-full self-start truncate tracking-tighter">
-                                        {clip.title}
-                                    </p>
-                                </div>
-                                <div className="flex justify-between gap-2">
-                                    <p className="truncate">{clip.broadcaster_name}</p>
-                                    {chronologicalOrder() ? (
-                                        <p>{new Date(clip.created_at).toLocaleString()}</p>
-                                    ) : (
-                                        <p>{clip.view_count}</p>
-                                    )}
-                                </div>
-                            </div>
-                        </Button>
+                        />
                     );
                 })}
             </div>
