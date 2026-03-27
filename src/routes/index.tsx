@@ -20,7 +20,7 @@ import {
     SquarePlay,
 } from "lucide-react";
 import { AnimatePresence, motion, useMotionValueEvent } from "motion/react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { z } from "zod";
 
 import ToggleWithTooltip from "~/components/ToggleWithTooltip";
@@ -183,6 +183,18 @@ function Index() {
             stopAutonextTimer();
         }
     });
+
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "hidden") stopAutonextTimer();
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, []);
 
     async function selectClip(clip: TwitchClipMetadata | null = null) {
         if (currentClip?.id === clip?.id) return;
