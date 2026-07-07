@@ -5,9 +5,9 @@ ENV PATH="$PNPM_HOME:$PATH"
 ENV CI=true
 RUN corepack enable
 
-FROM base AS prod
-
 WORKDIR /app
+
+FROM base AS prod
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches ./patches
@@ -21,8 +21,8 @@ RUN pnpm run build
 
 FROM base
 
-COPY --from=prod /app/node_modules /app/node_modules
-COPY --from=prod /app/.output /app/.output
+COPY --from=prod /app/node_modules ./node_modules
+COPY --from=prod /app/.output ./.output
 
 EXPOSE 3000
 
