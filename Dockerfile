@@ -2,6 +2,7 @@ FROM node:22-slim AS base
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV CI=true
 RUN corepack enable
 
 FROM base AS prod
@@ -9,7 +10,7 @@ FROM base AS prod
 WORKDIR /app
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY patches patches
+COPY patches ./patches
 
 RUN pnpm fetch
 
@@ -25,4 +26,4 @@ COPY --from=prod /app/.output /app/.output
 
 EXPOSE 3000
 
-CMD node /app/.output/server/index.mjs
+CMD ["node", ".output/server/index.mjs"]
