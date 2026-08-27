@@ -43,6 +43,7 @@ export const baseConfig = defineConfig(
                 "off",
                 { allowInterfaces: "with-single-extends" },
             ],
+            "@typescript-eslint/unbound-method": "off",
         },
     },
 );
