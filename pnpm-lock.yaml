@@ -24,7 +24,7 @@ importers:
         specifier: ^0.7.2
         version: 0.7.2(@ianvs/prettier-plugin-sort-imports@4.7.0(prettier@3.7.4))(prettier@3.7.4)
       turbo:
-        specifier: ^2.5.0
+        specifier: 2.10.12
         version: 2.10.12
       typescript:
         specifier: ^5.7.2
