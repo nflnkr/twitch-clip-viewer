@@ -3,7 +3,6 @@ import axios from "axios";
 import { z } from "zod";
 
 import type { TwitchGame } from "~/model/twitch";
-import { logger } from "../logger";
 import { twitchAuthToken } from "../twitch-auth-token";
 
 export const getGamesServerFn = createServerFn({ method: "POST" })
@@ -29,7 +28,7 @@ export const getGamesServerFn = createServerFn({ method: "POST" })
 
             return response.data.data;
         } catch (error) {
-            logger.error(error, "Error fetching games");
+            console.error("Error fetching games", error);
 
             throw error;
         }

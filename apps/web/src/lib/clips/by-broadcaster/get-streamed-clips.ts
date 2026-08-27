@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { endOfDay, parse, startOfDay } from "date-fns";
 import { z } from "zod";
 
-import { logger } from "../../logger";
 import { fetchBroadcasterClips } from "./fetch-broadcaster-clips";
 
 export const getStreamedClips = createServerFn({ method: "POST" })
@@ -96,7 +95,7 @@ async function* generateBroadcasterClips({
 
             cursor = response.cursor;
         } catch (err) {
-            logger.error(err, "Error fetching all broadcaster clips");
+            console.error("Error fetching all broadcaster clips", err);
 
             break;
         }

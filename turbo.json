@@ -34,6 +34,6 @@
             "cache": false
         }
     },
-    "globalEnv": ["TWITCH_API_CLIENT_ID", "TWITCH_API_CLIENT_SECRET", "LOGTAIL_SOURCE_TOKEN"],
+    "globalEnv": ["TWITCH_API_CLIENT_ID", "TWITCH_API_CLIENT_SECRET"],
     "globalPassThroughEnv": ["NODE_ENV", "CI", "npm_lifecycle_event"]
 }

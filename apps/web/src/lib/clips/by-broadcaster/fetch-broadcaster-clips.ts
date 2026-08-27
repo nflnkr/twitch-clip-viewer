@@ -1,7 +1,6 @@
 import axios from "axios";
 
 import type { TwitchClipMetadata } from "~/model/twitch";
-import { logger } from "../../logger";
 import { twitchAuthToken } from "../../twitch-auth-token";
 import { twitchUserId } from "../../twitch-user-Id";
 
@@ -47,7 +46,7 @@ export async function fetchBroadcasterClips({
             cursor: response.data.pagination?.cursor || null,
         };
     } catch (err) {
-        logger.error(err, "Error fetching broadcaster clips");
+        console.error("Error fetching broadcaster clips", err);
 
         return null;
     }

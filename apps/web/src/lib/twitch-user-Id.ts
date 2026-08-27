@@ -1,7 +1,6 @@
 import axios from "axios";
 
 import type { TwitchUserMetadata } from "~/model/twitch";
-import { logger } from "./logger";
 import { twitchAuthToken } from "./twitch-auth-token";
 
 export class TwitchUserId {
@@ -64,7 +63,7 @@ export class TwitchUserId {
 
             return id;
         } catch (err) {
-            logger.error({ err, username }, "Error fetching user id");
+            console.error("Error fetching user id", { err, username });
 
             return null;
         }
@@ -87,7 +86,7 @@ export class TwitchUserId {
 
             return username.toLowerCase();
         } catch (err) {
-            logger.error(err, "Error fetching username");
+            console.error("Error fetching username", err);
 
             return null;
         }

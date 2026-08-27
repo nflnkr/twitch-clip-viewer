@@ -1,7 +1,6 @@
 import axios from "axios";
 
 import { env } from "~/env";
-import { logger } from "./logger";
 
 export class TwitchAuthToken {
     private readonly clientId: string;
@@ -20,7 +19,7 @@ export class TwitchAuthToken {
         }
 
         if (!this.authToken) {
-            logger.fatal("No auth token after fetching");
+            console.error("No auth token after fetching");
 
             throw new Error("No auth token after fetching");
         }
@@ -48,7 +47,7 @@ export class TwitchAuthToken {
         } catch (err) {
             this.authToken = null;
 
-            logger.error(err, "Error getting auth token");
+            console.error("Error getting auth token", err);
         }
     }
 }
