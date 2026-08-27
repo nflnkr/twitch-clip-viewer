@@ -67,6 +67,17 @@ const defaultMinViews = 10;
 const getDefaultFrom = () => format(subDays(new Date(), 7), "yyyy-MM-dd");
 const getDefaultTo = () => format(new Date(), "yyyy-MM-dd");
 
+async function markClipAsViewed(clipId: string) {
+    const exists = await db.viewedClips.where("clipId").equals(clipId).count();
+
+    if (!exists) {
+        await db.viewedClips.add({
+            clipId,
+            timestamp: Date.now(),
+        });
+    }
+}
+
 export const Route = createFileRoute("/")({
     validateSearch: zodValidator(
         z.object({
@@ -109,7 +120,7 @@ export const Route = createFileRoute("/")({
         const host = getHost();
 
         const imageUrl = channels.length
-            ? `http${import.meta.env.DEV ? "" : "s"}://${host}/og-image?channels=${channels}`
+            ? `http${import.meta.env.DEV ? "" : "s"}://${host}/og-image?channels=${channels.join(",")}`
             : undefined;
 
         return {
@@ -176,27 +187,6 @@ function Index() {
               .reduce((acc, c) => acc + c.duration, 0)
         : sortedClips?.reduce((acc, c) => acc + c.duration, 0);
 
-    useMotionValueEvent(autonextTimer, "animationComplete", () => {
-        if (nextClip) {
-            selectClip(nextClip);
-            startAutonextTimer(nextClip.duration + autonextBuffer());
-        } else {
-            stopAutonextTimer();
-        }
-    });
-
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === "hidden") stopAutonextTimer();
-        };
-
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-
-        return () => {
-            document.removeEventListener("visibilitychange", handleVisibilityChange);
-        };
-    }, []);
-
     async function selectClip(clip: TwitchClipMetadata | null = null) {
         if (currentClip?.id === clip?.id) return;
 
@@ -204,14 +194,7 @@ function Index() {
 
         if (markAsViewed() && leavingClipId && clip?.id) {
             try {
-                const exists = await db.viewedClips.where("clipId").equals(leavingClipId).count();
-
-                if (!exists) {
-                    await db.viewedClips.add({
-                        clipId: leavingClipId,
-                        timestamp: Date.now(),
-                    });
-                }
+                await markClipAsViewed(leavingClipId);
             } catch (error) {
                 console.error(error);
             }
@@ -237,6 +220,27 @@ function Index() {
             stopAutonextTimer();
         }
     }
+
+    useMotionValueEvent(autonextTimer, "animationComplete", () => {
+        if (nextClip) {
+            selectClip(nextClip);
+            startAutonextTimer(nextClip.duration + autonextBuffer());
+        } else {
+            stopAutonextTimer();
+        }
+    });
+
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "hidden") stopAutonextTimer();
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, []);
 
     return (
         <div className="flex h-full divide-x">

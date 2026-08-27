@@ -26,6 +26,8 @@ interface Props {
 }
 
 function ClipList({ ref, clips, currentClipId = null, currentClipIndex, onClipClick }: Props) {
+    "use no memo";
+
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const viewedClips = useLiveQuery(() => db.viewedClips.toArray());
 
@@ -34,6 +36,7 @@ function ClipList({ ref, clips, currentClipId = null, currentClipIndex, onClipCl
     const small = smallClipButton();
     const clipHeight = small ? 68 : 270;
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const rowVirtualizer = useVirtualizer({
         count: clips.length,
         getScrollElement: () =>

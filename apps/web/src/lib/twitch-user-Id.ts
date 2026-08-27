@@ -75,7 +75,7 @@ export class TwitchUserId {
         const authData = await this.getTwitchAuthData();
 
         try {
-            const response = await axios(url, {
+            const response = await axios<{ data: TwitchUserMetadata[] }>(url, {
                 headers: {
                     Authorization: "Bearer " + authData.authToken,
                     "Client-Id": authData.clientId,

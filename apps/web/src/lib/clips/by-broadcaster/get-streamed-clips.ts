@@ -13,7 +13,7 @@ export const getStreamedClips = createServerFn({ method: "POST" })
             minViews: z.number(),
         }),
     )
-    .handler(async (params) => {
+    .handler((params) => {
         const { channels, from, to, minViews } = params.data;
 
         const fromTimestamp = parse(from, "yyyy-MM-dd", new Date());
