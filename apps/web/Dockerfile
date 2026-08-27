@@ -35,6 +35,6 @@ USER nodejs
 
 COPY --from=builder --chown=nodejs:nodejs /app/apps/web/.output .output
 
-EXPOSE 4135
+EXPOSE 3000
 
 CMD ["node", "/app/.output/server/index.mjs"]

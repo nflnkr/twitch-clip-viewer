@@ -2,9 +2,9 @@ import { reatomComponent } from "@reatom/react";
 import { Check } from "lucide-react";
 import type { ComponentPropsWithRef, ReactNode } from "react";
 
-import { Button } from "~/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import { smallClipButton } from "~/lib/store/atoms";
-import { cn } from "~/lib/utils";
+import { cn } from "@repo/ui/lib/utils";
 
 type Props = ComponentPropsWithRef<typeof Button> & {
     selected: boolean;

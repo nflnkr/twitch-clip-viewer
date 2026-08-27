@@ -5,7 +5,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import type { RefObject } from "react";
 import { useEffect, useImperativeHandle, useRef } from "react";
 
-import { ScrollArea } from "~/components/ui/scroll-area";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { db } from "~/lib/db";
 import { chronologicalOrder, skipViewed, smallClipButton } from "~/lib/store/atoms";
 import type { TwitchClipMetadata } from "~/model/twitch";

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { Toggle } from "./ui/toggle";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Toggle } from "@repo/ui/components/ui/toggle";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/ui/tooltip";
 
 interface Props {
     pressed: boolean;

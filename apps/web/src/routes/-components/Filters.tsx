@@ -6,14 +6,14 @@ import { motion } from "motion/react";
 import type { KeyboardEvent, ReactNode } from "react";
 
 import { NumberInput } from "~/components/NumberInput";
-import { Button, buttonVariants } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
+import { Button, buttonVariants } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/ui/tooltip";
 import { useTranslations } from "~/lib/locale/locales";
 import { chronologicalOrder, selectedGameId, titleFilterField } from "~/lib/store/atoms";
 import { stopAutonextTimer } from "~/lib/store/autonext";
-import { cn } from "~/lib/utils";
+import { cn } from "@repo/ui/lib/utils";
 
 import DateRangePicker from "./DateRangePicker";
 

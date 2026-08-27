@@ -24,10 +24,10 @@ import { useEffect, useRef } from "react";
 import { z } from "zod";
 
 import ToggleWithTooltip from "~/components/ToggleWithTooltip";
-import { Button } from "~/components/ui/button";
-import { ButtonGroup } from "~/components/ui/button-group";
-import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
+import { Button } from "@repo/ui/components/ui/button";
+import { ButtonGroup } from "@repo/ui/components/ui/button-group";
+import { ToggleGroup, ToggleGroupItem } from "@repo/ui/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/ui/tooltip";
 import { capitalizeFirstLetter } from "~/lib/capitalize-first-letter";
 import { useClips } from "~/lib/clips/by-broadcaster/use-clips";
 import { db } from "~/lib/db";

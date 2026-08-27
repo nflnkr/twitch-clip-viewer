@@ -3,7 +3,7 @@ import { useQueries } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { use, useState } from "react";
 
-import { Button } from "~/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
     Command,
     CommandEmpty,
@@ -11,8 +11,8 @@ import {
     CommandInput,
     CommandItem,
     CommandList,
-} from "~/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+} from "@repo/ui/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/ui/popover";
 import { gameOptions, GamesLoaderContext } from "~/lib/games/query";
 import { useTranslations } from "~/lib/locale/locales";
 import { selectedGameId } from "~/lib/store/atoms";

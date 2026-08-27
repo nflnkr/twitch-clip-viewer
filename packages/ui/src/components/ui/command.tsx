@@ -8,8 +8,8 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "~/components/ui/dialog";
-import { cn } from "~/lib/utils";
+} from "@repo/ui/components/ui/dialog";
+import { cn } from "@repo/ui/lib/utils";
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
     return (

@@ -5,19 +5,19 @@ import { Settings } from "lucide-react";
 import EnFlag from "~/components/EnFlag";
 import { NumberInput } from "~/components/NumberInput";
 import RuFlag from "~/components/RuFlag";
-import { Button } from "~/components/ui/button";
+import { Button } from "@repo/ui/components/ui/button";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "~/components/ui/dialog";
-import { Label } from "~/components/ui/label";
+} from "@repo/ui/components/ui/dialog";
+import { Label } from "@repo/ui/components/ui/label";
 import { db } from "~/lib/db";
 import { useLocaleContext, useTranslations } from "~/lib/locale/locales";
 import { autonextBuffer } from "~/lib/store/atoms";
-import { cn } from "~/lib/utils";
+import { cn } from "@repo/ui/lib/utils";
 
 function ExtraSettingsDialog() {
     const t = useTranslations();
