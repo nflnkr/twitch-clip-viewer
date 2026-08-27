@@ -1,0 +1,11 @@
+{
+    "extends": "@repo/typescript-config/base.json",
+    "compilerOptions": {
+        "types": ["vite/client"],
+        "paths": {
+            "~/*": ["./src/*"]
+        }
+    },
+    "include": ["**/*.ts", "**/*.tsx", "eslint.config.ts", "vite.config.ts"],
+    "exclude": ["node_modules"]
+}

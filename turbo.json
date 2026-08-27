@@ -1,0 +1,39 @@
+{
+    "$schema": "./node_modules/turbo/schema.json",
+    "ui": "tui",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", ".env*"],
+            "outputs": [".nitro/**", ".output/**", ".tanstack/**"]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "preview": {
+            "cache": false,
+            "persistent": true
+        },
+        "lint": {
+            "dependsOn": ["^lint"]
+        },
+        "lint:fix": {
+            "dependsOn": ["^lint:fix"]
+        },
+        "fix": {
+            "dependsOn": ["^fix"]
+        },
+        "typecheck": {
+            "dependsOn": ["^typecheck"]
+        },
+        "clean": {
+            "cache": false
+        },
+        "//#clean": {
+            "cache": false
+        }
+    },
+    "globalEnv": ["TWITCH_API_CLIENT_ID", "TWITCH_API_CLIENT_SECRET", "LOGTAIL_SOURCE_TOKEN"],
+    "globalPassThroughEnv": ["NODE_ENV", "CI", "npm_lifecycle_event"]
+}

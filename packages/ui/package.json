@@ -1,0 +1,25 @@
+{
+    "name": "@repo/ui",
+    "type": "module",
+    "exports": {
+        ".": "./src/ui-example.tsx"
+    },
+    "scripts": {
+        "clean": "git clean -xdf .cache .turbo dist node_modules",
+        "lint": "eslint",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0"
+    },
+    "devDependencies": {
+        "@repo/eslint-config": "workspace:*",
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "^22.10.2",
+        "@types/react": "^19.2.0",
+        "@types/react-dom": "^19.2.0",
+        "eslint": "^9.39.2",
+        "typescript": "^5.7.2"
+    }
+}

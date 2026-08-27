@@ -4,7 +4,13 @@ dist
 dist-ssr
 *.local 
 .env
+.env.*
+!.env.example
 .nitro
 .tanstack
 .output
 .vinxi 
+
+# Turbo
+.turbo
+.cache
