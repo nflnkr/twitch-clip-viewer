@@ -1,6 +1,6 @@
 import { reatomComponent } from "@reatom/react";
 import { Check } from "lucide-react";
-import { ComponentPropsWithRef, ReactNode } from "react";
+import type { ComponentPropsWithRef, ReactNode } from "react";
 
 import { Button } from "~/components/ui/button";
 import { smallClipButton } from "~/lib/store/atoms";

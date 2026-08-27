@@ -55,6 +55,7 @@ import {
 } from "~/lib/store/autonext";
 import { formatSeconds } from "~/lib/utils";
 import type { TwitchClipMetadata } from "~/model/twitch";
+
 import BottomBar from "./-components/BottomBar";
 import ClipList, { type ClipListRef } from "./-components/ClipList";
 import ExtraSettingsDialog from "./-components/ExtraSettings";
@@ -85,7 +86,7 @@ export const Route = createFileRoute("/")({
             }),
         ],
     },
-    async head(ctx) {
+    head(ctx) {
         const search = ctx.match.search;
 
         let title = "Twitch Clip Viewer";

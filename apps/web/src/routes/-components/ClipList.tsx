@@ -2,12 +2,14 @@ import { reatomComponent } from "@reatom/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { milliseconds } from "date-fns";
 import { useLiveQuery } from "dexie-react-hooks";
-import { RefObject, useEffect, useImperativeHandle, useRef } from "react";
+import type { RefObject } from "react";
+import { useEffect, useImperativeHandle, useRef } from "react";
 
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { db } from "~/lib/db";
 import { chronologicalOrder, skipViewed, smallClipButton } from "~/lib/store/atoms";
 import type { TwitchClipMetadata } from "~/model/twitch";
+
 import ClipButton from "./ClipButton";
 
 export type ClipListRef = {

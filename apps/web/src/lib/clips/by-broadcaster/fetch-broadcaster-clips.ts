@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import type { TwitchClipMetadata } from "~/model/twitch";
+
 import { twitchAuthToken } from "../../twitch-auth-token";
 import { twitchUserId } from "../../twitch-user-Id";
 

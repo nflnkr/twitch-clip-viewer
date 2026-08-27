@@ -80,7 +80,7 @@ export default function DateRangePicker({ currentClipDate, dateRange, onDateRang
                 <PopoverTrigger asChild>
                     <Button
                         id="date"
-                        variant={"outline"}
+                        variant="outline"
                         className={cn(
                             "grow justify-start rounded-r-none text-left font-normal",
                             !dateRange && "text-muted-foreground",

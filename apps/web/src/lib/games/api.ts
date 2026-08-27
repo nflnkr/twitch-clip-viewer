@@ -3,6 +3,7 @@ import axios from "axios";
 import { z } from "zod";
 
 import type { TwitchGame } from "~/model/twitch";
+
 import { twitchAuthToken } from "../twitch-auth-token";
 
 export const getGamesServerFn = createServerFn({ method: "POST" })

@@ -6,7 +6,7 @@ export class TwitchAuthToken {
     private readonly clientId: string;
     private readonly clientSecret: string;
     authToken: string | null = null;
-    private authTokenExpiresAt: number = 0;
+    private authTokenExpiresAt = 0;
 
     constructor(clientId: string, clientSecret: string) {
         this.clientId = clientId;

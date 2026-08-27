@@ -18,7 +18,7 @@ import { useTranslations } from "~/lib/locale/locales";
 import { selectedGameId } from "~/lib/store/atoms";
 import { stopAutonextTimer } from "~/lib/store/autonext";
 import { isDefined, uniqueIds } from "~/lib/utils";
-import { TwitchClipMetadata } from "~/model/twitch";
+import type { TwitchClipMetadata } from "~/model/twitch";
 
 const gameImageHeight = 80;
 const gameImageWidth = Math.round(gameImageHeight * 0.75);

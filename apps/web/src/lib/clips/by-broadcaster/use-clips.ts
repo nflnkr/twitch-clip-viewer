@@ -6,6 +6,7 @@ import {
 import { useMemo } from "react";
 
 import { twitchClipMetadataArraySchema, type TwitchClipMetadata } from "~/model/twitch";
+
 import { getStreamedClips } from "./get-streamed-clips";
 
 export function useClips({

@@ -60,7 +60,7 @@ export const composeImageGrid = createServerOnlyFn(async function ({
         const dy = padding + row * (cellH + gap);
 
         const settled = images[idx];
-        if (!settled || settled.status !== "fulfilled") {
+        if (settled?.status !== "fulfilled") {
             ctx.fillStyle = "#391452ff";
             ctx.fillRect(dx, dy, cellW, cellH);
             continue;

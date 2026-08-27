@@ -1,5 +1,6 @@
 import { atom } from "@reatom/core";
-import { animate, AnimationPlaybackControlsWithThen, motionValue } from "motion/react";
+import type { AnimationPlaybackControlsWithThen } from "motion/react";
+import { animate, motionValue } from "motion/react";
 
 let currentAutonextTimerAnimation: AnimationPlaybackControlsWithThen | null = null;
 
