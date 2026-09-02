@@ -3,7 +3,9 @@
     "compilerOptions": {
         "types": ["vite/client"],
         "paths": {
-            "~/*": ["./src/*"]
+            "~/*": ["./src/*"],
+            "@/*": ["./src/*"],
+            "#/*": ["./src/*"]
         }
     },
     "include": ["**/*.ts", "**/*.tsx", "eslint.config.ts", "vite.config.ts"],

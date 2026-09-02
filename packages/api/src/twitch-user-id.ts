@@ -1,7 +1,6 @@
 import axios from "axios";
 
-import type { TwitchUserMetadata } from "~/model/twitch";
-
+import type { TwitchUserMetadata } from "./twitch-model";
 import { twitchAuthToken } from "./twitch-auth-token";
 
 export class TwitchUserId {

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import type { TwitchGame } from "~/model/twitch";
 
-import { twitchAuthToken } from "../twitch-auth-token";
+import { twitchAuthToken } from "@repo/api";
 
 export const getGamesServerFn = createServerFn({ method: "POST" })
     .inputValidator(

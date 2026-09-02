@@ -7,6 +7,7 @@
         "dev": "pnpm with-env vite dev --port 4135",
         "preview": "pnpm with-env vite preview --port 4135",
         "build": "pnpm with-env vite build",
+        "generate-routes": "tsr generate",
         "clean": "git clean -xdf .cache .turbo node_modules .output .tanstack",
         "lint": "eslint",
         "typecheck": "tsc --noEmit",
@@ -14,8 +15,12 @@
     },
     "dependencies": {
         "@napi-rs/canvas": "^0.1.84",
+        "@orpc/client": "^1.15.0",
+        "@orpc/server": "^1.15.0",
+        "@orpc/tanstack-query": "^1.15.0",
         "@reatom/core": "^1000.1.0",
         "@reatom/react": "^1000.0.0",
+        "@repo/api": "workspace:*",
         "@repo/ui": "workspace:*",
         "@t3-oss/env-core": "^0.13.8",
         "@tailwindcss/vite": "^4.0.6",
@@ -28,7 +33,6 @@
         "@tanstack/react-router-ssr-query": "^1.131.7",
         "@tanstack/react-start": "^1.132.0",
         "@tanstack/react-virtual": "^3.13.13",
-        "@tanstack/router-plugin": "^1.132.0",
         "@tanstack/zod-adapter": "^1.141.2",
         "axios": "^1.13.2",
         "dataloader": "^2.2.3",
@@ -39,24 +43,24 @@
         "lucide-react": "^0.544.0",
         "motion": "^12.23.26",
         "nitro": "3.0.1-alpha.1",
-        "react": "^19.2.0",
+        "react": "^19.2.8",
         "react-day-picker": "^9.12.0",
-        "react-dom": "^19.2.0",
+        "react-dom": "^19.2.8",
         "react-number-format": "^5.4.4",
         "tailwindcss": "^4.0.6",
-        "vite-tsconfig-paths": "^5.1.4",
-        "zod": "^4.1.11"
+        "zod": "^4.4.3"
     },
     "devDependencies": {
         "@repo/eslint-config": "workspace:*",
         "@repo/typescript-config": "workspace:*",
         "@tanstack/devtools-vite": "^0.3.11",
-        "@types/node": "^22.10.2",
-        "@types/react": "^19.2.0",
-        "@types/react-dom": "^19.2.0",
-        "@vitejs/plugin-react": "^5.0.4",
+        "@tanstack/router-cli": "^1.132.0",
+        "@types/node": "^24.13.3",
+        "@types/react": "^19.2.18",
+        "@types/react-dom": "^19.2.4",
+        "@vitejs/plugin-react": "^6.1.0",
         "eslint": "^9.39.2",
-        "typescript": "^5.7.2",
-        "vite": "^7.2.7"
+        "typescript": "~6.0.2",
+        "vite": "^8.2.2"
     }
 }

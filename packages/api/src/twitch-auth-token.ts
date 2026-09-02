@@ -1,6 +1,12 @@
 import axios from "axios";
 
-import { env } from "~/env";
+function requireEnv(name: string, value: string | undefined): string {
+    if (!value) {
+        throw new Error(`Missing environment variable: ${name}`);
+    }
+
+    return value;
+}
 
 export class TwitchAuthToken {
     private readonly clientId: string;
@@ -53,6 +59,6 @@ export class TwitchAuthToken {
 }
 
 export const twitchAuthToken = new TwitchAuthToken(
-    env.TWITCH_API_CLIENT_ID,
-    env.TWITCH_API_CLIENT_SECRET,
+    requireEnv("TWITCH_API_CLIENT_ID", process.env.TWITCH_API_CLIENT_ID),
+    requireEnv("TWITCH_API_CLIENT_SECRET", process.env.TWITCH_API_CLIENT_SECRET),
 );

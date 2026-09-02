@@ -100,7 +100,7 @@ export const Route = createFileRoute("/")({
     head(ctx) {
         const search = ctx.match.search;
 
-        let title = "Twitch Clip Viewer";
+        let title = "TTV Clip Viewer";
         const channels = search.channels.split(",").filter(Boolean);
 
         if (channels.length) {

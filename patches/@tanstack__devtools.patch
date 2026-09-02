@@ -1,0 +1,26 @@
+diff --git a/dist/devtools/7NDEDZB7.js b/dist/devtools/7NDEDZB7.js
+index 399d93517ce51ce3616d98d6f488d67ea00ef304..071e591aba16cc392bbf5799d67cd6eac1868da1 100644
+--- a/dist/devtools/7NDEDZB7.js
++++ b/dist/devtools/7NDEDZB7.js
+@@ -4022,7 +4022,7 @@ var SourceInspector = () => {
+     window.getSelection()?.removeAllRanges();
+     e.preventDefault();
+     e.stopPropagation();
+-    fetch(`${location.origin}/__tsd/open-source?source=${encodeURIComponent(highlightState.dataSource)}`).catch(() => {
++    fetch(`http://localhost:4573/__tsd/open-source?source=${encodeURIComponent(highlightState.dataSource)}`).catch(() => {
+     });
+   });
+   const currentElementBoxStyles = createMemo(() => {
+diff --git a/dist/devtools/JEZZ2PQE.js b/dist/devtools/JEZZ2PQE.js
+index 806ba5d4aabfd0602b432d0801a28f60643f5770..e0b54a5c46a03e5644543d45ab6158c9ee99cc15 100644
+--- a/dist/devtools/JEZZ2PQE.js
++++ b/dist/devtools/JEZZ2PQE.js
+@@ -3490,7 +3490,7 @@ var SourceInspector = () => {
+     window.getSelection()?.removeAllRanges();
+     e.preventDefault();
+     e.stopPropagation();
+-    fetch(`${location.origin}/__tsd/open-source?source=${encodeURIComponent(highlightState.dataSource)}`).catch(() => {
++    fetch(`http://localhost:4573/__tsd/open-source?source=${encodeURIComponent(highlightState.dataSource)}`).catch(() => {
+     });
+   });
+   const currentElementBoxStyles = createMemo(() => {

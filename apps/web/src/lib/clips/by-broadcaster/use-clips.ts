@@ -1,13 +1,9 @@
-import {
-    queryOptions,
-    experimental_streamedQuery as streamedQuery,
-    useQuery,
-} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { endOfDay, parse, startOfDay } from "date-fns";
 import { useMemo } from "react";
 
-import { twitchClipMetadataArraySchema, type TwitchClipMetadata } from "~/model/twitch";
-
-import { getStreamedClips } from "./get-streamed-clips";
+import { orpc } from "~/lib/orpc";
+import type { TwitchClipMetadata } from "~/model/twitch";
 
 export function useClips({
     channels,
@@ -22,9 +18,25 @@ export function useClips({
     minViews: number;
     chronologicalOrder: boolean;
 }) {
-    const clipsQuery = useQuery(
-        clipsOptions({ channels: channels.toSorted(), from, to, minViews }),
+    const normalizedChannels = useMemo(
+        () => channels.filter((channel) => /^[a-zA-Z0-9][\w]{2,24}$/.test(channel)).toSorted(),
+        [channels],
     );
+
+    const fromTimestamp = startOfDay(parse(from, "yyyy-MM-dd", new Date())).getTime();
+    const toTimestamp = endOfDay(parse(to, "yyyy-MM-dd", new Date())).getTime();
+
+    const clipsQuery = useQuery({
+        ...orpc.getClips.experimental_streamedOptions({
+            input: {
+                channels: normalizedChannels,
+                from: fromTimestamp,
+                to: toTimestamp,
+                minViews,
+            },
+        }),
+        enabled: normalizedChannels.length > 0,
+    });
 
     const uniqueSortedClips = useMemo(() => {
         if (!clipsQuery.data) return null;
@@ -53,81 +65,4 @@ export function useClips({
         ...clipsQuery,
         clips: uniqueSortedClips,
     };
-}
-
-function clipsOptions(params: { channels: string[]; from: string; to: string; minViews: number }) {
-    return queryOptions({
-        queryKey: ["clips", params],
-        queryFn: streamedQuery({
-            streamFn: (ctx) => generateClips(params, ctx.signal),
-        }),
-        enabled: params.channels.length > 0,
-    });
-}
-
-async function* generateClips(
-    {
-        channels,
-        from,
-        to,
-        minViews,
-    }: {
-        channels: string[];
-        from: string;
-        to: string;
-        minViews: number;
-    },
-    signal: AbortSignal,
-) {
-    try {
-        const response = await getStreamedClips({
-            data: { channels: channels.toSorted().join(","), from, to, minViews },
-            signal,
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) {
-            throw new Error("Response body is empty or not readable.");
-        }
-
-        const decoder = new TextDecoder();
-        let accumulatedString = "";
-        let done = false;
-
-        do {
-            const read = await reader.read();
-            done = read.done;
-
-            accumulatedString += decoder.decode(read.value);
-
-            if (accumulatedString.endsWith("\n")) {
-                const lines = accumulatedString.split("\n").filter(Boolean);
-
-                const clips: TwitchClipMetadata[] = [];
-                for (const line of lines) {
-                    const data = JSON.parse(line);
-                    const newClips = twitchClipMetadataArraySchema.parse(data);
-
-                    clips.push(...newClips);
-                }
-
-                yield clips;
-
-                accumulatedString = "";
-            }
-        } while (!done);
-
-        yield [];
-
-        reader.releaseLock();
-    } catch (error: unknown) {
-        if (!(error instanceof Error)) throw error;
-
-        if (error.name !== "AbortError") {
-            console.error("%cFetch clips error:", "color: red", error);
-        }
-    }
 }

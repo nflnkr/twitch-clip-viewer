@@ -1,8 +1,9 @@
 packages:
-    - apps/*
-    - packages/*
-    - tooling/*
+  - apps/*
+  - packages/*
+  - tooling/*
 allowBuilds:
-    esbuild: false
+  esbuild: false
 patchedDependencies:
-    dexie-react-hooks: patches/dexie-react-hooks.patch
+  '@tanstack/devtools': patches/@tanstack__devtools.patch
+  dexie-react-hooks: patches/dexie-react-hooks.patch
