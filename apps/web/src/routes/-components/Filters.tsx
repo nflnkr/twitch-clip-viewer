@@ -5,15 +5,16 @@ import { ListIndentIncrease, X } from "lucide-react";
 import { motion } from "motion/react";
 import type { KeyboardEvent, ReactNode } from "react";
 
-import { NumberInput } from "~/components/NumberInput";
 import { Button, buttonVariants } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/ui/tooltip";
+import { cn } from "@repo/ui/lib/utils";
+
+import { NumberInput } from "~/components/NumberInput";
 import { useTranslations } from "~/lib/locale/locales";
 import { chronologicalOrder, selectedGameId, titleFilterField } from "~/lib/store/atoms";
 import { stopAutonextTimer } from "~/lib/store/autonext";
-import { cn } from "@repo/ui/lib/utils";
 
 import DateRangePicker from "./DateRangePicker";
 
@@ -45,7 +46,7 @@ function Filters({ currentClipCreatedAt, children, resetSelectedClip }: Props) {
             .map((s) => s.toLowerCase())
             .filter((s) => /^[a-zA-Z0-9][\w]{2,24}$/.test(s));
         const newChannels = [...channels, ...filteredNewChannels];
-        const uniqueChannels = Array.from(new Set(newChannels));
+        const uniqueChannels = Array.from(new Set(newChannels)).slice(0, 20);
 
         event.currentTarget.value = "";
 

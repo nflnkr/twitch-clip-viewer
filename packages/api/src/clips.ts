@@ -27,7 +27,7 @@ export const getClip = base
 export const getClips = base
     .input(
         z.object({
-            channels: z.array(z.string()),
+            channels: z.array(z.string().min(1)).max(20),
             from: z.number(),
             to: z.number(),
             minViews: z.number().optional().default(DEFAULT_MIN_VIEWS),

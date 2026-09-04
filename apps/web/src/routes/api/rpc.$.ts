@@ -1,16 +1,25 @@
 import { onError } from "@orpc/client";
+import { RatelimitHandlerPlugin } from "@orpc/experimental-ratelimit";
 import { RPCHandler } from "@orpc/server/fetch";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { orpcRouter } from "@repo/api";
 
 const handler = new RPCHandler(orpcRouter, {
+    plugins: [new RatelimitHandlerPlugin()],
     interceptors: [
         onError((error) => {
             console.error("ORPC error: ", error);
         }),
     ],
 });
+
+function getClientIp(request: Request) {
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    if (forwardedFor) return forwardedFor.split(",")[0]?.trim();
+
+    return request.headers.get("cf-connecting-ip") ?? request.headers.get("x-real-ip") ?? "unknown";
+}
 
 const allowedOrigins = /^https:\/\/(\w+\.)?twitch\.tv$/;
 
@@ -33,7 +42,7 @@ function corsHeaders(request: Request) {
 async function handleORPCRequest({ request }: { request: Request }) {
     const { response } = await handler.handle(request, {
         prefix: "/api/rpc",
-        context: {},
+        context: { ip: getClientIp(request) },
     });
 
     const headers = new Headers(response?.headers);

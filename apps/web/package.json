@@ -16,6 +16,7 @@
     "dependencies": {
         "@napi-rs/canvas": "^0.1.84",
         "@orpc/client": "^1.15.0",
+        "@orpc/experimental-ratelimit": "^1.15.0",
         "@orpc/server": "^1.15.0",
         "@orpc/tanstack-query": "^1.15.0",
         "@reatom/core": "^1000.1.0",
